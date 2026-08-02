@@ -1,0 +1,2176 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>DEFNE - Akıllı YKS Ders Çalışma Koçu</title>
+  <meta name="description" content="YKS sınavına hazırlanan öğrenciler için bilimsel verilerle desteklenen akıllı, dinamik ve kişiselleştirilmiş AI Ders Çalışma Koçu.">
+  <meta name="theme-color" content="#6366f1">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="styles.css?v=25">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js" integrity="sha384-e6cc9LaIG7xZ3XD5B+jtr1NhTWPQGQdRCh6xiZ+ZFUtWCpg4ycv3Sh+SkZoopvUY" crossorigin="anonymous"></script>
+  <script>
+    /* Chart.js visual defaults — aligned with the Aurora design system */
+    if (typeof Chart !== 'undefined') {
+      Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+      Chart.defaults.font.size = 12;
+      Chart.defaults.color = '#697089';
+      Chart.defaults.borderColor = 'rgba(120, 130, 165, 0.14)';
+      Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(23, 30, 51, 0.92)';
+      Chart.defaults.plugins.tooltip.padding = 10;
+      Chart.defaults.plugins.tooltip.cornerRadius = 10;
+      Chart.defaults.plugins.tooltip.titleFont = { family: "'Plus Jakarta Sans', sans-serif", weight: '700' };
+      Chart.defaults.plugins.legend.labels.usePointStyle = true;
+      Chart.defaults.plugins.legend.labels.boxWidth = 8;
+      Chart.defaults.animation.duration = 700;
+      Chart.defaults.animation.easing = 'easeOutQuart';
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js" integrity="sha384-sZlPHqJ8Pk1GMyFXfg9vOgDjyUZZe7wE2c0NoPg2z1vs2fmI4wOC0O1ONVyr73qa" crossorigin="anonymous"></script>
+</head>
+<body>
+  
+  <!-- Trial Banner -->
+  <div id="trialBanner" style="display:none; background: linear-gradient(135deg, #f59e0b, #ea580c); color: white; text-align: center; padding: 0.5rem; font-size: 0.85rem; z-index: 1000; position: relative;">
+  </div>
+
+  <!-- App Header -->
+  <header>
+    <div class="logo" role="button" tabindex="0" onclick="app.showView('dashboardView')" style="display: flex; align-items: center; gap: 0.45rem; cursor: pointer; flex-shrink: 0;">
+      <svg viewBox="0 0 120 140" style="width: 38px; height: 44px; flex-shrink: 0;">
+        <g transform="rotate(-10 60 70)">
+          <path d="M46 72 Q34 76 31 86" fill="none" stroke="#1E2A4A" stroke-width="3" stroke-linecap="round"></path>
+          <circle cx="31" cy="87" r="4" fill="#FFD93B" stroke="#1E2A4A" stroke-width="2.5"></circle>
+          <path d="M74 68 Q86 62 89 52" fill="none" stroke="#1E2A4A" stroke-width="3" stroke-linecap="round"></path>
+          <circle cx="89" cy="51" r="4" fill="#FFD93B" stroke="#1E2A4A" stroke-width="2.5"></circle>
+          <path d="M89 47 Q95 40 91 34" fill="none" stroke="#1E2A4A" stroke-width="2" stroke-dasharray="1 4" stroke-linecap="round"></path>
+          <circle cx="91" cy="31" r="5.5" fill="#E45C7F" stroke="#1E2A4A" stroke-width="2.5"></circle>
+          <rect x="94" y="27" width="6" height="4.5" rx="1.5" fill="#E45C7F" stroke="#1E2A4A" stroke-width="2"></rect>
+          <rect x="46" y="8" width="28" height="15" rx="7" fill="#FFB3C7" stroke="#1E2A4A" stroke-width="2.5"></rect>
+          <rect x="46" y="22" width="28" height="8" fill="#D9DCE5" stroke="#1E2A4A" stroke-width="2.5"></rect>
+          <path d="M50 24v4M56 24v4M62 24v4M68 24v4" stroke="#1E2A4A" stroke-width="1.4" opacity="0.5"></path>
+          <rect x="46" y="30" width="28" height="60" fill="#FFD93B" stroke="#1E2A4A" stroke-width="2.5"></rect>
+          <path d="M55 30v60M65 30v60" stroke="#1E2A4A" stroke-width="1.4" opacity="0.22"></path>
+          <rect x="45" y="38" width="30" height="7" fill="#E45C7F" stroke="#1E2A4A" stroke-width="2.5"></rect>
+          <circle cx="55" cy="55" r="2.4" fill="#1E2A4A"></circle>
+          <circle cx="66" cy="55" r="2.4" fill="#1E2A4A"></circle>
+          <path d="M55.5 64 Q60.5 69 65.5 64" fill="none" stroke="#1E2A4A" stroke-width="2.5" stroke-linecap="round"></path>
+          <circle cx="50.5" cy="61" r="2.6" fill="#FFB3C7" opacity="0.85"></circle>
+          <circle cx="70.5" cy="61" r="2.6" fill="#FFB3C7" opacity="0.85"></circle>
+          <path d="M46 90 L74 90 L60 116 Z" fill="#F2D6A8" stroke="#1E2A4A" stroke-width="2.5" stroke-linejoin="round"></path>
+          <path d="M55 106 L65 106 L60 116 Z" fill="#1E2A4A"></path>
+        </g>
+      </svg>
+      <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem;">
+        <span style="background: linear-gradient(135deg, var(--text-main) 40%, var(--primary) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">DEFNE</span>
+        <button style="padding: 0.1rem 0.5rem; font-size: 0.58rem; line-height: 1.4; display: inline-flex; align-items: center; gap: 0.2rem; font-weight: 700; white-space: nowrap; border-radius: 4px; border: 1px solid rgba(245,158,11,0.4); background: rgba(245,158,11,0.08); color: #b45309; cursor: pointer; font-family: var(--font-header);" id="headerTierBtn" onclick="event.stopPropagation(); app.showSubscription()">
+          <i class="fa-solid fa-bolt" style="font-size: 0.5rem;"></i> <span id="headerTierText">Paket Seç</span>
+        </button>
+      </div>
+    </div>
+    <div class="nav-stats" id="navStats" style="display: none; flex-wrap: wrap; margin-left: 1.5rem; gap: 0.75rem;">
+      <div class="nav-stat-item" style="position: relative; cursor: pointer;">
+        <span class="stat-icon-badge"><i class="fa-solid fa-fire"></i></span>
+        <strong id="streakVal">1 Gün</strong>
+        <div class="stat-tooltip-popup">
+          <h4 style="margin: 0 0 0.5rem; font-size: 0.85rem; color: var(--text-main); font-family: var(--font-header); font-weight: 800; border-bottom: 1.5px solid var(--border-color); padding-bottom: 0.4rem;">
+            &#128293; &#304;stikrar Serisi Nedir?
+          </h4>
+          <p style="margin: 0; font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; font-weight: 600;">
+            Her g&#252;n en az 1 ders &#231;al&#305;&#351;ma g&#246;revi tamamlayarak serini koruyabilirsin. G&#252;n atlad&#305;&#287;&#305;nda serin s&#305;f&#305;rlan&#305;r. &#304;stikrarl&#305; &#231;al&#305;&#351;arak hedefine h&#305;zla ula&#351;!
+          </p>
+        </div>
+      </div>
+      <div class="nav-stat-item" style="position: relative; cursor: pointer;">
+        <span class="stat-icon-badge"><i class="fa-solid fa-medal"></i></span>
+        <strong id="levelVal">1</strong>
+        <div class="stat-tooltip-popup" id="levelStatTooltip">
+          <!-- Populated dynamically in app.js -->
+        </div>
+      </div>
+      <div class="nav-stat-item" id="headerBadgeContainer" style="position: relative; cursor: pointer;">
+        <!-- JS populated badge item and tooltip popup -->
+      </div>
+      <div class="nav-stat-item" style="position: relative; cursor: pointer;">
+        <span class="stat-icon-badge"><i class="fa-solid fa-trophy"></i></span>
+        <strong id="targetVal">Tıp</strong>
+        <div class="stat-tooltip-popup" id="targetStatTooltip">
+          <!-- Populated dynamically in app.js -->
+        </div>
+      </div>
+      <div class="theme-select-chip" title="Görsel Stili Değiştir">
+        <span class="stat-icon-badge" style="background: linear-gradient(135deg, #f0abfc, #a855f7);"><i class="fa-solid fa-palette"></i></span>
+        <select id="themeSelector" onchange="app.changeTheme(this.value)">
+          <option value="classic">✨ Aurora</option>
+          <option value="blue">🌊 Okyanus</option>
+          <option value="pink">🌸 Sakura</option>
+          <option value="dark">🌙 Gece</option>
+        </select>
+      </div>
+      <!-- Notification bell chip -->
+      <div class="nav-stat-item notif-bell-chip" id="headerNotifBtn" style="display: none; cursor: pointer; border-color: rgba(99,102,241,0.35);" onclick="app.openNotificationCenter()" title="Bildirimler">
+        <span class="stat-icon-badge" style="background: var(--ai-gradient);"><i class="fa-solid fa-bell"></i></span>
+        <div class="notif-unread-badge"></div>
+      </div>
+      <!-- Logout chip -->
+      <div class="nav-stat-item logout-chip" id="headerLogoutBtn" style="display: none; cursor: pointer;" onclick="app.logoutUser()" title="&#199;&#305;k&#305;&#351; Yap">
+        <span class="stat-icon-badge"><i class="fa-solid fa-right-from-bracket"></i></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Wrapper -->
+  <main>
+
+
+
+    <!-- VIEW 1: LANDING / WELCOME -->
+    <section id="landingView" class="app-view active">
+      <div class="hero-container">
+        <div class="hero-text">
+          <h1>Sıradışı Bir Sınav <br>Yolculuğuna Hazır Mısın, <span>Şampiyon?</span></h1>
+          <p>DEFNE sıradan ders programlarından değildir. Bilimsel veriler ve unutma eğrisine göre seni takip eder, alışkanlıklarını analiz eder, seviye tespit sınavlarıyla eksiklerini belirler ve anlık olarak programını revize eder. Hazırsan, taktik tahtasını çıkarıyoruz!</p>
+          <div class="cta-group">
+            <button class="btn btn-primary" onclick="app.startWizard()">
+              <i class="fa-solid fa-play"></i> Koçluk Hazırlığına Başla
+            </button>
+            <button class="btn btn-secondary" id="landingPricingBtn" onclick="app.showSubscription()">
+              <i class="fa-solid fa-tags"></i> Paketleri İncele
+            </button>
+          </div>
+
+          <!-- Saved Profile Quick Login Box (Hidden by default, shown if local registration exists) -->
+          <div id="savedProfileLoginBox" class="glass-card" style="display: none; align-items: center; gap: 1rem; margin-top: 1.5rem; background: rgba(37,99,235,0.03); border: 1px solid var(--primary); max-width: 450px; text-align: left; padding: 1rem; border-radius: 12px; box-shadow: var(--shadow-sm);">
+            <div style="font-size: 2.2rem; background: var(--bg-card); border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);">🏆</div>
+            <div style="flex: 1;">
+              <h4 style="margin: 0; font-size: 0.95rem; color: var(--text-main);" id="savedProfileName">-</h4>
+              <p style="margin: 0.15rem 0 0; font-size: 0.75rem; color: var(--text-muted);" id="savedProfileTrack">-</p>
+            </div>
+            <button class="btn btn-primary" style="padding: 0.45rem 0.9rem; font-size: 0.75rem;" onclick="app.quickLogin()">
+              <i class="fa-solid fa-right-to-bracket"></i> Giriş Yap
+            </button>
+          </div>
+        </div>
+        <div class="glass-card" style="display: flex; flex-direction: column; gap: 1.5rem; justify-content: center; align-items: center; text-align: center; padding: 3rem 2rem;">
+          <i class="fa-solid fa-clipboard-list" style="font-size: 5rem; color: var(--primary); animation: pulse-glow 2s infinite;"></i>
+          <h3>Akıllı Çalışma Planı</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            Kişiselleştirilmiş 8 farklı hazırlık seviyesi, MEB kazanımlarına göre yapay zeka destekli konu telafi sistemi ve veli bilgilendirme entegrasyonu tek bir yerde.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: SETUP WIZARD -->
+    <section id="wizardView" class="app-view" hidden>
+      <div class="glass-card">
+        <!-- Wizard Progress Tracker -->
+        <div class="wizard-progress">
+          <div class="wizard-progress-bar" id="wizardBar"></div>
+          <div class="wizard-step active" id="wStep1">1</div>
+          <div class="wizard-step" id="wStep2">2</div>
+        </div>
+
+        <!-- Wizard Page 1: Goal Setting -->
+        <div id="wizardPage1" class="wizard-page">
+          <h2 style="margin-bottom: 0.5rem;"><i class="fa-solid fa-location-crosshairs text-primary"></i> Hedefini Belirle</h2>
+          <p style="color: var(--text-muted); margin-bottom: 2rem;">Hedef sıralamanı gir; istersen üniversite ve bölüm de seç. AI Tercih Motoru sana uygun hedefleri 2025 ÖSYM verileriyle hesaplasın.</p>
+          
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="studentName">Adın Soyadın</label>
+              <input type="text" id="studentName" placeholder="Adın ve soyadın" required>
+            </div>
+            <div class="form-group">
+              <label for="studentEmail">E-posta Adresin</label>
+              <input type="email" id="studentEmail" placeholder="ornek@eposta.com" autocomplete="email" required>
+              <div id="studentEmailError" style="font-size: 0.7rem; color: var(--danger, #dc2626); font-weight: 700; margin-top: 0.25rem; display: none;"></div>
+              <div style="font-size: 0.68rem; color: var(--text-muted); line-height: 1.4; margin-top: 0.15rem;">
+                🔒 Bilgilerin yalnızca bu cihazda saklanır, hiçbir sunucuya gönderilmez. Rapor gönderiminde bu adres kullanılır.
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="trackSelect">Alan Seçimi</label>
+              <select id="trackSelect" onchange="app.updateGoalPlanPreview()">
+                <option value="Sayısal">Sayısal (SAY)</option>
+                <option value="Eşit Ağırlık">Eşit Ağırlık (EA)</option>
+                <option value="Sözel">Sözel (SÖZ)</option>
+                <option value="Dil">Yabancı Dil (DİL)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="targetUniversity">Hedef Üniversite (İsteğe Bağlı)</label>
+              <select id="targetUniversity" onchange="app.updateGoalPlanPreview()">
+                <option value="">Fark Etmez / Henüz Kararsızım</option>
+                <!-- JS: 2025 ÖSYM veri setindeki üniversitelerle doldurulur -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="targetDepartment">Hedeflediğin Bölüm (İsteğe Bağlı)</label>
+              <select id="targetDepartment" onchange="app.updateGoalPlanPreview()">
+                <option value="">Fark Etmez / Henüz Kararsızım</option>
+                <!-- JS: seçilen alana (SAY/EA/SÖZ/DİL) uygun bölümlerle doldurulur -->
+              </select>
+              <div id="targetDeptPercentileNotice" style="font-size: 0.72rem; color: var(--primary); font-weight: 700; margin-top: 0.25rem; display: none;"></div>
+            </div>
+            <div class="form-group">
+              <label for="targetRank">Hedef Sıralama (Türkiye Geneli)</label>
+              <input type="number" id="targetRank" step="1" min="1" max="3000000" placeholder="Örn: 50000" oninput="app.updateGoalPlanPreview()" required>
+              <div id="targetRankNote" style="font-size: 0.68rem; color: var(--text-muted); line-height: 1.4; margin-top: 0.15rem;">
+                📊 Hesaplamalarda 2025 YKS yerleştirme (ÖSYM) taban başarı sıralamaları esas alınır. Boş bırakırsan seçtiğin üniversite/bölümden otomatik hedef belirlenir.
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Tercih Motoru: sıralama / üniversite / bölüm kombinasyonlarına göre öneriler -->
+          <div id="tercihMotoruBox" class="glass-card" style="background: var(--bg-card); border: 1px solid var(--ai-border, rgba(139,92,246,0.25)); margin: 0 0 1.5rem; display: none; padding: 1.25rem;"></div>
+
+          <!-- Goal Plan Preview Box -->
+          <div id="goalPlanPreviewBox" class="glass-card" style="background: var(--bg-card); border: 1.5px dashed var(--primary); margin: 2rem 0; display: none;">
+            <h4 style="color: var(--primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem;">
+              <svg viewBox="0 0 120 140" style="width: 20px; height: 23px; flex-shrink: 0;"><g transform="rotate(-10 60 70)"><path d="M46 72 Q34 76 31 86" fill="none" stroke="#1E2A4A" stroke-width="3" stroke-linecap="round"></path><circle cx="31" cy="87" r="4" fill="#FFD93B" stroke="#1E2A4A" stroke-width="2.5"></circle><path d="M74 68 Q86 62 89 52" fill="none" stroke="#1E2A4A" stroke-width="3" stroke-linecap="round"></path><circle cx="89" cy="51" r="4" fill="#FFD93B" stroke="#1E2A4A" stroke-width="2.5"></circle><path d="M89 47 Q95 40 91 34" fill="none" stroke="#1E2A4A" stroke-width="2" stroke-dasharray="1 4" stroke-linecap="round"></path><circle cx="91" cy="31" r="5.5" fill="#E45C7F" stroke="#1E2A4A" stroke-width="2.5"></circle><rect x="94" y="27" width="6" height="4.5" rx="1.5" fill="#E45C7F" stroke="#1E2A4A" stroke-width="2"></rect><rect x="46" y="8" width="28" height="15" rx="7" fill="#FFB3C7" stroke="#1E2A4A" stroke-width="2.5"></rect><rect x="46" y="22" width="28" height="8" fill="#D9DCE5" stroke="#1E2A4A" stroke-width="2.5"></rect><path d="M50 24v4M56 24v4M62 24v4M68 24v4" stroke="#1E2A4A" stroke-width="1.4" opacity="0.5"></path><rect x="46" y="30" width="28" height="60" fill="#FFD93B" stroke="#1E2A4A" stroke-width="2.5"></rect><path d="M55 30v60M65 30v60" stroke="#1E2A4A" stroke-width="1.4" opacity="0.22"></path><rect x="45" y="38" width="30" height="7" fill="#E45C7F" stroke="#1E2A4A" stroke-width="2.5"></rect><circle cx="55" cy="55" r="2.4" fill="#1E2A4A"></circle><circle cx="66" cy="55" r="2.4" fill="#1E2A4A"></circle><path d="M55.5 64 Q60.5 69 65.5 64" fill="none" stroke="#1E2A4A" stroke-width="2.5" stroke-linecap="round"></path><circle cx="50.5" cy="61" r="2.6" fill="#FFB3C7" opacity="0.85"></circle><circle cx="70.5" cy="61" r="2.6" fill="#FFB3C7" opacity="0.85"></circle><path d="M46 90 L74 90 L60 116 Z" fill="#F2D6A8" stroke="#1E2A4A" stroke-width="2.5" stroke-linejoin="round"></path><path d="M55 106 L65 106 L60 116 Z" fill="#1E2A4A"></path></g></svg>
+              AI Çalışma Öngörüsü (Seviye <span id="previewLevel">3</span>)
+            </h4>
+            <p id="previewLevelDesc" style="font-size: 0.95rem; margin-bottom: 0.5rem;"></p>
+            <p id="previewRankEquiv" style="font-size: 0.8rem; color: var(--primary); font-weight: 700; margin-bottom: 0.4rem;"></p>
+            <p id="previewNetTargets" style="font-size: 0.8rem; color: var(--text-main); font-weight: 700; margin-bottom: 1.5rem;"></p>
+            <div class="level-info-box">
+              <div class="level-stat">
+                <div class="num" id="previewHours">1500</div>
+                <div class="label">Toplam Çalışma Saati</div>
+              </div>
+              <div class="level-stat">
+                <div class="num" id="previewQuestions">20,000</div>
+                <div class="label">Minimum Soru Adedi</div>
+              </div>
+              <div class="level-stat">
+                <div class="num" id="previewMocks">60</div>
+                <div class="label">Genel Deneme Sınavı</div>
+              </div>
+            </div>
+            
+            <div style="margin-top: 1.5rem; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 1rem;">
+              <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; color: var(--text-main);">
+                <input type="checkbox" id="acceptPlanCheck" style="width: 20px; height: 20px; accent-color: var(--primary);" onchange="app.toggleWizardNextButton()">
+                <span>Koçun belirlediği bu genel program hedeflerini kabul ediyor ve düzenli çalışmaya söz veriyorum!</span>
+              </label>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+            <button class="btn btn-secondary" onclick="app.showLandingView()">İptal</button>
+            <button class="btn btn-primary" id="wizardNextBtn" disabled onclick="app.nextWizardPage()">
+              Sonraki Adım <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Wizard Page 2: Habits Profiling -->
+        <div id="wizardPage2" class="wizard-page" style="display: none;">
+          <h2 style="margin-bottom: 0.5rem;"><i class="fa-solid fa-user-clock text-primary"></i> Alışkanlık Profilini Çıkar</h2>
+          <p style="color: var(--text-muted); margin-bottom: 2rem;">Günlük hayatındaki çalışma sınırlarını ve düzenini belirle. Koçun sana özel uyarılarda bulunacak.</p>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="schoolStatus">Okul / Mezuniyet Durumu</label>
+              <select id="schoolStatus" onchange="app.checkHabitsFeedback()">
+                <option value="school">Okula Gidiyorum (Hafta içi okul, Hafta sonu boş)</option>
+                <option value="graduate">Mezunum / Evden Hazırlanıyorum (Tüm günler esnek)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="weekdayCapacity">Hafta İçi Kaç Saat Çalışabilirsin? (Günlük)</label>
+              <input type="number" id="weekdayCapacity" min="1" max="15" value="4" oninput="app.checkHabitsFeedback()">
+            </div>
+            <div class="form-group">
+              <label for="weekendCapacity">Hafta Sonu Kaç Saat Çalışabilirsin? (Günlük)</label>
+              <input type="number" id="weekendCapacity" min="1" max="15" value="8" oninput="app.checkHabitsFeedback()">
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="wakeTime">Sabah Kalkış Saati</label>
+              <input type="time" id="wakeTime" value="07:00" onchange="app.checkHabitsFeedback()">
+            </div>
+            <div class="form-group">
+              <label for="sleepTime">Gece Yatış Saati</label>
+              <input type="time" id="sleepTime" value="23:00" onchange="app.checkHabitsFeedback()">
+            </div>
+            <div class="form-group">
+              <label for="parentContact">Veli İletişim (E-posta veya Telefon)</label>
+              <input type="text" id="parentContact" placeholder="Örn: veli@mail.com veya 05xxxxxxxxx" required style="border: 1.5px solid var(--border-color);">
+              <div id="parentContactError" style="display:none; font-size:0.72rem; color:var(--danger); margin-top:0.25rem; font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> Geçerli bir e-posta veya telefon numarası giriniz.</div>
+            </div>
+          </div>
+
+          <!-- Coach Live Feedback Alert -->
+          <div id="coachHabitFeedback" style="display: none;">
+            <!-- Rendered via JS dynamically -->
+          </div>
+
+          <div style="display: flex; justify-content: space-between; gap: 1rem; margin-top: 2rem;">
+            <button class="btn btn-secondary" onclick="app.prevWizardPage()">
+              <i class="fa-solid fa-arrow-left"></i> Geri Dön
+            </button>
+            <button class="btn btn-primary" onclick="app.goToSeviyeTespit()">
+              Seviye Tespit Sınavına Geç <i class="fa-solid fa-circle-check"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2.5: MEZUN ÖĞRENCİLER İÇİN MEVCUT KONUM GİRİŞİ -->
+    <section id="graduatePositionView" class="app-view" hidden>
+      <div class="glass-card" style="max-width: 640px; margin: 0 auto;">
+        <h2 style="margin-bottom: 0.5rem;"><i class="fa-solid fa-location-crosshairs text-primary"></i> Mevcut Konumunu Belirle</h2>
+        <p class="panel-intro" style="margin-top:0; margin-bottom: 1.5rem;">
+          Mezun olduğun için sana seviye tespit sınavı yerine son deneme/sınav sonuçlarını soruyoruz — mevcut konumun (Sıralama, TYT/AYT netlerin) buradan belirlenir ve program buna göre kurulur. Okula giden öğrenciler için mevcut konum, Seviye Tespit Sınavı sonucudur.
+        </p>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="gradCurrentRank">Mevcut Sıralaman (Türkiye Geneli, Tahmini)</label>
+            <input type="number" id="gradCurrentRank" min="1" max="3000000" step="1" placeholder="Örn: 180000" required>
+          </div>
+          <div class="form-group">
+            <label for="gradTytNet">Son Denemende TYT Neti (0-120)</label>
+            <input type="number" id="gradTytNet" min="0" max="120" step="0.25" placeholder="Örn: 78" required>
+          </div>
+          <div class="form-group" id="gradAytNetGroup">
+            <label for="gradAytNet">Son Denemende AYT Neti (0-80)</label>
+            <input type="number" id="gradAytNet" min="0" max="80" step="0.25" placeholder="Örn: 42">
+          </div>
+          <div class="form-group" id="gradDilNetGroup" style="display:none;">
+            <label for="gradDilNet">Son Denemende Dil Sınavı (YDT) Neti (0-80)</label>
+            <input type="number" id="gradDilNet" min="0" max="80" step="0.25" placeholder="Örn: 55">
+          </div>
+        </div>
+        <div id="gradPositionError" style="display:none; font-size:0.72rem; color:var(--danger); margin-bottom:1rem; font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> Sıralama ve TYT netini, alanına uygun ikinci neti (AYT veya Dil) doldurman gerekiyor.</div>
+
+        <div style="display: flex; justify-content: space-between; gap: 1rem; margin-top: 1rem;">
+          <button class="btn btn-secondary" onclick="app.showView('wizardView'); app.showWizardPage(2);">
+            <i class="fa-solid fa-arrow-left"></i> Geri Dön
+          </button>
+          <button class="btn btn-primary" onclick="app.submitGraduatePosition()">
+            Devam Et <i class="fa-solid fa-circle-check"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: DIAGNOSTIC TEST (SEVIYE TESPIT SINAVI) -->
+    <section id="testView" class="app-view" hidden>
+      <div class="glass-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.08); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+          <div>
+            <h2><i class="fa-solid fa-pen-fancy text-primary"></i> Seviye Tespit Sınavı</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem;">Seçtiğin derslerden son 10 yılın sınav sorularıyla derlenmiş testleri tamamla.</p>
+          </div>
+          <div style="display: flex; gap: 1.5rem; align-items: center;">
+            <div class="nav-stat-item" style="border-color: var(--primary); background:#fff;">
+              <i class="fa-solid fa-hourglass-half"></i>
+              <span id="testTimer">60:00</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="test-layout">
+          <!-- Left Bar: Subjects & Nav -->
+          <div class="test-sidebar">
+            <h4 style="margin-bottom: 0.75rem; color: var(--text-main);">Dersler</h4>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem;" id="testSubjectTabs">
+              <!-- Rendered via JS -->
+            </div>
+            
+            <h4 style="margin-bottom: 0.5rem; color: var(--text-main);">Soru Haritası</h4>
+            <div class="question-nav" id="testQuestionNav">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Right Content: Active Question Box -->
+          <div class="glass-card" style="margin: 0; background: rgba(0,0,0,0.01); border-color: rgba(0,0,0,0.05);">
+            <div class="question-box" id="testQuestionBox">
+              <!-- Rendered via JS -->
+            </div>
+            <div style="display: flex; justify-content: space-between; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 1.5rem;">
+              <button class="btn btn-secondary" onclick="app.testPrevQuestion()">
+                <i class="fa-solid fa-arrow-left"></i> Önceki
+              </button>
+              <button class="btn btn-primary" onclick="app.testNextQuestion()">
+                Sonraki <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; margin-top: 2rem;">
+          <button class="btn btn-danger" onclick="app.confirmSubmitTest()">
+            <i class="fa-solid fa-clipboard-check"></i> Sınavı Bitir ve Analiz Et
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: DIAGNOSTIC REPORT (RAPOR VE BASLANGIC) -->
+    <section id="reportView" class="app-view" hidden>
+      <div class="glass-card" style="max-width: 800px; margin: 0 auto; text-align: center;">
+        <i class="fa-solid fa-clipboard-check" style="font-size: 4.5rem; color: var(--success); margin-bottom: 1.5rem; animation: pulse-glow 2s infinite;"></i>
+        <h2>Seviye Tespit Sonuçların Hazır!</h2>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">Sınav analizlerin yapıldı, koçun eksiklerini belirledi ve program hazırlandı.</p>
+
+        <!-- Assessment stats -->
+        <div class="level-info-box" style="margin-bottom: 2.5rem;">
+          <div class="level-stat">
+            <div class="num" id="reportAccuracy">0%</div>
+            <div class="label">Genel Doğruluk Oranı</div>
+          </div>
+          <div class="level-stat">
+            <div class="num" id="reportAssessedLevel">3. Seviye</div>
+            <div class="label">Belirlenen Seviye</div>
+          </div>
+          <div class="level-stat">
+            <div class="num" id="reportCorrectCount">0/0</div>
+            <div class="label" id="reportCorrectCountLabel">Doğru / Soru Sayısı</div>
+          </div>
+        </div>
+
+        <!-- Subject details (only for diagnostic-test flow; graduates skip this) -->
+        <div id="reportSubjectBreakdownSection" style="text-align: left; margin-bottom: 2.5rem;">
+          <h4 style="margin-bottom: 1rem; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 0.5rem;"><i class="fa-solid fa-graduation-cap"></i> Ders Bazlı Analiz</h4>
+          <div id="reportSubjectBreakdown" style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <!-- JS populated -->
+          </div>
+        </div>
+
+        <!-- Coach speech -->
+        <div class="coach-feedback-box" style="text-align: left; margin-bottom: 2.5rem; background: rgba(59, 130, 246, 0.03); border-color: rgba(59, 130, 246, 0.15);">
+          <div class="coach-avatar" style="border-color: var(--secondary); background: rgba(59, 130, 246, 0.05);">✏️</div>
+          <div class="coach-message">
+            <h4>DEFNE Maç Raporu</h4>
+            <p id="reportCoachAnalysis">Analiz yükleniyor...</p>
+          </div>
+        </div>
+
+        <!-- Level Customization & Explanations Card -->
+        <div class="glass-card" style="text-align: left; margin-bottom: 2.5rem; background: rgba(245, 158, 11, 0.02); border: 1px solid rgba(245, 158, 11, 0.15); padding: 1.5rem; border-radius: 12px;">
+          <h4 style="color: #f59e0b; margin-bottom: 1rem; font-family:var(--font-header); font-weight:800;"><i class="fa-solid fa-sliders"></i> Seviye Seçimi ve Tanımları</h4>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.45;">
+            Yapay zekanın yaptığı tespit aşağıda seçili olarak işaretlenmiştir. İstersen bu seviyeyi kendi durumuna göre manuel olarak değiştirebilirsin:
+          </p>
+
+          <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem; display: block; color: var(--text-main);">Sınav Odak Alanı</label>
+            <select id="wizardExamFocusSelect" style="padding: 0.45rem; font-size: 0.85rem; font-weight: 700; width: 100%; border-radius: 6px; border: 1px solid var(--border-color); height:38px;">
+              <option value="both" selected>TYT + AYT (Genel Hazırlık)</option>
+              <option value="tyt">Sadece TYT (Temel Yeterlilik)</option>
+              <option value="ayt">Sadece AYT (Alan Yeterlilik)</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem; display: block; color: var(--text-main);">Çalışma Seviyeniz</label>
+            <select id="reportManualLevelSelect" onchange="app.changeReportLevelManual(this.value)" style="padding: 0.45rem; font-size: 0.85rem; font-weight: 700; width: 100%; border-radius: 6px; border: 1px solid var(--border-color); height:38px;">
+              <option value="1">1. Seviye - Başlangıç (Temel İnşa | 900 Saat / 22K Soru)</option>
+              <option value="2">2. Seviye - Gelişmekte Olan (İlk 516.612 Bandı | 1100 Saat / 30K Soru)</option>
+              <option value="3">3. Seviye - Orta (İlk 258.306 Bandı, Müh./Mimarlık Barajı | 1300 Saat / 40K Soru)</option>
+              <option value="4">4. Seviye - Orta-Üstü (İlk 103.322 Bandı, Diş/Ecz/Hukuk Barajı | 1450 Saat / 48K Soru)</option>
+              <option value="5">5. Seviye - İyi (İlk 51.661 Bandı, Tıp Barajı | 1600 Saat / 58K Soru)</option>
+              <option value="6">6. Seviye - İleri (İlk 12.915 Bandı | 1800 Saat / 70K Soru)</option>
+              <option value="7">7. Seviye - Zirve (Elit Programlar Hedefi | 2000 Saat / 85K Soru)</option>
+              <option value="8">8. Seviye - Şampiyonluk (Türkiye Derecesi Hedefi, İlk 100 | Tüm Sorular Doğru | 2200 Saat / 100K Soru)</option>
+            </select>
+          </div>
+
+          <!-- Description Box -->
+          <div style="background: var(--bg-card); padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.8rem; line-height: 1.45; color: var(--text-main);" id="reportLevelExplanationBox">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="app.startMainDashboard()">
+          Çalışma Programımı Oluştur & Sahaya Çık <i class="fa-solid fa-circle-check"></i>
+        </button>
+      </div>
+    </section>
+
+    <section id="notificationSettingsView" class="app-view" hidden>
+      <div class="glass-card" style="max-width: 600px; margin: 2rem auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 1rem; margin-bottom: 1rem;">
+          <h2 style="margin:0; font-size: 1.5rem; display:flex; align-items:center; gap: 0.5rem;">
+            <i class="fa-solid fa-bell"></i> AI Bildirim Ayarları
+          </h2>
+          <button class="btn btn-outline" onclick="app.showView('dashboardView')">Geri Dön</button>
+        </div>
+        
+        <div class="control-group">
+          <label style="display: flex; align-items: center; justify-content: space-between; font-weight: bold; font-size: 1.1rem; cursor: pointer;">
+            <span>Akıllı Bildirimleri Aktifleştir</span>
+            <input type="checkbox" id="notifEnabledToggle" style="transform: scale(1.2);" onchange="app.notificationManager.requestPermission().then(g => { if(g) { document.getElementById('notifEnabledToggle').checked = true; } else { document.getElementById('notifEnabledToggle').checked = false; } })">
+          </label>
+          <small style="color: var(--text-muted);">DEFNE sana çalışma durumuna göre kritik hatırlatmalar yapacak.</small>
+        </div>
+
+        <h3 style="margin-top: 1.5rem;">Sessiz Saatler</h3>
+        <div id="dynamicQuietHoursInfo" style="padding: 1rem; background: rgba(139, 92, 246, 0.05); border-left: 4px solid var(--primary); border-radius: 4px; margin-bottom: 1.5rem; color: var(--text-main);">
+          Sessiz saatlerin uyku düzenine göre otomatik olarak <strong id="dynamicQuietStart">23:00</strong> - <strong id="dynamicQuietEnd">08:00</strong> olarak senkronize edildi.
+        </div>
+
+        <h3>Bildirim Kategorileri</h3>
+        <div style="display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 2rem;">
+          <label style="display: flex; gap: 0.5rem; align-items: center;">
+            <input type="checkbox" id="notifCatCritical" onchange="app.notificationManager.settings.categories.critical = this.checked; app.notificationManager.saveSettings();" checked>
+            <div>
+              <strong>Kritik Uyarılar</strong>
+              <div style="font-size: 0.85rem; color: var(--text-muted);">Hata defterinde biriken tekrar hataları (Çok Önemli)</div>
+            </div>
+          </label>
+          <label style="display: flex; gap: 0.5rem; align-items: center;">
+            <input type="checkbox" id="notifCatHigh" onchange="app.notificationManager.settings.categories.high = this.checked; app.notificationManager.saveSettings();" checked>
+            <div>
+              <strong>Günlük Çalışma Hatırlatmaları</strong>
+              <div style="font-size: 0.85rem; color: var(--text-muted);">O günkü aralıklı tekrar konuları ve önemli görevler</div>
+            </div>
+          </label>
+          <label style="display: flex; gap: 0.5rem; align-items: center;">
+            <input type="checkbox" id="notifCatLow" onchange="app.notificationManager.settings.categories.low = this.checked; app.notificationManager.saveSettings();" checked>
+            <div>
+              <strong>Motivasyon ve Gelişim</strong>
+              <div style="font-size: 0.85rem; color: var(--text-muted);">Çalışma serileri ve tebrik mesajları</div>
+            </div>
+          </label>
+        </div>
+
+        <button class="btn btn-primary" style="width: 100%;" onclick="app.notificationManager.sendTestNotification()">Test Bildirimi Gönder</button>
+      </div>
+    </section>
+
+    <section id="dashboardView" class="app-view" hidden>
+
+      <!-- YKS GERİ SAYIM — flip-clock, tek satır -->
+      <div class="yks-countdown-bar" id="yksCountdownBar">
+        <div class="yks-cd-title"><i class="fa-solid fa-hourglass-half"></i> YKS Geri Sayım</div>
+        <div class="yks-cd-groups" id="yksCdGroups"></div>
+        <div class="yks-cd-meta">
+          <div class="yks-cd-date">19 Haziran 2027 <span>🎯</span></div>
+          <div class="yks-cd-substats">
+            <span><i class="fa-solid fa-circle-check"></i> Tamamlanan: <strong id="heroTodayDone">0</strong>/<strong id="heroTodayTotal">0</strong> görev</span>
+            <span class="yks-cd-sep">•</span>
+            <span><i class="fa-solid fa-calendar-day"></i> Program günü: <strong id="heroDayNum">1</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid" style="width: 100%; max-width: 100%;">
+        <!-- Sidebar panel -->
+        <div class="sidebar-panel" style="display: none !important;">
+          
+          <!-- Prominent Target Trophy Board -->
+          <div class="glass-card target-trophy-board" style="text-align:center;">
+            <div style="font-size:2.5rem; color:#f59e0b; margin-bottom:0.5rem;"><i class="fa-solid fa-trophy"></i></div>
+            <h3 style="font-size:1.15rem; color:var(--text-main);">HEDEFİNİZ</h3>
+            <div style="font-size:1.35rem; font-weight:800; font-family:var(--font-header); color:var(--primary); margin:0.4rem 0;" id="trophyTargetDept">-</div>
+            <p style="font-size:0.8rem; color:var(--text-muted);">Hedef Sıralama (Türkiye): <strong id="trophyPercentile">-</strong></p>
+          </div>
+
+          <div class="glass-card mini-profile">
+            <div class="profile-pic">🏆</div>
+            <h3 id="dashName">-</h3>
+            <p style="color: var(--primary); font-size: 0.85rem; font-weight: 700; margin-bottom: 0.5rem;" id="dashTrack">Sayısal Programı</p>
+            <div style="font-size:0.8rem; color:var(--text-muted); border-top:1px solid var(--border-color); padding-top:0.75rem; margin-top:0.75rem; text-align:left; display:flex; flex-direction:column; gap:0.4rem;">
+              <div><i class="fa-solid fa-graduation-cap"></i> Durum: <strong id="dashSchoolStatus">Okula Gidiyor</strong></div>
+              <div><i class="fa-solid fa-bed"></i> Uyku Düzeni: <strong id="dashSleepPattern">23:00 - 07:00</strong></div>
+              <div><i class="fa-solid fa-square-poll-vertical"></i> Seviye Tespit Skoru: <strong id="dashDiagnosticScore">-%</strong></div>
+              <div><i class="fa-solid fa-phone"></i> Veli İrtibat: <strong id="dashParentContact">-</strong></div>
+            </div>
+            
+            <!-- PRO Premium soft highlight widget -->
+            <div id="sidebarProBanner" style="margin: 1rem 0 0; padding: 0.75rem; border-radius: 8px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(168, 85, 247, 0.1)); border: 1.5px solid rgba(139, 92, 246, 0.2); text-align: center;">
+              <span style="font-size: 0.72rem; font-weight: 700; color: #a78bfa; display: block; margin-bottom: 0.35rem;">
+                <i class="fa-solid fa-crown text-warning"></i> DEFNE Üyeliği: <span id="dashSubTierText" style="text-transform: uppercase;">PRO</span>
+              </span>
+              <button id="dashSubActionButton" onclick="app.showSubscriptionModal()" style="border: none; background: #8b5cf6; color: white; padding: 0.25rem 0.6rem; font-size: 0.68rem; font-weight: 800; border-radius: 6px; cursor: pointer; transition: background 0.2s; width: 100%;" onmouseover="this.style.background='#a78bfa'" onmouseout="this.style.background='#8b5cf6'">
+                Planları Yönet
+              </button>
+            </div>
+            
+            <div style="margin-top:1.5rem; border-top:1px dashed var(--border-color); padding-top:1rem; text-align:center;">
+              <div id="aiConnectionStatus" style="display: inline-block; padding: 0.5rem 1rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 8px; font-weight: 700; color: #b45309; font-size: 0.85rem;">
+                <i class="fa-solid fa-plug-circle-xmark"></i> AI Koç Bağlantısı Yok
+              </div>
+              <div style="margin-top:0.75rem; text-align:left;">
+                <label for="aiCoachApiKey" style="font-size:0.72rem; font-weight:800; color:var(--text-muted); display:block; margin-bottom:0.3rem;">AI Anahtarı (Google Gemini)</label>
+                <input type="password" id="aiCoachApiKey" autocomplete="off" placeholder="Anahtarını yapıştır" style="width:100%; padding:0.45rem 0.6rem; font-size:0.75rem; border:1.5px solid var(--border-color); border-radius:8px; background:var(--bg-card); color:var(--text-main);">
+                <button class="btn btn-secondary" style="width:100%; margin-top:0.4rem; padding:0.35rem; font-size:0.72rem; font-weight:800;" onclick="app.saveLlmApiKey(document.getElementById('aiCoachApiKey').value)">
+                  <i class="fa-solid fa-key"></i> Anahtarı Kaydet
+                </button>
+                <p style="font-size:0.66rem; color:var(--text-muted); margin:0.4rem 0 0; line-height:1.4;">Anahtar yalnızca bu cihazda saklanır, hiçbir yere gönderilmez. Boş bırakırsan uygulama çevrimdışı kural tabanlı modda çalışır.</p>
+              </div>
+            </div>
+
+            <button class="btn btn-secondary" style="width:100%; margin-top:1rem; padding:0.45rem; font-size:0.8rem; display:flex; align-items:center; justify-content:center; gap:0.4rem; font-weight:700;" onclick="app.showView('notificationSettingsView')">
+              <i class="fa-solid fa-bell"></i> AI Bildirim Ayarları
+            </button>
+
+            <button class="btn btn-secondary text-danger" style="width:100%; margin-top:1rem; padding:0.45rem; font-size:0.8rem; display:flex; align-items:center; justify-content:center; gap:0.4rem; font-weight:700; border-color:rgba(239,68,68,0.2); background:rgba(239,68,68,0.02);" onclick="app.logoutUser()">
+              <i class="fa-solid fa-right-from-bracket"></i> Sistemden Çıkış Yap
+            </button>
+          </div>
+
+          <!-- Focus Score Circular Gauge Widget -->
+          <div class="glass-card" style="text-align: center; padding: 1.5rem;">
+            <h4 style="margin-bottom: 1rem;"><i class="fa-solid fa-brain text-primary"></i> Günlük Odak Puanı</h4>
+            <div style="display: flex; justify-content: center; align-items: center; margin: 1rem 0;">
+              <div class="focus-gauge-outer">
+                <span id="focusScoreVal">100</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">/ 100</span>
+              </div>
+            </div>
+            <p style="font-size: 0.7rem; color: var(--text-muted);">
+              İstikrar serisi, programı tamamlama oranı ve çözüm hızı verimliliğine göre hesaplanır.
+            </p>
+          </div>
+
+
+
+          <div class="glass-card">
+            <h4><i class="fa-solid fa-list-check"></i> Çalışma Özeti</h4>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
+              <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                <span class="text-muted">Toplam Süreç:</span>
+                <strong>30 Günlük Süreç</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                <span class="text-muted">Bugün Tamamlanan:</span>
+                <strong id="dashTasksCompleted">0/4</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                <span class="text-muted">Doğruluk Yüzdesi:</span>
+                <strong id="dashDailyAccuracy">-%</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                <span class="text-muted">Çalışılan Konu:</span>
+                <strong id="dashTopicsWorked">0 konu</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                <span class="text-muted">Öğrenilen Konu:</span>
+                <strong id="dashTopicsLearned">0 konu</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                <span class="text-muted">İstikrar Serisi:</span>
+                <strong style="color: #ff7e39;"><i class="fa-solid fa-fire"></i> <span id="dashStreakVal">1 Gün</span></strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.85rem; border-top:1px dashed var(--border-color); padding-top:0.5rem; margin-top:0.25rem;">
+                <span class="text-muted">TYT Soru / Doğruluk:</span>
+                <strong id="dashTytSummaryStats">- / -%</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+                <span class="text-muted">AYT Soru / Doğruluk:</span>
+                <strong id="dashAytSummaryStats">- / -%</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Parent Report Countdown Card Widget -->
+          <div class="glass-card" id="parentReportCountdownCard" style="display: none; border-color: var(--success); background: rgba(16, 185, 129, 0.02);">
+            <h4 style="color: var(--success);"><i class="fa-brands fa-whatsapp"></i> Veli Rapor Sayacı</h4>
+            <div style="font-family: var(--font-header); font-weight: 800; font-size: 1.8rem; color: var(--text-main); margin: 0.5rem 0;" id="parentReportSidebarTimer">02:00:00</div>
+            <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4;">
+              Günlük çalışma programın tamamlandığında, 2 saat sonra veli raporu hazır hale gelir ve gönderme ekranı açılır — tek tıkla e-posta veya WhatsApp ile velisine iletebilirsin.
+            </p>
+          </div>
+
+          
+          
+        </div> <!-- Close sidebar-panel -->
+        
+        <!-- Main content panel -->
+        <div class="main-content-panel" style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1.5rem;">
+
+          <!-- HERO CARD: MASCOT + TODAY STATS | COUNTDOWN -->
+          <!-- AI ÇALIŞMA YARDIMCILARI GRID (no title/card wrapper) -->
+          <div id="topHelpersCard" style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+            <div style="width: 100%;">
+              <!-- 3 AI merkezi + yüzen DEFNE = 4 giriş noktası.
+                   Rota Rehberi kaldırıldı; 4 fazlı müfredat haritası Program
+                   Sihirbazı'nın içine taşındı. Alışkanlık Haritası, Gelişim
+                   Analizi'nin altında kalır. Her kart öğrencinin zihnindeki
+                   TEK soruyu yanıtlar. -->
+              <div class="helpers-grid" style="display: grid; gap: 0.75rem;">
+
+                <button class="tab-btn ai-helper-card" id="tabBtn-programCreator" onclick="app.switchTab('programCreator')">
+                  <span class="ai-helper-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+                  <span class="ai-helper-title">AI Program Sihirbazı</span>
+                  <span class="ai-helper-question">Ne çalışmalıyım?</span>
+                </button>
+
+                <button class="tab-btn ai-helper-card" id="tabBtn-vault" onclick="app.switchTab('vault')">
+                  <span class="ai-helper-icon"><i class="fa-solid fa-dungeon"></i></span>
+                  <span class="ai-helper-title">AI Hata Zindanı</span>
+                  <span class="ai-helper-question">Hatalarımı nasıl kapatırım?</span>
+                </button>
+
+                <button class="tab-btn ai-helper-card" id="tabBtn-charts" onclick="app.switchTab('charts')">
+                  <span class="ai-helper-icon"><i class="fa-solid fa-chart-line"></i></span>
+                  <span class="ai-helper-title">AI Çalışma Analizi</span>
+                  <span class="ai-helper-question">Nasıl gidiyorum?</span>
+                </button>
+
+                <button class="tab-btn ai-helper-card" id="tabBtn-habitMap" onclick="app.switchTab('habitMap')">
+                  <span class="ai-helper-icon"><i class="fa-solid fa-dna"></i></span>
+                  <span class="ai-helper-title">AI Alışkanlık Haritası</span>
+                  <span class="ai-helper-question">Düzenli çalışıyor muyum?</span>
+                </button>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- NAV: ÇALIŞMA PLANIM · Gün | Hafta | Ay | Yıl -->
+          <div class="glass-card" id="combinedProgramPlanCard" style="padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; position: relative; overflow: visible;">
+            <!-- Tape on top -->
+            <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%) rotate(0.5deg); width: 85px; height: 18px; background: rgba(190, 205, 225, 0.45); border-radius: 2px; z-index: 10;"></div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+              <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                <h4 style="margin: 0; font-size: 0.95rem; font-family: var(--font-header); font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 0.4rem; white-space: nowrap;">
+                  <i class="fa-solid fa-calendar-day text-secondary"></i> Çalışma Programım
+                </h4>
+
+                <!-- Aktif program salt-okunur göstergesi + yönetime yönlendirme -->
+                <span style="display:inline-flex; align-items:center; gap:0.35rem; padding:0.25rem 0.6rem; font-size:0.72rem; font-weight:700; border-radius:99px; background:var(--ai-tint); border:1px solid var(--ai-border); color:var(--primary); white-space:nowrap;">
+                  <i class="fa-solid fa-circle-play" style="font-size:0.6rem;"></i> <span id="activeProgramNameLabel">AI Standart Planı</span>
+                </span>
+                <button class="btn btn-secondary" style="padding: 0 0.6rem; font-size: 0.7rem; height: 28px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-weight: 800;" onclick="app.switchTab('programCreator')">
+                  <i class="fa-solid fa-sliders"></i> Programı Yönet
+                </button>
+              </div>
+
+              <div class="sub-tabs-grid" style="display: grid; gap: 0.5rem; width: 100%; max-width: 420px;">
+                <button class="tab-btn active" id="tabBtn-today" onclick="app.switchTab('today')" style="background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 0.5rem; font-family: var(--font-header); font-weight: 900; font-size: 0.85rem; color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+                  <i class="fa-solid fa-sun text-primary"></i> Günlük
+                </button>
+                <button class="tab-btn" id="tabBtn-calendar" onclick="app.switchTab('calendar')" style="background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 0.5rem; font-family: var(--font-header); font-weight: 900; font-size: 0.85rem; color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+                  <i class="fa-solid fa-calendar-day text-secondary"></i> Haftalık
+                </button>
+                <button class="tab-btn" id="tabBtn-monthly" onclick="app.switchTab('monthly')" style="background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 0.5rem; font-family: var(--font-header); font-weight: 900; font-size: 0.85rem; color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+                  <i class="fa-solid fa-calendar-days text-success"></i> Aylık
+                </button>
+                <button class="tab-btn" id="tabBtn-year" onclick="app.switchTab('year')" style="background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 0.5rem; font-family: var(--font-header); font-weight: 900; font-size: 0.85rem; color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+                  <i class="fa-solid fa-route text-warning"></i> Yıllık
+                </button>
+              </div>
+            </div>
+          </div>
+
+
+
+          <!-- TAB PANEL: TODAY TASKS (GÜNLÜK PLAN) -->
+          <div class="tab-panel" id="panel-today">
+            <div class="glass-card" style="padding: 1.5rem; background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 12px; position: relative;">
+              <!-- Tape on top -->
+              <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%) rotate(-1.5deg); width: 80px; height: 18px; background: rgba(190, 205, 225, 0.45); border-radius: 2px; z-index: 10;"></div>
+              
+              <div style="display: flex; justify-content: flex-end; align-items: center; border-bottom: 2px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+                <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end;">
+                  <span style="font-weight: 800; color: var(--primary); font-size: 1rem;" id="todayPanelProgressText">0/0 Tamamlandı</span>
+                  <div style="background: rgba(0,0,0,0.05); width: 140px; height: 8px; border-radius: 4px; margin-top: 0.25rem; overflow: hidden;">
+                    <div style="background: var(--primary); width: 0%; height: 100%; border-radius: 4px; transition: width 0.3s ease;" id="todayPanelProgressBar"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tasks Checklist -->
+              <div id="todayPanelTasksList" style="display: flex; flex-direction: column; gap: 1rem; min-height: 100px;">
+                <!-- dynamic task list populated in app.js -->
+              </div>
+
+              <div style="display: flex; justify-content: space-between; margin-top: 1.5rem; border-top: 1px dashed var(--border-color); padding-top: 1rem; flex-wrap: wrap; gap: 1rem;">
+                <button class="btn btn-secondary" onclick="app.openAddCustomTaskModal()" style="font-weight: 700;">
+                  <i class="fa-solid fa-plus"></i> Yeni Görev Ekle
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- TAB PANEL: YEARLY (YILLIK PLAN - DETAYLI 12 AY) -->
+          <div class="tab-panel" id="panel-year">
+            <div class="glass-card" style="padding: 1.5rem; background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 12px; position: relative;">
+              <!-- Tape on top -->
+              <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%) rotate(1deg); width: 80px; height: 18px; background: rgba(190, 205, 225, 0.45); border-radius: 2px; z-index: 10;"></div>
+              
+              <!-- Yearly 12 Months Detailed Track Card -->
+              <div class="glass-card">
+                <h2>Detaylı Yıllık (12 Aylık) Süreç Takibi</h2>
+                <p class="panel-intro">YKS maratonunun 12 ayının tamamını buradan inceleyebilir, geçmiş ayların tamamlanma oranını görüp ileri tarihli günlerin görevlerini önceden kontrol edebilirsin.</p>
+                <div id="yearlyAllMonthsGridContainer" style="display:flex; flex-direction:column; gap:2rem;">
+                  <!-- JS populated 12 months detailed sections -->
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="tab-panel active" id="panel-calendar">
+            
+
+
+            <!-- Week Selector Tabs -->
+            <div style="display: flex; gap: 0.4rem; overflow-x: auto; margin-bottom: 1rem; padding-bottom: 0.25rem;" id="weekSelectorTabsRow">
+              <!-- JS dynamically renders weeks tabs here -->
+            </div>
+            
+            <!-- Parent Report Countdown Banner -->
+            <div id="parentReportCountdownBanner" class="glass-card" style="display: none; background: rgba(16, 185, 129, 0.05); border-color: var(--success); margin-bottom: 1.5rem; align-items: center; justify-content: space-between; padding: 1rem 1.5rem;">
+              <div style="display:flex; align-items:center; gap:0.75rem;">
+                <i class="fa-brands fa-whatsapp" style="font-size: 1.8rem; color: var(--success); animation: pulse-glow 2s infinite;"></i>
+                <div>
+                  <h4 style="color:var(--success);">Veli Raporu Hazır</h4>
+                  <p style="font-size:0.8rem; color:var(--text-muted);">2 saat sonra gönderme ekranı otomatik açılır; dilersen şimdi de tek tıkla gönderebilirsin.</p>
+                </div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-family:var(--font-header); font-weight:800; font-size:1.15rem; color:var(--text-main);" id="parentReportTimerVal">02:00:00</div>
+                <button class="btn btn-secondary" style="padding:0.3rem 0.6rem; font-size:0.75rem; margin-top:0.25rem;" onclick="app.showParentReportModal()">Şimdi Gönder</button>
+              </div>
+            </div>
+
+            <!-- Outlook-style Weekly Calendar View -->
+            <div class="glass-card" style="overflow-x: auto; margin-bottom: 1.5rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+                <div>
+                  <h2 id="weeklyOutlookTitle">Haftalık Takvim Planlayıcısı</h2>
+                  <p class="panel-intro" style="margin: 0.25rem 0 0;">Haftanın yedi gününü yan yana görüp görevlerini gerçek takvim üzerinde planla.</p>
+                </div>
+                <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+                  <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem;">
+                    <label style="font-weight:600; color:var(--text-muted); white-space:nowrap;"><i class="fa-regular fa-calendar"></i> Başlangıç:</label>
+                    <input type="date" id="programStartDatePicker" onchange="app.updateProgramStartDate(this.value)" style="width:145px; padding:0.3rem 0.5rem; font-size:0.8rem;">
+                  </div>
+                </div>
+              </div>
+              
+              <div class="weekly-outlook-grid" id="weeklyOutlookContainer">
+                <!-- JS rendered outlook calendar grid columns -->
+              </div>
+            </div>
+
+
+
+          </div>
+
+          <!-- TAB PANEL 2: DETAILED MONTHLY PROCESS PLAN -->
+          <div class="tab-panel" id="panel-monthly">
+            
+            <div class="glass-card" style="background: var(--bg-card) !important;">
+              <h2>Aylık Plan</h2>
+              <p class="panel-intro">Çalışma programındaki günleri, gerçek aylara gruplanmış kartlar halinde gör; bir güne tıklayıp o günün görevlerini açabilir, tamamlananları buradan da işaretleyebilirsin.</p>
+              
+              <div id="detailedMonthlyGridContainer" style="display:flex; flex-direction:column; gap:2rem;">
+                <!-- JS populated monthly sections -->
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB PANEL 3: AI PROGRAM OLUŞTUR -->
+          <div class="tab-panel" id="panel-programCreator">
+            <div class="glass-card">
+              <button class="btn btn-secondary" onclick="app.switchTab('today')" style="margin-bottom: 1.25rem; font-family: var(--font-header); font-weight: 800; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 0.4rem; border: 1.5px solid var(--border-color); border-radius: 6px; padding: 0.35rem 0.75rem; background: var(--bg-card); color: var(--text-main); cursor: pointer;">
+                <i class="fa-solid fa-arrow-left"></i> ✏️ Ana Sayfaya Dön
+              </button>
+
+              <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.5rem; border-bottom:1px solid var(--border-color); padding-bottom:0.75rem;">
+                <span class="ai-helper-icon" style="width:36px; height:36px; border-radius:10px; font-size:0.95rem;"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+                <h2 style="margin:0; font-family: var(--font-header); font-weight: 800; color: var(--text-main);">AI Program Sihirbazı</h2>
+              </div>
+              <p class="panel-intro">
+                Hedeflediğin derece seviyesine göre çalışma programını sıfırdan yaratır ve istersen kendi özel programını oluşturup AI planıyla arasında geçiş yapmanı sağlar.
+              </p>
+
+              <!-- PROGRAM OLUŞTURMA MODU — tek giriş noktası.
+                   Önceden aynı panelde iki ayrı kutu (AI planı / kendi planı) ve
+                   modalda gömülü üçüncü bir yol (fotoğraftan) vardı. Üçü tek bir
+                   mod seçicinin altında birleştirildi; hiçbir yetenek kaldırılmadı. -->
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.25rem;">
+                <button class="btn btn-secondary program-mode-btn active" id="progModeBtn-ai" onclick="app.setProgramCreatorMode('ai')"
+                        style="flex:1; min-width:150px; font-weight:800; font-size:0.82rem;">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i> AI Oluştursun
+                </button>
+                <button class="btn btn-secondary program-mode-btn" id="progModeBtn-custom" onclick="app.setProgramCreatorMode('custom')"
+                        style="flex:1; min-width:150px; font-weight:800; font-size:0.82rem;">
+                  <i class="fa-solid fa-pen-ruler"></i> Kendim Yapayım
+                </button>
+                <button class="btn btn-secondary program-mode-btn" id="progModeBtn-photo" onclick="app.setProgramCreatorMode('photo')"
+                        style="flex:1; min-width:150px; font-weight:800; font-size:0.82rem;">
+                  <i class="fa-solid fa-camera"></i> Fotoğraftan
+                </button>
+              </div>
+
+              <!-- ============ SECTION A: AI PROGRAM OLUŞTURUCU ============ -->
+              <div id="progMode-ai" style="border: 1.5px solid var(--ai-border); background: var(--ai-tint); border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                <h3 style="margin: 0 0 0.4rem; font-size: 1.02rem; font-family: var(--font-header); font-weight: 800; color: var(--text-main); display:flex; align-items:center; gap:0.5rem;">
+                  <i class="fa-solid fa-wand-magic-sparkles text-primary"></i> AI Program Oluşturucu
+                </h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.6; margin-bottom: 1.25rem;">
+                  Aşağıdan sınav odağını ve hedef başarı seviyeni seç. AI, bu seçime göre toplam çalışma saatini, çözmen gereken soru sayısını ve günlük ders programını (saatlik zaman çizelgesi, mola ve yemek araları dahil) yeniden hesaplayıp senin için sıfırdan oluşturur — <strong>mevcut standart programının yerine geçer.</strong>
+                </p>
+
+                <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 1rem;">
+                  <div class="form-group">
+                    <label style="font-weight: 700; font-size: 0.85rem; color: var(--text-main); margin-bottom: 0.5rem; display: block;">Sınav Odak Alanı</label>
+                    <select id="creatorExamFocusSelect" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-weight: 700; font-size: 0.9rem; background: var(--bg-card); color: var(--text-main); cursor: pointer;">
+                      <option value="both" selected>TYT + AYT (Genel Hazırlık)</option>
+                      <option value="tyt">Sadece TYT (Temel Yeterlilik)</option>
+                      <option value="ayt">Sadece AYT (Alan Yeterlilik)</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label style="font-weight: 700; font-size: 0.85rem; color: var(--text-main); margin-bottom: 0.5rem; display: block;">Hedef Başarı Seviyesi</label>
+                    <select id="creatorLevelSelect" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-weight: 700; font-size: 0.9rem; background: var(--bg-card); color: var(--text-main); cursor: pointer;">
+                      <option value="1">1. Seviye: Başlangıç (Temel İnşa) - 900 Saat / 22K Soru</option>
+                      <option value="2">2. Seviye: Gelişmekte Olan (İlk 516.612) - 1.100 Saat / 30K Soru</option>
+                      <option value="3" selected>3. Seviye: Orta (İlk 258.306, Müh./Mimarlık Barajı) - 1.300 Saat / 40K Soru</option>
+                      <option value="4">4. Seviye: Orta-Üstü (İlk 103.322, Diş/Ecz/Hukuk Barajı) - 1.450 Saat / 48K Soru</option>
+                      <option value="5">5. Seviye: İyi (İlk 51.661, Tıp Barajı) - 1.600 Saat / 58K Soru</option>
+                      <option value="6">6. Seviye: İleri (İlk 12.915) - 1.800 Saat / 70K Soru</option>
+                      <option value="7">7. Seviye: Zirve (Elit Programlar) - 2.000 Saat / 85K Soru</option>
+                      <option value="8">8. Seviye: Şampiyonluk (Türkiye Derecesi, İlk 100, Tüm Sorular Doğru) - 2.200 Saat / 100K Soru</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="app.generateAIProgramFromCreator()" style="width: 100%; padding: 0.85rem; font-size: 0.95rem; font-weight: 800; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 0.5rem; background: linear-gradient(135deg, #7c3aed, #a855f7); border: none; color: #fff; box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i> Standart Programı Oluştur & Güncelle
+                </button>
+              </div>
+
+              <!-- AI Tahsis Motoru — oluşturulan programın süre/ders dağılımını açıklayan katman -->
+              <div class="glass-card" id="studyAllocationCard" style="padding: 1.1rem; margin-bottom: 1.5rem; border-color: var(--ai-border); background: var(--ai-tint);">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; cursor:pointer;" onclick="app.toggleStudyAllocationCard()">
+                  <h4 style="margin:0; display:flex; align-items:center; gap:0.5rem; font-family:var(--font-header); font-weight:800; font-size:0.88rem;">
+                    <span class="ai-helper-icon" style="width:26px; height:26px; border-radius:8px; font-size:0.7rem;"><i class="fa-solid fa-scale-balanced"></i></span>
+                    AI Tahsis Motoru <span id="studyAllocationTimeLabel" style="font-weight:700; color:var(--text-muted); font-size:0.72rem;"></span>
+                  </h4>
+                  <i class="fa-solid fa-chevron-down" id="studyAllocationChevron" style="color:var(--text-muted); transition:transform 0.2s;"></i>
+                </div>
+                <p class="panel-intro" style="margin:0.5rem 0 0; font-size:0.78rem;">Oluşturulan programın bugünkü süresini TYT/AYT ve derslere nasıl paylaştırdığını gösterir; dengeyi dilediğin oranda elle de ayarlayabilirsin.</p>
+                <div id="studyAllocationBody" style="display:none; margin-top:0.9rem;">
+                  <div id="studyAllocationTytAyt" style="margin-bottom:0.9rem;"></div>
+                  <div id="studyAllocationManualControl" style="display:none; align-items:center; gap:0.6rem; margin-bottom:0.9rem; padding:0.5rem 0.6rem; background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px;">
+                    <label style="font-size:0.68rem; font-weight:800; color:var(--text-muted); white-space:nowrap;">Manuel Denge:</label>
+                    <input type="range" min="0" max="100" step="5" id="tytAytManualSlider" oninput="app.setManualTytAytSplit(this.value)" style="flex:1;">
+                    <span id="tytAytManualLabel" style="font-size:0.68rem; font-weight:800; color:var(--text-main); white-space:nowrap; min-width:120px; text-align:right;"></span>
+                    <button class="btn btn-secondary" style="padding:0.2rem 0.5rem; font-size:0.62rem; font-weight:800; white-space:nowrap;" onclick="app.resetTytAytSplit()"><i class="fa-solid fa-rotate"></i> AI Otomatik</button>
+                  </div>
+                  <div id="studyAllocationLessons" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:0.6rem; margin-bottom:0.9rem;"></div>
+                  <div id="studyAllocationPortfolio" style="margin-bottom:0.9rem;"></div>
+                  <p id="studyAllocationExplanation" style="font-size:0.78rem; color:var(--text-main); line-height:1.5; margin:0; padding-top:0.75rem; border-top:1px solid var(--border-color);"></p>
+                </div>
+              </div>
+
+              <!-- ============ SECTION B: KENDİ ÖZEL PROGRAM OLUŞTURUCU ============ -->
+              <div id="progMode-custom" style="display:none; border: 1.5px solid var(--border-color); border-radius: 14px; padding: 1.5rem;">
+                <h3 style="margin: 0 0 0.4rem; font-size: 1.02rem; font-family: var(--font-header); font-weight: 800; color: var(--text-main); display:flex; align-items:center; gap:0.5rem;">
+                  <i class="fa-solid fa-pen-ruler text-secondary"></i> Kendi Özel Program Oluşturucu
+                </h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.6; margin-bottom: 1.25rem;">
+                  İstediğin kadar özel program oluşturup aralarında geçiş yapabilirsin. "Kendi Programımı Oluştur" dediğinde <strong>şu an aktif olan program (AI'ın oluşturduğu plan dahil) planlayıcıya olduğu gibi yüklenir</strong>; üzerinde ekleme-çıkarma yapıp kaydedebilirsin. Kaydettiğin değişiklikler günlük, haftalık ve aylık programlarına da anında yansır. Kağıda yazdığın bir programı aktarmak istersen yukarıdaki <strong>"Fotoğraftan"</strong> sekmesini kullan.
+                </p>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                  <label style="font-weight: 700; font-size: 0.85rem; color: var(--text-main); margin-bottom: 0.5rem; display: block;">Aktif Program</label>
+                  <select id="activeProgramSelector" onchange="app.switchActiveProgram(this.value)" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-weight: 700; font-size: 0.9rem; background: var(--bg-card); color: var(--text-main); cursor: pointer;">
+                    <option value="standard">🤖 AI Standart Planı</option>
+                    <!-- JS: kayıtlı özel programlarla doldurulur -->
+                  </select>
+                </div>
+
+                <div style="display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                  <button class="btn btn-secondary" style="flex:1; min-width:180px; font-weight:800; font-size:0.85rem;" onclick="app.plannerCreateNewProgramFromScratch()">
+                    <i class="fa-solid fa-pen"></i> Kendi Programımı Oluştur
+                  </button>
+                </div>
+
+                <!-- Seçili özel program için yönetim kontrolleri (Standart plan aktifken gizli) -->
+                <div id="customProgramManageControls" style="display:none; gap: 0.6rem; flex-wrap: wrap; border-top: 1px dashed var(--border-color); padding-top: 1rem;">
+                  <button class="btn btn-secondary" style="flex:1; min-width:140px; font-weight:800; font-size:0.85rem;" onclick="app.openCustomProgramPlannerForCurrent()">
+                    <i class="fa-solid fa-pen-to-square"></i> Düzenle
+                  </button>
+                  <button class="btn btn-secondary text-danger" style="flex:1; min-width:140px; font-weight:800; font-size:0.85rem;" onclick="app.deleteActiveCustomProgram()">
+                    <i class="fa-solid fa-trash-can"></i> Sil
+                  </button>
+                </div>
+              </div>
+
+              <!-- ============ SECTION C: FOTOĞRAFTAN PROGRAM OLUŞTURMA ============
+                   Modül önceden planlayıcı modalının içinde gömülüydü; "Kendim
+                   Yapayım" akışında beklenmedik şekilde karşıya çıkıyordu.
+                   Artık kendi sekmesinde, olduğu gibi burada duruyor. -->
+              <div id="progMode-photo" style="display:none; border: 1.5px dashed var(--primary); border-radius: 14px; padding: 1.5rem;">
+                <h3 style="margin: 0 0 0.4rem; font-size: 1.02rem; font-family: var(--font-header); font-weight: 800; color: var(--text-main); display:flex; align-items:center; gap:0.5rem;">
+                  <i class="fa-solid fa-camera text-primary"></i> Fotoğraftan / PDF'ten Program Oluştur
+                </h3>
+                <p class="panel-intro" style="margin-bottom:1rem;">Kağıda yazdığın gün gün çalışma programının <strong>fotoğrafını</strong> ya da okuldan/kurstan gelen <strong>PDF</strong> programını yükle; yapay zeka okuyup dijital plana dönüştürür. Aktardıktan sonra planlayıcı açılır, kontrol edip kaydedersin.</p>
+
+                <div style="background:rgba(37,99,235,0.03); border:1px dashed var(--primary); padding:1rem; border-radius:12px;">
+                  <label style="font-size:0.78rem; font-weight:800; color:var(--text-main); display:block; margin-bottom:0.5rem;">
+                    <i class="fa-solid fa-file-arrow-up text-primary"></i> Program Dosyası <span style="font-weight:600; color:var(--text-muted);">(JPG, PNG veya PDF)</span>
+                  </label>
+                  <input type="file" id="plannerPhotoOCR" accept="image/*,application/pdf,.pdf" onchange="app.plannerUploadOCRImage(this)" style="font-size:0.8rem; width:100%;">
+
+                  <div id="ocrStatus" style="display:none; font-size:0.78rem; margin-top:0.6rem; font-weight:600; color:var(--primary); line-height:1.45;"></div>
+
+                  <div id="ocrResultArea" style="display:none; margin-top:0.85rem; border-top:1px solid var(--border-color); padding-top:0.85rem;">
+                    <label style="font-size:0.75rem; font-weight:700; color:var(--text-main);">Okunan Program Metni (gerekirse düzelt):</label>
+                    <textarea id="ocrResultText" style="width:100%; height:150px; font-family:monospace; font-size:0.78rem; padding:0.5rem; border:1px solid var(--border-color); border-radius:6px; margin:0.4rem 0;" placeholder="Gün 1:&#10;- Matematik: Limit 30 soru çöz&#10;- Fizik: Kuvvet video izle&#10;&#10;Gün 2:&#10;- Türkçe: Paragraf 20 soru çöz"></textarea>
+                    <button class="btn btn-primary" style="width:100%; padding:0.6rem; font-size:0.85rem; font-weight:800;" onclick="app.plannerParseOCRTextAndImport()">
+                      <i class="fa-solid fa-wand-magic-sparkles"></i> Metni Çözümle & Plana Aktar
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ÇALIŞMA TEMPOSU (ROTA) — Rota Rehberi kaldırılınca kontrolsüz
+                   kalmıştı; tempo mantığı program üreticisini beslediği için
+                   seçici buraya taşındı. Radyo adı (learningRoute) korunuyor. -->
+              <div id="routeTempoSection" style="border-top: 1.5px dashed var(--border-color); margin-top: 1.5rem; padding-top: 1.5rem;">
+                <h3 style="font-family: var(--font-header); font-weight: 800; font-size: 1.02rem; color: var(--text-main); margin: 0 0 0.4rem; display:flex; align-items:center; gap:0.5rem;">
+                  <i class="fa-solid fa-gauge-high text-primary"></i> Çalışma Temposu
+                </h3>
+                <p class="panel-intro" style="margin-bottom:1rem;">Seçtiğin tempo, programdaki soru sayılarını ve süreleri ölçekler. Değiştirmeden önce farkı karşılaştırabilirsin.</p>
+
+                <div id="routeTempoOptions" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(190px,1fr)); gap:0.6rem; margin-bottom:1rem;">
+                  <!-- JS: ROUTE_PROFILES'tan doldurulur -->
+                </div>
+
+                <button class="btn btn-primary" id="applyTempoBtn" onclick="app.confirmAndUpdateProgramWithRoute()"
+                        style="width:100%; padding:0.7rem; font-size:0.88rem; font-weight:800; border-radius:8px;">
+                  <i class="fa-solid fa-arrows-rotate"></i> Tempoyu Uygula ve Programı Güncelle
+                </button>
+              </div>
+
+              <!-- 4 FAZLI MÜFREDAT HARİTASI — Rota Rehberi kaldırıldı,
+                   müfredat ilerlemesi artık Program Sihirbazı'nın içinde.
+                   Aynı müfredat grafiğinden beslenir. -->
+              <div style="border-top: 1.5px dashed var(--border-color); margin-top: 1.5rem; padding-top: 1.5rem;">
+                <h3 style="font-family: var(--font-header); font-weight: 800; font-size: 1.02rem; color: var(--text-main); margin: 0 0 0.4rem; display:flex; align-items:center; gap:0.5rem;">
+                  <i class="fa-solid fa-graduation-cap text-primary"></i> 4 Fazlı YKS Müfredat Haritası
+                </h3>
+                <p class="panel-intro" style="margin-bottom:1rem;">Programın hangi konuları kapsadığını ve hangilerini tamamladığını faz faz gösterir. Bir konuya tıklayarak durumunu işaretleyebilirsin.</p>
+                <div id="phasesContainer" style="display: flex; flex-direction: column; gap: 1rem;">
+                  <!-- Dynamically populated by JS (4 phases with TYT/AYT roadmaps) -->
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- TAB PANEL 4: PERFORMANCE CHARTS -->
+          <div class="tab-panel" id="panel-charts">
+            <div class="glass-card">
+              <button class="btn btn-secondary" onclick="app.switchTab('today')" style="margin-bottom: 1.25rem; font-family: var(--font-header); font-weight: 800; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 0.4rem; border: 1.5px solid var(--border-color); border-radius: 6px; padding: 0.35rem 0.75rem; background: var(--bg-card); color: var(--text-main); cursor: pointer;">
+                <i class="fa-solid fa-arrow-left"></i> ✏️ Ana Sayfaya Dön
+              </button>
+              <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                  <label style="font-size:0.8rem; font-weight:600; color:var(--text-muted);"><i class="fa-solid fa-filter"></i> Grafik Filtresi:</label>
+                  <select id="chartExamTypeFilter" onchange="app.renderCharts()" style="padding:0.35rem 0.5rem; font-size:0.8rem; font-weight:700; border-radius:4px; border:1px solid var(--border-color);">
+                    <option value="all">Tümü (TYT & AYT)</option>
+                    <option value="TYT">Sadece TYT Verileri</option>
+                    <option value="AYT">Sadece AYT Verileri</option>
+                  </select>
+                </div>
+              </div>
+              <p class="panel-intro">AI Çalışma Analizi; güncel durumunu, risklerini ve önerdiği en iyi hamleyi tek panelde özetleyip deneme netlerini ve gelişimini YKS hedeflerinle karşılaştırır.</p>
+
+              <!-- AI ÇALIŞMA ANALİZİ (birleşik: AI yorumu, Neredeyim, Risk Radarı, Günün En İyi Hamlesi, Grafik Özeti) -->
+              <!-- ALT ÖZELLİK: davranışsal performans da bu merkezde -->
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.25rem;">
+                <button class="btn btn-secondary" onclick="app.switchTab('habitMap')" style="font-weight:800; font-size:0.78rem;">
+                  <i class="fa-solid fa-dna"></i> Alışkanlık Haritası (çalışma istikrarı)
+                </button>
+              </div>
+
+              <!-- HAFTALIK DEĞERLENDİRME — tek kaynak.
+                   Önceden aynı soruyu ("haftam nasıl geçti?") iki ayrı yerde iki
+                   ayrı metin cevaplıyordu: burada AI Çalışma Analizi, Alışkanlık
+                   Haritası'nda ise ayrı bir haftalık değerlendirme. Birleştirildi. -->
+              <div id="habitWeeklyReviewCard" class="glass-card" style="display:none; padding:1.25rem; margin-bottom:1.5rem; border-color:var(--ai-border); background:var(--ai-tint);">
+                <h4 style="margin:0 0 0.5rem; display:flex; align-items:center; gap:0.5rem; font-family:var(--font-header); font-weight:800; font-size:0.9rem;">
+                  <span class="ai-helper-icon" style="width:26px; height:26px; border-radius:8px; font-size:0.7rem;"><i class="fa-solid fa-comment-dots"></i></span>
+                  AI Koç — Haftalık Değerlendirme
+                </h4>
+                <p id="habitWeeklyReviewText" style="font-size:0.82rem; color:var(--text-main); line-height:1.5; margin:0;"></p>
+              </div>
+
+              <div id="aiCoachCommentaryCardContainer" style="margin-bottom: 2rem;"></div>
+
+              <!-- DENEME BÖLÜM ANALİZİ — daha önce görünmeyen bölüm bazlı teşhis -->
+              <div class="glass-card" id="sectionAnalysisCard" style="display:none; padding:1.25rem; margin-bottom:2rem; border-color:var(--ai-border); background:var(--ai-tint);">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; cursor:pointer;" onclick="app.toggleSectionAnalysisCard()">
+                  <h4 style="margin:0; display:flex; align-items:center; gap:0.5rem;">
+                    <span class="ai-helper-icon" style="width:26px; height:26px; border-radius:8px; font-size:0.7rem;"><i class="fa-solid fa-chart-simple"></i></span>
+                    Deneme Bölüm Analizi <span id="sectionAnalysisCount" style="font-weight:700; color:var(--text-muted); font-size:0.72rem;"></span>
+                  </h4>
+                  <i class="fa-solid fa-chevron-down" id="sectionAnalysisChevron" style="color:var(--text-muted); transition:transform 0.2s;"></i>
+                </div>
+                <p class="panel-intro" style="margin:0.5rem 0 0; font-size:0.78rem;">Hangi bölümde net kaybettiğini gösterir: doğruluk, soru başına süre ve gidişat. Bu veriler tekrar önceliğini ve program dağılımını doğrudan etkiler.</p>
+                <div id="sectionAnalysisBody" style="display:none; margin-top:1rem;"></div>
+              </div>
+
+              <!-- Wrap charts content for dynamic hide/show -->
+              <div id="chartsContentArea">
+
+                <div class="premium-chart-grid">
+                  <div class="premium-chart-card" style="--tile-accent: #6366f1;">
+                    <div class="premium-chart-head"><span class="premium-chart-icon"><i class="fa-solid fa-chart-bar"></i></span> Hedef vs Mevcut Net</div>
+                    <div class="premium-chart-canvas-wrap"><canvas id="netsLineChart"></canvas></div>
+                  </div>
+
+                  <div class="premium-chart-card" style="--tile-accent: #6366f1;">
+                    <div class="premium-chart-head"><span class="premium-chart-icon"><i class="fa-solid fa-scale-balanced"></i></span> Ders Çalışma Dengesi</div>
+                    <p class="premium-chart-note" id="balanceRecommendation">Derslere ayrılan süre dengesi yükleniyor...</p>
+                    <div class="premium-chart-canvas-wrap"><canvas id="balanceRadarChart"></canvas></div>
+                  </div>
+
+                  <div class="premium-chart-card" style="--tile-accent: #eab308;">
+                    <div class="premium-chart-head"><span class="premium-chart-icon"><i class="fa-solid fa-bolt"></i></span> Çözüm Hızı vs Hedef</div>
+                    <p class="premium-chart-note">TYT: 1.35 dk/soru · AYT: 2 dk/soru referans alınır.</p>
+                    <div class="premium-chart-canvas-wrap"><canvas id="speedLineChart"></canvas></div>
+                  </div>
+
+                  <div class="premium-chart-card" style="--tile-accent: #ec4899;">
+                    <div class="premium-chart-head"><span class="premium-chart-icon"><i class="fa-solid fa-arrow-trend-up"></i></span> Zaman İçinde Gelişim</div>
+                    <p class="premium-chart-note">Her testteki doğruluk oranının kronolojik seyri.</p>
+                    <div class="premium-chart-canvas-wrap"><canvas id="accuracyTrendChart"></canvas></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Empty state card when no test data exists -->
+              <div id="chartsEmptyState" style="display: none; text-align: center; padding: 4rem 1.5rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; margin-top: 1rem;">
+                <div style="font-size: 4rem; color: var(--text-muted); margin-bottom: 1.5rem; display: inline-block; animation: pulse-glow 2s infinite;"><i class="fa-solid fa-chart-line"></i></div>
+                <h3 style="font-family: var(--font-header); font-weight: 800; color: var(--text-main); margin-bottom: 0.5rem;">Çalışma Analizi Verisi Bulunamadı</h3>
+                <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto; font-size: 0.9rem; line-height: 1.5;">
+                  Henüz çözülmüş ve kaydedilmiş bir test verin bulunmuyor. Günlük programındaki test/soru pratiklerini tamamlayıp sonuçlarını kaydettikten sonra YKS gelişim analizin, çalışma dengen ve hız grafiklerin burada görüntülenecek.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB PANEL 5: MISTAKES VAULT (YANLIS SORU DEFTERI) -->
+          <div class="tab-panel" id="panel-vault">
+            <div class="glass-card">
+              <button class="btn btn-secondary" onclick="app.switchTab('today')" style="margin-bottom: 1.25rem; font-family: var(--font-header); font-weight: 800; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 0.4rem; border: 1.5px solid var(--border-color); border-radius: 6px; padding: 0.35rem 0.75rem; background: var(--bg-card); color: var(--text-main); cursor: pointer;">
+                <i class="fa-solid fa-arrow-left"></i> ✏️ Ana Sayfaya Dön
+              </button>
+              <h2 style="display:flex; align-items:center; gap:0.6rem;">
+                <span class="ai-helper-icon" style="width:32px; height:32px; border-radius:9px; font-size:0.85rem;"><i class="fa-solid fa-dungeon"></i></span>
+                AI Hata Zindanı
+              </h2>
+              <p class="panel-intro">Test sonuçlarını girerken yaptığın hatalar otomatik olarak buraya işlenir; deneme sınavı gibi tek bir göreve bağlanamayan hataları aşağıdan elle ekleyebilirsin. AI, havuzdaki en öncelikli konuları her gün değerlendirip programına tek bir "🧠 AI Akıllı Tekrar Seansı" görevi ekler ve bir konuyu sıfır hatayla tamamladığında o konu zindandan çıkar. Her kart için konuya özel YouTube videoları ve yayın/soru bankası önerileri de sunulur.</p>
+
+              <!-- Manuel Giriş (Deneme Sınavı vb.) -->
+              <div class="glass-card" style="background: rgba(0,0,0,0.01); border: 1px dashed var(--primary); margin-bottom: 2rem;">
+                <h4 style="margin-bottom: 0.35rem; color:var(--text-main);"><i class="fa-solid fa-upload"></i> Deneme Sınavı Hatası Ekle (Manuel)</h4>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0 0 1rem; font-weight: 600;">Deneme sınavı tek bir göreve bağlı olmadığı için otomatik yakalanamaz — o denemede yanlış yaptığın konuyu buradan tek tek ekle. Fotoğraf yüklemek isteğe bağlıdır.</p>
+                <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));">
+                  <div class="form-group">
+                    <label>Ders Seçimi</label>
+                    <select id="vaultSubject">
+                      <option value="Matematik">Matematik</option>
+                      <option value="Türkçe">Türkçe</option>
+                      <option value="Fizik">Fizik</option>
+                      <option value="Kimya">Kimya</option>
+                      <option value="Biyoloji">Biyoloji</option>
+                      <option value="Edebiyat">Edebiyat</option>
+                      <option value="Tarih">Tarih</option>
+                      <option value="Coğrafya">Coğrafya</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Sınav Türü</label>
+                    <select id="vaultExamType">
+                      <option value="TYT">TYT</option>
+                      <option value="AYT">AYT</option>
+                      <option value="Genel">Genel</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>MEB Kazanım Adı</label>
+                    <input type="text" id="vaultTopic" placeholder="Örn: Toplam-Fark Formülleri" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="vaultTag">Hata Nedeni Etiketi</label>
+                    <select id="vaultTag">
+                      <option value="İşlem Hatası">İşlem Hatası</option>
+                      <option value="Bilgi Eksikliği">Bilgi Eksikliği</option>
+                      <option value="Süre Yetmedi">Süre Yetmedi</option>
+                      <option value="Soru Anlaşılamadı">Soru Anlaşılamadı</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label>Soru Fotoğrafı (İsteğe Bağlı — Kamera veya Dosya)</label>
+                    <input type="file" id="vaultFile" accept="image/*" style="padding: 0.5rem;" onchange="app.analyzeVaultImage(event)">
+                    <div id="vaultAILoading" style="display:none; color: var(--primary); font-size: 0.85rem; font-weight: bold; margin-top: 0.5rem;"><i class="fa-solid fa-spinner fa-spin"></i> AI Fotoğrafı İnceliyor, Lütfen Bekleyin...</div>
+                  </div>
+                  <div class="form-group">
+                    <label>Koç Notu / Çözüm İpucu</label>
+                    <textarea id="vaultNote" rows="2" placeholder="Örn: Formülü unuttum, işlem hatası yaptım..." style="resize: none;"></textarea>
+                  </div>
+                </div>
+                <div style="background: rgba(37, 99, 235, 0.05); border: 1px solid var(--primary); padding: 0.75rem; border-radius: 8px; margin-bottom: 1.25rem; font-size: 0.78rem; line-height: 1.5; color: var(--text-main);">
+                  <i class="fa-solid fa-circle-info"></i> Bu konu, yarının programına 30 dk tekrar + 30 dk test olarak otomatik eklenir. O testte bu konudan sıfır hata yapmadan konu Hata Zindanı'ndan çıkmaz.
+                </div>
+                <button class="btn btn-primary" onclick="app.uploadVaultQuestion()">Kutuya Ekle</button>
+              </div>
+
+              <!-- ARALIKLI TEKRAR TAKVİMİ — daha önce hiçbir ekranda görünmüyordu -->
+              <div class="glass-card" id="repetitionScheduleCard" style="display:none; padding:1.1rem; margin-top:1.5rem; border-color:var(--ai-border); background:var(--ai-tint);">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; cursor:pointer;" onclick="app.toggleRepetitionScheduleCard()">
+                  <h4 style="margin:0; display:flex; align-items:center; gap:0.5rem;">
+                    <span class="ai-helper-icon" style="width:26px; height:26px; border-radius:8px; font-size:0.7rem;"><i class="fa-solid fa-repeat"></i></span>
+                    Aralıklı Tekrar Takvimi <span id="repetitionScheduleCount" style="font-weight:700; color:var(--text-muted); font-size:0.72rem;"></span>
+                  </h4>
+                  <i class="fa-solid fa-chevron-down" id="repetitionScheduleChevron" style="color:var(--text-muted); transition:transform 0.2s;"></i>
+                </div>
+                <p class="panel-intro" style="margin:0.5rem 0 0; font-size:0.78rem;">Tamamladığın her konu unutma eğrisine göre tekrar döngüsüne girer. Aralıklar hata defterine, konu hâkimiyetine, deneme bölüm analizine ve sınava kalan süreye göre otomatik ayarlanır.</p>
+                <div id="repetitionScheduleBody" style="display:none; margin-top:1rem;"></div>
+              </div>
+
+              <!-- Question Grid -->
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:1rem; border-top:1px solid var(--border-color); padding-top:1.5rem; margin-top:1rem;">
+                <h3 style="margin: 0;"><i class="fa-solid fa-images"></i> Aktif Hata Takibi (Programa Eklenen Konular)</h3>
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                  <label style="font-size:0.8rem; font-weight:600; color:var(--text-muted);"><i class="fa-solid fa-filter"></i> Sınav Filtresi:</label>
+                  <select id="vaultExamTypeFilter" onchange="app.renderVault()" style="padding:0.35rem 0.5rem; font-size:0.8rem; font-weight:700; border-radius:4px; border:1px solid var(--border-color);">
+                    <option value="all">Tümü (TYT & AYT)</option>
+                    <option value="TYT">Sadece TYT</option>
+                    <option value="AYT">Sadece AYT</option>
+                  </select>
+                </div>
+              </div>
+              <div class="vault-grid" id="vaultQuestionsContainer">
+                <!-- JS dynamically renders uploaded cards -->
+              </div>
+
+              <!-- Collapsible Solved Questions Archive -->
+              <div style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                <button class="btn btn-secondary" style="font-weight: 700; width: 100%; justify-content: space-between; padding: 0.75rem 1rem; border-radius:8px;" onclick="app.toggleVaultArchive()">
+                  <span><i class="fa-solid fa-box-archive text-success"></i> Çözülmüş Hatalı Sorular Arşivi (<span id="vaultArchiveCount">0</span>)</span>
+                  <i class="fa-solid fa-chevron-down" id="vaultArchiveChevron"></i>
+                </button>
+                <div id="vaultArchiveContainer" style="display: none; margin-top: 1rem;" class="vault-grid">
+                  <!-- JS populated completed questions -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VIEW 5.5: HABIT MAP (ALISKANLIK HARITASI) -->
+          <div class="tab-panel" id="panel-habitMap">
+            <div class="glass-card" style="margin-bottom: 1.5rem; padding: 2rem;">
+              <button class="btn btn-secondary" onclick="app.switchTab('today')" style="margin-bottom: 1.25rem; font-family: var(--font-header); font-weight: 800; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 0.4rem; border: 1.5px solid var(--border-color); border-radius: 6px; padding: 0.35rem 0.75rem; background: var(--bg-card); color: var(--text-main); cursor: pointer;">
+                <i class="fa-solid fa-arrow-left"></i> ✏️ Ana Sayfaya Dön
+              </button>
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+                <div>
+                  <h2 style="margin: 0; display:flex; align-items:center; gap:0.6rem; font-family:var(--font-header); font-weight:800; color:var(--text-main);">
+                    <span class="ai-helper-icon" style="width:32px; height:32px; border-radius:9px; font-size:0.85rem;"><i class="fa-solid fa-dna"></i></span>
+                    AI Alışkanlık Haritası
+                  </h2>
+                  <p class="panel-intro" style="margin-top:0.25rem; margin-bottom:0;">Uyku, odak ve çalışma ritmini analiz eder; verimin düştüğü saatleri işaretleyip uyarır ve haftalık ders programını bu ritme göre yeniden dizer.</p>
+                </div>
+                <button class="btn btn-primary" onclick="app.updateProgramByHabitMap()" style="padding:0.6rem 1.2rem; font-size:0.85rem; display:flex; align-items:center; gap:0.5rem; font-weight:700; background: linear-gradient(135deg, #7c3aed, #a855f7); border: none; color: #fff; box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);">
+                  <svg viewBox="0 0 120 140" style="width: 1.3em; height: 1.3em; display:inline-block; vertical-align: middle;"><g transform="rotate(-10 60 70)"><path d="M46 72 Q34 76 31 86" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"></path><circle cx="31" cy="87" r="4" fill="#8b5cf6" stroke="#fff" stroke-width="2.5"></circle><path d="M74 68 Q86 62 89 52" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"></path><circle cx="89" cy="51" r="4" fill="#8b5cf6" stroke="#fff" stroke-width="2.5"></circle><rect x="46" y="8" width="28" height="15" rx="7" fill="#8b5cf6" stroke="#fff" stroke-width="2.5"></rect><rect x="46" y="22" width="28" height="8" fill="#c4b5fd" stroke="#fff" stroke-width="2.5"></rect><rect x="46" y="30" width="28" height="60" fill="#ede9fe" stroke="#fff" stroke-width="2.5"></rect><path d="M46 90 L74 90 L60 116 Z" fill="#c4b5fd" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"></path><path d="M55 106 L65 106 L60 116 Z" fill="#8b5cf6"></path></g></svg> Haritaya Göre Programı Optimize Et
+                </button>
+              </div>
+
+              <!-- AI Habit Suggestions (Feature 1) -->
+              <div id="habitSuggestionsContainer" style="display:none; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;"></div>
+
+              <!-- Calibration progress card -->
+              <div style="background:rgba(37,99,235,0.02); border:1px solid rgba(37,99,235,0.1); border-radius:12px; padding:1.25rem; margin-bottom:2rem; display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap;">
+                <div style="font-size:2.5rem; color:var(--primary); animation:pulse-glow 2s infinite;"><i class="fa-solid fa-dna"></i></div>
+                <div style="flex:1; min-width:250px;">
+                  <div style="display:flex; justify-content:space-between; font-weight:700; font-size:0.85rem; margin-bottom:0.4rem; color:var(--text-main);">
+                    <span>İlk 7 Gün Kalibrasyon Süreci</span>
+                    <span id="habitMapCalibrationPct">%0</span>
+                  </div>
+                  <div style="background:rgba(0,0,0,0.05); height:10px; border-radius:5px; overflow:hidden;">
+                    <div style="background:linear-gradient(90deg, var(--primary), var(--secondary)); width:0%; height:100%; transition: width 0.8s ease;" id="habitMapCalibrationBar"></div>
+                  </div>
+                  <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.5rem; margin-bottom:0; line-height:1.4;">
+                    Her tamamlanan görev, Pomodoro başarısı ve deneme sınavındaki dikkat analizi puanlanır. 7 gün boyunca toplanan verilerle harita kusursuzlaşır.
+                  </p>
+                </div>
+              </div>
+
+              <!-- AI Habit Prediction (Feature 3) -->
+              <div class="glass-card" style="padding:1.25rem; margin-bottom:2rem;">
+                <h4 style="margin:0 0 0.5rem; display:flex; align-items:center; gap:0.5rem; font-family:var(--font-header); font-weight:800; font-size:0.9rem;">
+                  <i class="fa-solid fa-chart-line text-primary"></i> AI Alışkanlık Tahmini
+                </h4>
+                <p id="habitPredictionText" style="font-size:0.82rem; color:var(--text-muted); line-height:1.5; margin:0;"></p>
+              </div>
+
+              <!-- DNA Grid Table -->
+              <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.9rem;">
+                  <thead>
+                    <tr style="border-bottom:2px solid var(--border-color); color:var(--text-muted); font-size:0.8rem; font-weight:800; text-transform:uppercase;">
+                      <th style="padding:0.75rem 1rem;">Davranış / Gösterge</th>
+                      <th style="padding:0.75rem 1rem;">AI Öğrenci DNA Analizi</th>
+                      <th style="padding:0.75rem 1rem;">Haftalık Program Güncelleme Etkisi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="habitMapTableBody">
+                    <!-- Dynamic Rows populated in app.js -->
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- AI Habit Calendar — GitHub tarzı ısı haritası (Feature 2) -->
+              <div class="glass-card" style="padding:1.25rem; margin-top:2rem;">
+                <h4 style="margin:0 0 0.4rem; display:flex; align-items:center; gap:0.5rem; font-family:var(--font-header); font-weight:800; font-size:0.9rem;">
+                  <i class="fa-solid fa-calendar-days text-primary"></i> AI Alışkanlık Takvimi
+                </h4>
+                <p style="font-size:0.75rem; color:var(--text-muted); margin:0 0 0.85rem;">Her kare bir günü temsil eder; renk koyulaştıkça o günkü görev tamamlama oranı artar. Bir güne tıklayarak detayları görebilirsin.</p>
+                <div id="habitHeatmapGrid"></div>
+              </div>
+            </div>
+          </div>
+
+        </div> <!-- Close main-content-panel -->
+      </div> <!-- Close dashboard-grid -->
+    </section>
+
+  </main>
+
+  <!-- MODAL 0.5: WEEKLY AI REPORT & REVISION -->
+  <!-- MODAL: PROGRAM SAATLERE SIĞMIYOR (kalkış/yatış penceresi taşması) -->
+  <div class="modal-overlay" role="dialog" aria-modal="true" id="scheduleFitModal">
+    <div class="modal-content" style="max-width: 600px;">
+      <button class="modal-close" onclick="app.closeModal('scheduleFitModal')"><i class="fa-solid fa-xmark"></i></button>
+      <h2 style="margin-bottom: 0.5rem;"><i class="fa-solid fa-clock text-warning"></i> Program Saatlere Sığmıyor</h2>
+      <p class="panel-intro" id="scheduleFitIntro" style="margin-bottom: 1.25rem;"></p>
+
+      <div style="display:flex; flex-direction:column; gap:1rem;">
+        <div style="border: 1.5px solid var(--border-color); border-radius: 10px; padding: 1rem;">
+          <div style="font-weight:800; font-size:0.9rem; color:var(--text-main); margin-bottom:0.35rem;">
+            <i class="fa-solid fa-scale-balanced text-primary"></i> Seçenek 1 — Çalışma Süresini Azalt
+          </div>
+          <p style="font-size:0.78rem; color:var(--text-muted); font-weight:600; margin-bottom:0.75rem;">Günlük görev yükü daha rahat bir tempoya çekilir; programın tamamı yeniden hesaplanır.</p>
+          <button class="btn btn-secondary" style="width:100%;" onclick="app.resolveScheduleFitReduceLoad()"><i class="fa-solid fa-leaf"></i> Çalışma Yükünü Azalt ve Yeniden Oluştur</button>
+        </div>
+
+        <div style="border: 1.5px solid var(--border-color); border-radius: 10px; padding: 1rem;">
+          <div style="font-weight:800; font-size:0.9rem; color:var(--text-main); margin-bottom:0.35rem;">
+            <i class="fa-solid fa-clock-rotate-left text-primary"></i> Seçenek 2 — Kalkış / Yatış Saatlerini Düzenle
+          </div>
+          <p style="font-size:0.78rem; color:var(--text-muted); font-weight:600; margin-bottom:0.75rem;">Çalışma penceresini genişletmek için uyanma saatini erkene, yatış saatini geriye çek.</p>
+          <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+            <div class="form-group" style="flex:1; min-width:140px; margin:0;">
+              <label for="scheduleFitWakeTime" style="font-size:0.72rem;">Yeni Kalkış Saati</label>
+              <input type="time" id="scheduleFitWakeTime">
+            </div>
+            <div class="form-group" style="flex:1; min-width:140px; margin:0;">
+              <label for="scheduleFitSleepTime" style="font-size:0.72rem;">Yeni Yatış Saati</label>
+              <input type="time" id="scheduleFitSleepTime">
+            </div>
+          </div>
+          <button class="btn btn-secondary" style="width:100%;" onclick="app.resolveScheduleFitAdjustTimes()"><i class="fa-solid fa-check"></i> Saatleri Kaydet ve Yeniden Oluştur</button>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; margin-top:1.25rem;">
+        <button class="btn btn-secondary" onclick="app.closeModal('scheduleFitModal')">Şimdilik Sıkıştırılmış Haliyle Devam Et</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ROTA DEĞİŞİKLİĞİ ONAYI (AI Rota Rehberi) -->
+  <div class="modal-overlay" role="dialog" aria-modal="true" id="routeChangeModal">
+    <div class="modal-content" style="max-width: 640px;">
+      <button class="modal-close" onclick="app.closeModal('routeChangeModal')"><i class="fa-solid fa-xmark"></i></button>
+      <h2 style="margin-bottom: 0.5rem;"><i class="fa-solid fa-code-branch text-primary"></i> Rota Değişikliğini Onayla</h2>
+      <p class="panel-intro" style="margin-bottom: 1.25rem;" id="routeChangeIntro"></p>
+
+      <div id="routeChangeDiffBox" style="border: 1.5px solid var(--border-color); border-radius: 10px; overflow: hidden; margin-bottom: 1.25rem;">
+        <!-- JS: mevcut / yeni / fark karşılaştırma tablosu -->
+      </div>
+
+      <div id="routeChangeProbBox" style="margin-bottom: 1.25rem;">
+        <!-- JS: hedef olasılığı değişimi -->
+      </div>
+
+      <div style="display: flex; align-items: flex-start; gap: 0.5rem; background: rgba(234,179,8,0.1); border: 1px solid var(--warning); border-radius: 8px; padding: 0.75rem; font-size: 0.78rem; font-weight: 600; color: var(--text-main); line-height: 1.5; margin-bottom: 1.5rem;">
+        <i class="fa-solid fa-triangle-exclamation" style="color: var(--warning); margin-top: 0.15rem;"></i>
+        <span id="routeChangeWarning">Program yeniden oluşturulur; bu programa elle eklediğin görevler ve gün düzenlemeleri silinir. Tamamlanmış günlerin kaydı korunmaz.</span>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; flex-wrap: wrap;">
+        <button class="btn btn-secondary" onclick="app.closeModal('routeChangeModal')">Vazgeç</button>
+        <button class="btn btn-primary" onclick="app.applyRouteChange()"><i class="fa-solid fa-check"></i> Onayla ve Programı Güncelle</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 1: COACH CORNER & REF SLAM -->
+  <div class="modal-overlay" role="dialog" aria-modal="true" id="coachModal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="app.closeModal('coachModal')"><i class="fa-solid fa-xmark"></i></button>
+      <div class="coach-alert-header">
+        <i class="fa-solid fa-clipboard-check"></i>
+        <h2 style="margin-top: 1rem;" id="coachModalTitle">Mola Zamanı!</h2>
+      </div>
+      <div class="coach-quote" id="coachModalQuote">
+        "Son saniyeye kadar mücadeleyi bırakamazsın! Bu maçın galibi sen olacaksın."
+      </div>
+      <div id="coachModalBody" style="font-size: 0.95rem; margin-bottom: 2rem;">
+        <!-- Body populated via JS -->
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 1rem;" id="coachModalButtons">
+        <button class="btn btn-secondary" onclick="app.closeModal('coachModal')">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: PARENT NOTIFICATION SIMULATOR -->
+  <div class="modal-overlay" role="dialog" aria-modal="true" id="parentModal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="app.closeModal('parentModal')"><i class="fa-solid fa-xmark"></i></button>
+      <h2 style="margin-bottom: 0.5rem;"><i class="fa-brands fa-whatsapp text-primary"></i> Veli Bilgilendirme Raporu</h2>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Velinin (WhatsApp/E-posta) iletişim hattına gönderebileceğin gün sonu raporu hazırlandı.</p>
+
+      <div class="report-copy-box" id="parentReportText">
+        <!-- Rendered text -->
+      </div>
+
+      <p id="parentContactMissingWarning" style="display:none; font-size:0.78rem; color:var(--danger); font-weight:700; margin-top:0.75rem;">
+        <i class="fa-solid fa-triangle-exclamation"></i> Gönderebilmek için önce profilinde veli iletişim bilgisi (e-posta veya telefon) girmelisin.
+      </p>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+        <span style="font-size: 0.8rem; color: var(--success); display: none;" id="copyAlert">
+          <i class="fa-solid fa-circle-check"></i> Rapor panoya kopyalandı!
+        </span>
+        <div style="display: flex; gap: 0.75rem; margin-left: auto; flex-wrap: wrap;">
+          <button class="btn btn-secondary" onclick="app.closeModal('parentModal')">Kapat</button>
+          <button class="btn btn-secondary" onclick="app.copyParentReport()">
+            <i class="fa-solid fa-copy"></i> Kopyala
+          </button>
+          <button class="btn btn-primary" id="parentSendEmailBtn" onclick="app.sendParentReportViaEmail()" style="background: linear-gradient(135deg, #2563eb, #3b82f6); border: none;">
+            <i class="fa-solid fa-envelope"></i> E-posta ile Gönder
+          </button>
+          <button class="btn btn-primary" id="parentSendWhatsappBtn" onclick="app.sendParentReportViaWhatsapp()" style="background: linear-gradient(135deg, #16a34a, #22c55e); border: none;">
+            <i class="fa-brands fa-whatsapp"></i> WhatsApp ile Gönder
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Zoomable photo modal overlay -->
+  <div class="modal-overlay" role="dialog" aria-modal="true" id="zoomModal">
+    <div class="modal-content" style="max-width: 700px; padding: 1.5rem; text-align: center; background: #000;">
+      <button class="modal-close" style="color: #fff;" onclick="app.closeModal('zoomModal')"><i class="fa-solid fa-xmark"></i></button>
+      <img id="zoomedImg" src="" alt="Zoomed Image" style="max-width: 100%; max-height: 70vh; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+      <p id="zoomedCap" style="color: #f1f5f9; margin-top: 1rem; font-family: var(--font-body); font-size: 0.95rem;"></p>
+    </div>
+  </div>
+
+  <!-- Add custom task modal overlay -->
+  <div class="modal-overlay" role="dialog" aria-modal="true" id="addCustomTaskModal">
+    <div class="modal-content" style="max-width: 500px;">
+      <button class="modal-close" onclick="app.closeModal('addCustomTaskModal')"><i class="fa-solid fa-xmark"></i></button>
+      <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-plus text-primary"></i> Programa Görev Ekle</h3>
+      
+      <div style="display: flex; flex-direction: column; gap: 1rem; text-align: left;">
+        <div class="form-group">
+          <label>Ders Seçin</label>
+          <select id="customTaskSubject">
+            <option value="Matematik">Matematik</option>
+            <option value="Türkçe">Türkçe</option>
+            <option value="Fizik">Fizik</option>
+            <option value="Kimya">Kimya</option>
+            <option value="Biyoloji">Biyoloji</option>
+            <option value="Edebiyat">Edebiyat</option>
+            <option value="Tarih">Tarih</option>
+            <option value="Coğrafya">Coğrafya</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Konu / Yapılacak Çalışma</label>
+          <input type="text" id="customTaskTopic" style="padding: 0.4rem 0.6rem; font-size: 0.85rem; border: 1px solid var(--border-color); border-radius: 4px; width: 100%;" placeholder="Örn: Test 1 çöz veya 20 sayfa kitap oku">
+        </div>
+
+        <div class="form-group">
+          <label>Görev Türü</label>
+          <select id="customTaskType">
+            <option value="video">Konu Anlatım Videosu İzleme</option>
+            <option value="reading">Kaynak Kitap Okuma & Özet</option>
+            <option value="quiz">Soru Bankası Testi Çözme</option>
+            <option value="retest">Aralıklı Tekrar Seansı</option>
+          </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label>Tahmini Süre (Dk)</label>
+            <input type="number" id="customTaskDuration" value="45" min="5" max="180">
+          </div>
+          <div class="form-group">
+            <label>Soru Hedefi (Adet)</label>
+            <input type="number" id="customTaskQCount" value="30" min="0" max="200">
+          </div>
+        </div>
+
+        <button class="btn btn-primary" style="margin-top: 1rem;" onclick="app.submitCustomTask()">
+          Görev Ekle
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Custom Program Planner -->
+  <div class="modal-overlay" role="dialog" aria-modal="true" id="customProgramPlannerModal">
+    <div class="modal-content" style="max-width: 650px;">
+      <button class="modal-close" onclick="app.closeModal('customProgramPlannerModal')"><i class="fa-solid fa-xmark"></i></button>
+      <h3 id="plannerModalTitle" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-calendar-plus text-primary"></i> Özel Çalışma Programı Planlayıcısı</h3>
+
+      <div id="plannerBaseNote" style="display:none; align-items:flex-start; gap:0.5rem; text-align:left; background:var(--ai-tint); border:1px solid var(--ai-border); border-radius:10px; padding:0.6rem 0.75rem; margin-bottom:1rem; font-size:0.72rem; line-height:1.45; color:var(--text-main);"></div>
+
+      <div style="display: flex; flex-direction: column; gap: 1rem; text-align: left;">
+
+        <!-- Fotoğraftan program oluşturma modülü buradan "AI Program Sihirbazı >
+             Fotoğraftan" sekmesine taşındı. Planlayıcı modalı artık yalnızca
+             elle plan düzenlemeye ayrılmıştır; aynı yetenek iki yerde durmuyor. -->
+
+        <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+          <div class="form-group">
+            <label>Program Adı</label>
+            <input type="text" id="plannerProgName" placeholder="Örn: Matematik Yoğunlaştırma Programı">
+          </div>
+          <div class="form-group">
+            <label>Başlangıç Tarihi</label>
+            <input type="date" id="plannerProgStartDate" onchange="app.plannerUpdateDaySelectDates()">
+          </div>
+        </div>
+        
+        <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+          <div class="form-group">
+            <label>Tekrar Seçeneği</label>
+            <select id="plannerProgRep">
+              <option value="none">Tek Seferlik (Tekrar Etmesin)</option>
+              <option value="weekly">Her Hafta Tekrarla (Haftalık Döngü)</option>
+              <option value="monthly">Her Ay Tekrarla (Aylık Döngü)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Planlanacak Gün</label>
+            <select id="plannerDaySelect" onchange="app.plannerSelectDay(this.value)" style="font-weight:700;">
+              <!-- Dynamic options -->
+            </select>
+          </div>
+        </div>
+
+        <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; background: rgba(0,0,0,0.01);">
+          <h5 style="margin-bottom: 0.5rem;"><i class="fa-solid fa-plus text-success"></i> Yeni Görev Ekle</h5>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.5rem; margin-bottom: 0.5rem;">
+            <div class="form-group">
+              <label style="font-size:0.7rem;">Ders</label>
+              <select id="plannerTaskSubject" style="padding:0.25rem; font-size:0.75rem;" onchange="app.plannerRefreshBookOptions()">
+                <option value="Matematik">Matematik</option>
+                <option value="Türkçe">Türkçe</option>
+                <option value="Fizik">Fizik</option>
+                <option value="Kimya">Kimya</option>
+                <option value="Biyoloji">Biyoloji</option>
+                <option value="Edebiyat">Edebiyat</option>
+                <option value="Tarih">Tarih</option>
+                <option value="Coğrafya">Coğrafya</option>
+                <option value="Geometri">Geometri</option>
+                <option value="Paragraf">Paragraf</option>
+                <option value="Kitap Okuma">Kitap Okuma</option>
+                <option value="Özel Görev">Özel / Diğer</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label style="font-size:0.7rem;">Yapılacak Çalışma</label>
+              <input type="text" id="plannerTaskTopic" style="padding:0.25rem; font-size:0.75rem; border: 1px solid var(--border-color); border-radius: 4px; height: 32px; width: 100%;" placeholder="Örn: Test 1 çöz veya Kitap oku">
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 0.5rem; align-items:flex-end;">
+            <div class="form-group">
+              <label style="font-size:0.7rem;">Görev Tipi</label>
+              <select id="plannerTaskType" style="padding:0.25rem; font-size:0.75rem;">
+                <option value="video">🎥 Konu Anlatımı / Video</option>
+                <option value="quiz">🎯 Soru Çözümü / Test</option>
+                <option value="reading">📖 Konu Özeti / Kazanım</option>
+                <option value="common">✍️ Paragraf / Türkçe Kondisyonu</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label style="font-size:0.7rem;">Sınav Türü</label>
+              <select id="plannerTaskExamType" style="padding:0.25rem; font-size:0.75rem;">
+                <option value="TYT">TYT</option>
+                <option value="AYT">AYT</option>
+                <option value="Genel">Genel</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label style="font-size:0.7rem;">Süre</label>
+              <input type="text" id="plannerTaskDuration" value="60 dk" style="padding:0.25rem; font-size:0.75rem;">
+            </div>
+            <div class="form-group">
+              <label style="font-size:0.7rem;">Soru Sayısı</label>
+              <input type="number" id="plannerTaskQCount" value="30" min="0" max="200" style="padding:0.25rem; font-size:0.75rem;">
+            </div>
+          </div>
+
+          <!-- KAYNAK SEÇİMİ — hangi yayınevinin hangi kitabından, kaçıncı test.
+               Boş bırakılırsa ders/sınav türüne göre otomatik kaynak atanır. -->
+          <div style="margin-top:0.75rem; border-top:1px dashed var(--border-color); padding-top:0.75rem;">
+            <label style="font-size:0.72rem; font-weight:800; color:var(--primary); display:block; margin-bottom:0.4rem;">
+              <i class="fa-solid fa-book"></i> Çalışılacak Kaynak <span style="font-weight:600; color:var(--text-muted);">(boş bırakırsan otomatik seçilir)</span>
+            </label>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.5rem;">
+              <div class="form-group">
+                <label style="font-size:0.7rem;">Yayınevi</label>
+                <select id="plannerTaskPublisher" style="padding:0.25rem; font-size:0.75rem;" onchange="app.plannerRefreshBookOptions()">
+                  <option value="">Otomatik seç</option>
+                  <!-- JS: kaynak kitap kataloğundaki yayınevleriyle doldurulur -->
+                </select>
+              </div>
+              <div class="form-group">
+                <label style="font-size:0.7rem;">Kitap</label>
+                <select id="plannerTaskBook" style="padding:0.25rem; font-size:0.75rem;">
+                  <option value="">Önce yayınevi seç</option>
+                  <!-- JS: seçilen yayınevinin kitaplarıyla doldurulur -->
+                </select>
+              </div>
+              <div class="form-group">
+                <label style="font-size:0.7rem;">Test / Bölüm No</label>
+                <input type="text" id="plannerTaskTestNo" placeholder="Örn: Test 12" style="padding:0.25rem; font-size:0.75rem; border: 1px solid var(--border-color); border-radius: 4px; height: 32px; width: 100%;">
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-secondary" style="width:100%; margin-top:0.75rem; padding:0.4rem; font-size:0.8rem;" onclick="app.plannerAddTaskToSelectedDay()">
+            <i class="fa-solid fa-plus"></i> Görevi Listeye Ekle
+          </button>
+
+          <!-- Selected Day's Planned Tasks List (Hidden by default, reveals only when tasks exist) -->
+          <div id="plannerTaskListSection" style="display: none; margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; margin-bottom:0.75rem; flex-wrap:wrap;">
+              <h4 style="margin:0; font-size: 0.8rem;"><i class="fa-solid fa-tasks text-secondary"></i> Seçili Günün Görevleri</h4>
+              <div style="display:flex; gap:0.4rem;">
+                <button class="btn btn-secondary" style="padding:0.2rem 0.5rem; font-size:0.68rem; font-weight:800; border-radius:6px; color:var(--primary);" onclick="app.plannerApplyAIAllocation(document.getElementById('plannerDaySelect').value)" title="Görevleri AI öncelik skoruna göre sırala">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i> AI Tahsis Motorunu Uygula
+                </button>
+                <button class="btn btn-secondary text-danger" style="padding:0.2rem 0.5rem; font-size:0.68rem; font-weight:800; border-radius:6px;" onclick="app.plannerClearDay()">
+                  <i class="fa-solid fa-eraser"></i> Günü Temizle
+                </button>
+              </div>
+            </div>
+            <div id="plannerTaskList" style="display:flex; flex-direction:column; gap:0.5rem; max-height:150px; overflow-y:auto;">
+              <!-- JS populated -->
+            </div>
+          </div>
+
+          <!-- Günü Kopyala / Tekrar Et Card -->
+          <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; background: rgba(37,99,235,0.02); margin-top: 1rem;">
+            <h4 style="margin-bottom: 0.5rem; font-size:0.8rem; color:var(--primary); font-family:var(--font-header);"><i class="fa-solid fa-copy"></i> Günü Kopyala / Tekrar Et</h4>
+            <p style="font-size:0.65rem; color:var(--text-muted); line-height:1.3; margin-bottom:0.75rem;">
+              Seçili günün görevlerini diğer günlere hızlıca kopyalayarak programını çoğalt.
+            </p>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:0.5rem;">
+              <div style="border: 1px solid rgba(0,0,0,0.05); padding:0.5rem; border-radius:6px; background:#fff; text-align:left;">
+                <label style="font-size:0.65rem; font-weight:700; display:block; margin-bottom:0.25rem;">Sonraki X Gün Boyunca Tekrarla</label>
+                <div style="display:flex; gap:0.25rem;">
+                  <input type="number" id="plannerRepeatNextCount" min="1" max="360" value="7" style="width:70px; padding:0.25rem; font-size:0.75rem; border: 1px solid var(--border-color); border-radius: 4px; height: 28px;">
+                  <button class="btn btn-secondary" style="padding:0.25rem 0.5rem; font-size:0.7rem; flex:1;" onclick="app.plannerRepeatDayToNextRange()">Tekrarla</button>
+                </div>
+              </div>
+              <div style="border: 1px solid rgba(0,0,0,0.05); padding:0.5rem; border-radius:6px; background:#fff; text-align:left;">
+                <label style="font-size:0.65rem; font-weight:700; display:block; margin-bottom:0.25rem;">Belirli Günlere Kopyala</label>
+                <div style="display:flex; gap:0.25rem;">
+                  <input type="text" id="plannerRepeatTargetDays" placeholder="Örn: 8,15,22" style="padding:0.25rem; font-size:0.75rem; flex:1; min-width:0; border: 1px solid var(--border-color); border-radius: 4px; height: 28px;">
+                  <button class="btn btn-secondary" style="padding:0.25rem 0.5rem; font-size:0.7rem;" onclick="app.plannerCopyDayToSpecificDays()">Kopyala</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; margin-top:1rem; flex-wrap:wrap;">
+          <div id="plannerDeleteBtnWrap" style="display:flex; gap:0.5rem;">
+            <button class="btn btn-secondary text-danger" onclick="app.plannerDeleteActiveProgram()" style="padding: 0.5rem 0.8rem; font-size: 0.75rem;">
+              <i class="fa-solid fa-trash-can"></i> Programı Sil
+            </button>
+          </div>
+          <button class="btn btn-primary" id="plannerSaveBtn" style="padding: 0.5rem 1rem; font-size: 0.75rem;" onclick="app.plannerSaveProgram()">
+            <i class="fa-solid fa-floppy-disk"></i> Değişiklikleri Kaydet & Kapat
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Öğrenme Doğrulama Testi (ÖDT) Modal -->
+  <div class="modal-overlay" role="dialog" aria-modal="true" id="odtModal" style="display: none;">
+    <div class="modal-content" style="max-width: 600px; padding: 2rem;">
+      <button class="modal-close" onclick="app.closeOdtModal()"><i class="fa-solid fa-xmark"></i></button>
+      
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--border-color); padding-bottom:1rem; margin-bottom:1.5rem;">
+        <div>
+          <h3 style="margin:0; font-family:var(--font-header); font-weight:800; font-size:1.25rem; color:var(--text-main); display:flex; align-items:center; gap:0.4rem;">
+            <i class="fa-solid fa-flask text-primary"></i> Öğrenme Doğrulama Testi (ÖDT)
+          </h3>
+          <p id="odtModalSubTitle" style="margin:0.25rem 0 0; color:var(--text-muted); font-size:0.8rem; font-weight:600;"></p>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:0.8rem; color:var(--text-muted); font-weight:700;">Kalan Süre</div>
+          <div id="odtTimerVal" style="font-family:var(--font-header); font-weight:900; font-size:1.4rem; color:var(--primary);">15:00</div>
+        </div>
+      </div>
+
+      <!-- Question Content Area -->
+      <div id="odtQuestionArea" style="text-align:left; min-height:220px; display:flex; flex-direction:column; justify-content:space-between; margin-bottom:1.5rem;">
+        <!-- JS populated -->
+      </div>
+
+      <!-- Footer Buttons -->
+      <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-color); padding-top:1rem;">
+        <button class="btn btn-secondary" id="odtPrevBtn" onclick="app.odtPrevQuestion()">
+          <i class="fa-solid fa-chevron-left"></i> Önceki
+        </button>
+        <div id="odtQuestionProgressText" style="font-weight:700; font-size:0.85rem; color:var(--text-muted);">Soru 1/10</div>
+        <button class="btn btn-secondary" id="odtNextBtn" onclick="app.odtNextQuestion()">
+          Sonraki <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      </div>
+      
+      <div style="margin-top: 1rem; text-align: right;">
+        <button class="btn btn-primary" id="odtFinishBtn" onclick="app.odtFinishTest()" style="background:var(--success); border-color:var(--success); color:#fff; font-weight:800;">
+          <i class="fa-solid fa-square-check"></i> Sınavı Tamamla ve Sonuçları Gönder
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Day Details Modal (Tam Sayfa Görünüm) -->
+  <div class="modal-overlay" role="dialog" aria-modal="true" id="dayDetailsModal">
+    <div class="modal-content" style="max-width: 700px; padding: 2rem;">
+      <button class="modal-close" onclick="app.closeModal('dayDetailsModal')"><i class="fa-solid fa-xmark"></i></button>
+      
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:1rem; margin-bottom:1.5rem;">
+        <div>
+          <h2 id="dayModalTitle" style="font-size:1.5rem; color:var(--text-main); font-family:var(--font-header);">Gün 1 Programı</h2>
+          <p id="dayModalDate" style="color:var(--text-muted); font-size:0.85rem; font-weight:600;"></p>
+        </div>
+        <div style="text-align:right;">
+          <span style="font-weight:800; color:var(--primary); font-size:0.95rem;" id="dayModalProgressText">0/4 Tamamlandı</span>
+          <div style="background:rgba(0,0,0,0.05); width:130px; height:8px; border-radius:4px; margin-top:0.25rem;">
+            <div style="background:var(--primary); width:0%; height:100%; border-radius:4px;" id="dayModalProgressBar"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div id="dayModalTasksList" style="display:flex; flex-direction:column; gap:1rem; max-height:450px; overflow-y:auto; padding-right:0.5rem; text-align:left;">
+        <!-- JS rendered task items -->
+      </div>
+      
+      <div style="display:flex; justify-content:flex-end; margin-top:1.5rem; border-top:1px solid var(--border-color); padding-top:1rem;">
+        <button class="btn btn-secondary" onclick="app.closeModal('dayDetailsModal')">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Chat Companion Bot Widget -->
+  <div id="aiChatbotWrapper" style="position: fixed; bottom: 20px; right: 20px; z-index: 10000; font-family: var(--font-main); display: none; flex-direction: column; align-items: flex-end; gap: 10px;">
+    <!-- Chat Window Container -->
+    <div id="aiChatWindow" style="display: none; width: 360px; height: 480px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); flex-direction: column; overflow: hidden; margin-bottom: 10px; transition: all 0.3s ease;">
+      <!-- Chat Header -->
+      <div style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <svg viewBox="0 0 120 140" style="width: 26px; height: 30px; flex-shrink: 0; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));">
+            <g transform="rotate(-10 60 70)">
+              <path d="M46 72 Q34 76 31 86" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round"></path>
+              <circle cx="31" cy="87" r="4" fill="#FFD93B" stroke="#FFFFFF" stroke-width="3"></circle>
+              <path d="M74 68 Q86 62 89 52" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round"></path>
+              <circle cx="89" cy="51" r="4" fill="#FFD93B" stroke="#FFFFFF" stroke-width="3"></circle>
+              <path d="M89 47 Q95 40 91 34" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-dasharray="1 4" stroke-linecap="round"></path>
+              <circle cx="91" cy="31" r="5.5" fill="#E45C7F" stroke="#FFFFFF" stroke-width="3"></circle>
+              <rect x="94" y="27" width="6" height="4.5" rx="1.5" fill="#E45C7F" stroke="#FFFFFF" stroke-width="2.5"></rect>
+              <rect x="46" y="8" width="28" height="15" rx="7" fill="#FFB3C7" stroke="#FFFFFF" stroke-width="3"></rect>
+              <rect x="46" y="22" width="28" height="8" fill="#D9DCE5" stroke="#FFFFFF" stroke-width="3"></rect>
+              <path d="M50 24v4M56 24v4M62 24v4M68 24v4" stroke="#FFFFFF" stroke-width="1.8" opacity="0.6"></path>
+              <rect x="46" y="30" width="28" height="60" fill="#FFD93B" stroke="#FFFFFF" stroke-width="3"></rect>
+              <path d="M55 30v60M65 30v60" stroke="#FFFFFF" stroke-width="1.8" opacity="0.3"></path>
+              <rect x="45" y="38" width="30" height="7" fill="#E45C7F" stroke="#FFFFFF" stroke-width="3"></rect>
+              <circle cx="55" cy="55" r="2.8" fill="#1E2A4A"></circle>
+              <circle cx="66" cy="55" r="2.8" fill="#1E2A4A"></circle>
+              <path d="M55.5 64 Q60.5 69 65.5 64" fill="none" stroke="#1E2A4A" stroke-width="3.5" stroke-linecap="round"></path>
+              <circle cx="50.5" cy="61" r="3" fill="#FFB3C7" opacity="0.9"></circle>
+              <circle cx="70.5" cy="61" r="3" fill="#FFB3C7" opacity="0.9"></circle>
+              <path d="M46 90 L74 90 L60 116 Z" fill="#F2D6A8" stroke="#FFFFFF" stroke-width="3" stroke-linejoin="round"></path>
+              <path d="M55 106 L65 106 L60 116 Z" fill="#FFFFFF"></path>
+            </g>
+          </svg>
+          <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem;">
+            <div style="display: flex; align-items: center; gap: 0.35rem;">
+              <h4 style="margin: 0; font-size: 0.95rem; font-weight: 800; font-family: var(--font-header);">DEFNE</h4>
+              <span style="padding: 0.05rem 0.35rem; font-size: 0.55rem; font-weight: 700; background: #f59e0b; color: #fff; border-radius: 4px; display: inline-flex; align-items: center; gap: 2px;">
+                <i class="fa-solid fa-bolt" style="font-size: 0.45rem;"></i> Pro
+              </span>
+            </div>
+            <span style="font-size: 0.65rem; color: rgba(255,255,255,0.85); display: flex; align-items: center; gap: 0.25rem;"><span style="width: 6px; height: 6px; background: #10b981; border-radius: 50%;"></span> Çevrimiçi</span>
+          </div>
+        </div>
+        <button style="background: none; border: none; color: #fff; cursor: pointer; font-size: 1rem; padding: 0.25rem;" onclick="app.toggleChatWindow()"><i class="fa-solid fa-chevron-down"></i></button>
+      </div>
+
+      <!-- Chat Messages Body -->
+      <div id="aiChatMessages" style="flex: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; background: rgba(0,0,0,0.01);">
+        <!-- Bot Welcome -->
+        <div style="display: flex; gap: 0.5rem; align-items: flex-start; max-width: 85%;">
+          <div style="flex-shrink: 0; width: 28px; height: 28px; background: var(--bg-sub); border-radius: 50%; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm); padding: 3px;">
+            <svg viewBox="0 0 120 140" style="width: 20px; height: 23px;"><g transform="rotate(-10 60 70)"><path d="M46 72 Q34 76 31 86" fill="none" stroke="#1E2A4A" stroke-width="3" stroke-linecap="round"></path><circle cx="31" cy="87" r="4" fill="#FFD93B" stroke="#1E2A4A" stroke-width="2.5"></circle><path d="M74 68 Q86 62 89 52" fill="none" stroke="#1E2A4A" stroke-width="3" stroke-linecap="round"></path><circle cx="89" cy="51" r="4" fill="#FFD93B" stroke="#1E2A4A" stroke-width="2.5"></circle><path d="M89 47 Q95 40 91 34" fill="none" stroke="#1E2A4A" stroke-width="2" stroke-dasharray="1 4" stroke-linecap="round"></path><circle cx="91" cy="31" r="5.5" fill="#E45C7F" stroke="#1E2A4A" stroke-width="2.5"></circle><rect x="94" y="27" width="6" height="4.5" rx="1.5" fill="#E45C7F" stroke="#1E2A4A" stroke-width="2"></rect><rect x="46" y="8" width="28" height="15" rx="7" fill="#FFB3C7" stroke="#1E2A4A" stroke-width="2.5"></rect><rect x="46" y="22" width="28" height="8" fill="#D9DCE5" stroke="#1E2A4A" stroke-width="2.5"></rect><path d="M50 24v4M56 24v4M62 24v4M68 24v4" stroke="#1E2A4A" stroke-width="1.4" opacity="0.5"></path><rect x="46" y="30" width="28" height="60" fill="#FFD93B" stroke="#1E2A4A" stroke-width="2.5"></rect><path d="M55 30v60M65 30v60" stroke="#1E2A4A" stroke-width="1.4" opacity="0.22"></path><rect x="45" y="38" width="30" height="7" fill="#E45C7F" stroke="#1E2A4A" stroke-width="2.5"></rect><circle cx="55" cy="55" r="2.4" fill="#1E2A4A"></circle><circle cx="66" cy="55" r="2.4" fill="#1E2A4A"></circle><path d="M55.5 64 Q60.5 69 65.5 64" fill="none" stroke="#1E2A4A" stroke-width="2.5" stroke-linecap="round"></path><circle cx="50.5" cy="61" r="2.6" fill="#FFB3C7" opacity="0.85"></circle><circle cx="70.5" cy="61" r="2.6" fill="#FFB3C7" opacity="0.85"></circle><path d="M46 90 L74 90 L60 116 Z" fill="#F2D6A8" stroke="#1E2A4A" stroke-width="2.5" stroke-linejoin="round"></path><path d="M55 106 L65 106 L60 116 Z" fill="#1E2A4A"></path></g></svg>
+          </div>
+          <div style="background: var(--bg-card); border: 1px solid var(--border-color); padding: 0.5rem 0.75rem; border-radius: 0 12px 12px 12px; font-size: 0.8rem; line-height: 1.45; color: var(--text-main);">
+            Merhaba! Ben senin yapay zeka koç asistanınım. Programına ders ekleyip çıkarabilirim. 
+            <br><br>
+            <strong>Örnek komutlar:</strong>
+            <br>• <i>"Önümüzdeki hafta programına ekstra 30 dk matematik test ekle"</i>
+            <br>• <i>"Yarınki fizik çalışmasını sil"</i>
+            <br>• <i>"Pazartesi gününe 45 dk kitap okuma ekle"</i>
+          </div>
+      </div>
+      </div>
+
+      <!-- Chat Input Area -->
+      <div style="padding: 0.75rem; border-top: 1px solid var(--border-color); display: flex; gap: 0.5rem; background: var(--bg-card);">
+        <input type="text" id="aiChatInput" placeholder="AI Koçuna talimat yaz..." style="flex: 1; padding: 0.45rem 0.75rem; font-size: 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); outline: none;" onkeydown="if(event.key==='Enter') app.sendChatMessage()">
+        <button class="btn btn-primary" style="padding: 0.45rem 0.75rem; font-size: 0.8rem; border-radius: 8px; font-weight: 700; width: 45px; display: flex; align-items: center; justify-content: center;" onclick="app.sendChatMessage()">
+          <i class="fa-solid fa-paper-plane"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Coach speech bubble: daily briefing delivered by the pencil mascot -->
+    <div id="coachBriefBubble" class="coach-bubble" style="display: none;">
+      <button class="coach-bubble-close" onclick="app.closeCoachBubble()" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+      <div class="coach-bubble-title"><i class="fa-solid fa-wand-magic-sparkles"></i> Günlük Brifingin</div>
+      <p class="coach-bubble-text" id="coachBubbleText"></p>
+      <ul class="coach-bubble-tasks" id="coachBubbleTasks"></ul>
+      <div class="coach-bubble-actions">
+        <button class="coach-bubble-btn primary" onclick="app.openBriefingFromBubble()"><i class="fa-solid fa-list-check"></i> Detaylı Gör</button>
+        <button class="coach-bubble-btn" onclick="app.closeCoachBubble()">Tamam</button>
+      </div>
+    </div>
+
+    <!-- Floating Action Button Trigger (Pencil Coach Mascot) -->
+    <div id="aiChatTrigger"style="display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer;" role="button" tabindex="0" onclick="app.toggleChatWindow()">
+      <span style="display:none; font-family: var(--font-header); font-weight: 700; font-size: 0.85rem; color: var(--text-main); background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 99px; padding: 4px 12px; box-shadow: var(--shadow-sm); margin-bottom: -4px;"></span>
+      <button style="width: 70px; height: 70px; border-radius: 50%; background: var(--hl-yellow); border: 2px solid var(--text-main); display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 6px; box-shadow: 3px 3px 0 rgba(30,42,74,0.15); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05) rotate(-3deg)'" onmouseout="this.style.transform='scale(1)'">
+        <svg viewBox="0 0 120 140" style="width: 52px; height: 60px;">
+          <g transform="rotate(-10 60 70)">
+            <path d="M46 72 Q34 76 31 86" fill="none" stroke="#1E2A4A" stroke-width="3" stroke-linecap="round"></path>
+            <circle cx="31" cy="87" r="4" fill="#FFD93B" stroke="#1E2A4A" stroke-width="2.5"></circle>
+            <path d="M74 68 Q86 62 89 52" fill="none" stroke="#1E2A4A" stroke-width="3" stroke-linecap="round"></path>
+            <circle cx="89" cy="51" r="4" fill="#FFD93B" stroke="#1E2A4A" stroke-width="2.5"></circle>
+            <!-- whistle -->
+            <path d="M89 47 Q95 40 91 34" fill="none" stroke="#1E2A4A" stroke-width="2" stroke-dasharray="1 4" stroke-linecap="round"></path>
+            <circle cx="91" cy="31" r="5.5" fill="#E45C7F" stroke="#1E2A4A" stroke-width="2.5"></circle>
+            <rect x="94" y="27" width="6" height="4.5" rx="1.5" fill="#E45C7F" stroke="#1E2A4A" stroke-width="2"></rect>
+            <!-- eraser -->
+            <rect x="46" y="8" width="28" height="15" rx="7" fill="#FFB3C7" stroke="#1E2A4A" stroke-width="2.5"></rect>
+            <!-- metal band -->
+            <rect x="46" y="22" width="28" height="8" fill="#D9DCE5" stroke="#1E2A4A" stroke-width="2.5"></rect>
+            <path d="M50 24v4M56 24v4M62 24v4M68 24v4" stroke="#1E2A4A" stroke-width="1.4" opacity="0.5"></path>
+            <!-- pencil body -->
+            <rect x="46" y="30" width="28" height="60" fill="#FFD93B" stroke="#1E2A4A" stroke-width="2.5"></rect>
+            <path d="M55 30v60M65 30v60" stroke="#1E2A4A" stroke-width="1.4" opacity="0.22"></path>
+            <!-- head band -->
+            <rect x="45" y="38" width="30" height="7" fill="#E45C7F" stroke="#1E2A4A" stroke-width="2.5"></rect>
+            <!-- face -->
+            <circle cx="55" cy="55" r="2.4" fill="#1E2A4A"></circle>
+            <circle cx="66" cy="55" r="2.4" fill="#1E2A4A"></circle>
+            <path d="M55.5 64 Q60.5 69 65.5 64" fill="none" stroke="#1E2A4A" stroke-width="2.5" stroke-linecap="round"></path>
+            <circle cx="50.5" cy="61" r="2.6" fill="#FFB3C7" opacity="0.85"></circle>
+            <circle cx="70.5" cy="61" r="2.6" fill="#FFB3C7" opacity="0.85"></circle>
+            <!-- wood tip -->
+            <path d="M46 90 L74 90 L60 116 Z" fill="#F2D6A8" stroke="#1E2A4A" stroke-width="2.5" stroke-linejoin="round"></path>
+            <path d="M55 106 L65 106 L60 116 Z" fill="#1E2A4A"></path>
+          </g>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: Test Score Entry -->
+  <div class="modal-overlay" role="dialog" aria-modal="true" id="testScoreModal" style="z-index: 9999;">
+    <div class="modal-content" style="max-width: 640px; text-align: center; padding: 2.75rem;">
+      <div style="font-size: 3.75rem; margin-bottom: 0.75rem;">📝</div>
+      <h3 style="margin-bottom: 0.75rem; font-size: 1.5rem;">Test Sonucu Gir</h3>
+      <p style="font-size: 1rem; color: var(--text-muted); margin-bottom: 2rem;">Tamamladığın testin sonuçlarını girerek görevini tamamla. Doğru ve yanlış sayısını girmek zorunludur.</p>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; text-align: left;">
+        <div class="form-group">
+          <label style="font-size: 1rem;">Doğru Sayısı</label>
+          <input type="number" id="testScoreCorrect" min="0" max="200" placeholder="0" required style="padding: 0.9rem; border: 1.5px solid var(--border-color); border-radius: 10px; width: 100%; font-size: 1.4rem; font-weight: 800;">
+        </div>
+        <div class="form-group">
+          <label style="font-size: 1rem;">Yanlış Sayısı <span style="color: var(--danger);">*</span></label>
+          <input type="number" id="testScoreWrong" min="0" max="200" placeholder="0" required style="padding: 0.9rem; border: 1.5px solid var(--border-color); border-radius: 10px; width: 100%; font-size: 1.4rem; font-weight: 800;">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom: 2rem; text-align: left;">
+        <label style="font-size: 1rem;">Süre (Dakika)</label>
+        <input type="number" id="testScoreTime" min="1" max="300" value="30" required style="padding: 0.9rem; border: 1.5px solid var(--border-color); border-radius: 10px; width: 100%; font-size: 1.4rem; font-weight: 800;">
+      </div>
+
+      <!-- DENEME SINAVI: BÖLÜM BAZLI GİRİŞ (yalnızca deneme görevlerinde görünür) -->
+      <div id="mockSectionEntry" style="display:none; text-align:left; margin-bottom:1.5rem; border-top:1px dashed var(--border-color); padding-top:1.25rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; margin-bottom:0.5rem;" onclick="app.toggleMockSectionEntry()">
+          <label style="font-size:0.95rem; font-weight:800; margin:0;">
+            <i class="fa-solid fa-chart-simple text-primary"></i> Bölüm Bazlı Sonuç Girişi
+          </label>
+          <i class="fa-solid fa-chevron-down" id="mockSectionChevron" style="color:var(--text-muted); transition:transform 0.2s;"></i>
+        </div>
+        <p class="panel-intro" style="margin:0 0 0.75rem; font-size:0.78rem;">Her bölümün doğru/yanlış sayısını girersen AI hangi bölümün net kaybettirdiğini tespit edip programını buna göre günceller. Boş bırakırsan yalnızca genel sonuç kaydedilir.</p>
+        <div id="mockSectionRows" style="display:none; flex-direction:column; gap:0.5rem;"></div>
+      </div>
+
+      <div style="display: flex; gap: 1rem;">
+        <button class="btn btn-secondary" style="flex: 1; padding: 0.9rem; font-size: 1rem;" onclick="app.closeModal('testScoreModal')">İptal</button>
+        <button class="btn btn-primary" style="flex: 1; padding: 0.9rem; font-size: 1rem;" onclick="app.submitTestScore()"><i class="fa-solid fa-check"></i> Tamamla</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Akıllı Tekrar Seansı Modal -->
+  <div class="modal-overlay" role="dialog" aria-modal="true" id="smartReviewModal" style="z-index: 9999;">
+    <div class="modal-content" style="max-width: 560px; text-align: center;">
+      <button class="modal-close" onclick="app.closeModal('smartReviewModal')"><i class="fa-solid fa-xmark"></i></button>
+      <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🧠</div>
+      <h3 style="margin-bottom: 0.5rem;">AI Akıllı Tekrar Seansı</h3>
+      <p id="smartReviewWhyText" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; text-align: left;"></p>
+      <div id="smartReviewItemsList" style="text-align: left; margin-bottom: 1.5rem;"></div>
+      <button class="btn btn-primary" style="width: 100%; padding: 0.9rem; font-size: 1rem;" onclick="app.finishSmartReviewSession()"><i class="fa-solid fa-check-double"></i> Seansı Tamamla</button>
+    </div>
+  </div>
+
+  <!-- JavaScript Application Controller -->
+  <!-- Floating Focus Pomodoro Stopwatch Widget -->
+  <div id="floatingPomoWidget" class="collapsed" style="position: fixed; bottom: 20px; left: 20px; z-index: 10000; font-family: var(--font-main); display: none;">
+    
+    <!-- Full Pomo Content -->
+    <div class="glass-card full-pomo-content" style="width: 250px; padding: 0.85rem; border: 1.5px solid var(--border-color); border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 0.5rem; background: var(--bg-card) !important; border-color: var(--primary);">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px dashed var(--border-color); padding-bottom: 0.4rem; margin-bottom: 0.25rem;">
+        <span style="font-weight: 800; font-size: 0.85rem; color: var(--text-main); display: flex; align-items: center; gap: 0.35rem;">
+          <i class="fa-solid fa-stopwatch text-primary"></i> Odak Sayacı
+        </span>
+        <div style="display: flex; align-items: center; gap: 0.35rem;">
+          <span id="sidebarPomoTimer" aria-live="polite" style="font-family: var(--font-header); font-weight: 800; font-size: 1.15rem; color: var(--primary);">25:00</span>
+          <button style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0 2px;" onclick="app.togglePomoCollapse(true)" title="Küçült"><i class="fa-solid fa-compress" style="font-size: 0.75rem;"></i></button>
+        </div>
+      </div>
+      <div style="display: flex; gap: 0.35rem; align-items: center;">
+        <select id="sidebarPomoMinutes" onchange="app.changeSidebarPomoMinutes(this.value)" style="flex: 1.5; padding: 0.2rem; font-size: 0.75rem; font-weight: 700; height: 28px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); cursor: pointer;">
+          <option value="25">25 Dk Odak</option>
+          <option value="50">50 Dk Blok</option>
+          <option value="15">15 Dk Mola</option>
+        </select>
+        <button class="btn btn-primary" style="padding: 0.2rem 0.4rem; font-size: 0.75rem; font-weight: 800; height: 28px; flex: 1; border-radius: 6px; display: flex; align-items: center; justify-content: center; gap: 3px;" onclick="app.toggleSidebarPomo()" id="sidebarPomoBtn">Başlat</button>
+        <button class="btn btn-secondary" style="padding: 0.2rem 0.4rem; font-size: 0.75rem; font-weight: 800; height: 28px; flex: 0.8; border-radius: 6px; display: flex; align-items: center; justify-content: center;" onclick="app.resetSidebarPomo()">Sıfırla</button>
+      </div>
+    </div>
+
+    <!-- Mini (Collapsed) Pomo Content -->
+    <div class="glass-card mini-pomo-content" role="button" tabindex="0" onclick="app.togglePomoCollapse(false)" style="width: 58px; height: 58px; border-radius: 50%; border: 1.5px solid var(--primary); box-shadow: 0 8px 20px rgba(0,0,0,0.15); display: none; align-items: center; justify-content: center; background: var(--bg-card) !important; cursor: pointer; transition: transform 0.2s; padding: 0;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" title="Odak Sayacını Aç">
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; margin: 0; padding: 0;">
+        <i class="fa-solid fa-stopwatch text-primary" style="font-size: 0.9rem; margin-bottom: 2px;"></i>
+        <span id="miniPomoTimer" aria-live="polite" style="font-family: var(--font-header); font-weight: 800; font-size: 0.72rem; color: var(--text-main); line-height: 1; margin: 0; padding: 0;">25:00</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- AI Calculation Loading Overlay -->
+  <div id="aiCalcOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.75); backdrop-filter:blur(8px); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:var(--bg-card, #1e293b); border: 2px solid #8b5cf6; border-radius:16px; padding:2.5rem 3rem; text-align:center; box-shadow:0 8px 40px rgba(139, 92, 246, 0.4); max-width:360px; animation: aiCalcPulse 1.5s ease-in-out infinite;">
+      <div id="aiCalcIconContainer" style="font-size:2.5rem; margin-bottom:1rem; color: #a78bfa; min-height: 70px; display:flex; justify-content:center; align-items:center;">
+        <svg viewBox="0 0 120 140" style="width: 56px; height: 65px; display:inline-block; animation: aiPenWrite 1.5s infinite alternate ease-in-out;">
+          <g transform="rotate(-10 60 70)">
+            <path d="M46 72 Q34 76 31 86" fill="none" stroke="#a78bfa" stroke-width="3" stroke-linecap="round"></path>
+            <circle cx="31" cy="87" r="4" fill="#8b5cf6" stroke="#a78bfa" stroke-width="2.5"></circle>
+            <path d="M74 68 Q86 62 89 52" fill="none" stroke="#a78bfa" stroke-width="3" stroke-linecap="round"></path>
+            <circle cx="89" cy="51" r="4" fill="#8b5cf6" stroke="#a78bfa" stroke-width="2.5"></circle>
+            <rect x="46" y="8" width="28" height="15" rx="7" fill="#8b5cf6" stroke="#a78bfa" stroke-width="2.5"></rect>
+            <rect x="46" y="22" width="28" height="8" fill="#c4b5fd" stroke="#a78bfa" stroke-width="2.5"></rect>
+            <rect x="46" y="30" width="28" height="60" fill="#ede9fe" stroke="#a78bfa" stroke-width="2.5"></rect>
+            <path d="M46 90 L74 90 L60 116 Z" fill="#c4b5fd" stroke="#a78bfa" stroke-width="2.5" stroke-linejoin="round"></path>
+            <path d="M55 106 L65 106 L60 116 Z" fill="#8b5cf6"></path>
+          </g>
+        </svg>
+      </div>
+      <h3 style="font-family:var(--font-header, 'Outfit', sans-serif); font-weight:800; color:#c4b5fd; margin:0 0 0.5rem; font-size:1.2rem;" id="aiCalcTitle">AI Düşünüyor...</h3>
+      <p style="font-size:0.85rem; color:#a78bfa; margin:0 0 1.5rem;" id="aiCalcMsg">Sizin için en iyi rotayı çiziyorum...</p>
+      <div style="width:50px; height:50px; margin:0 auto; border:4px solid rgba(139, 92, 246, 0.2); border-top:4px solid #8b5cf6; border-radius:50%; animation: aiCalcSpin 0.8s linear infinite;"></div>
+    </div>
+  </div>
+  <style>
+    @keyframes aiCalcSpin { to { transform: rotate(360deg); } }
+    @keyframes aiCalcPulse { 0%,100% { transform: scale(1); box-shadow:0 8px 40px rgba(139, 92, 246, 0.3); } 50% { transform: scale(1.02); box-shadow:0 8px 60px rgba(139, 92, 246, 0.6); } }
+    @keyframes aiPenWrite { 0% { transform: translate(0, 0) rotate(0deg); } 25% { transform: translate(6px, -6px) rotate(6deg); } 50% { transform: translate(0, 0) rotate(0deg); } 75% { transform: translate(-6px, -6px) rotate(-6deg); } 100% { transform: translate(0, 0) rotate(0deg); } }
+  </style>
+
+  <!-- Subscription Modal -->
+  <div id="subscriptionModal" class="modal-overlay" style="display:none; align-items:center; justify-content:center;">
+    <div class="glass-card modal-content" style="max-width: 600px; padding: 2rem; position: relative;">
+      <button class="close-btn" onclick="app.closeSubscriptionModal()" style="position: absolute; top: 1rem; right: 1rem; background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);"><i class="fa-solid fa-times"></i></button>
+      <h2 style="text-align: center; margin-bottom: 0.5rem; font-family: var(--font-header); font-weight: 800; color: var(--text-main);"><i class="fa-solid fa-crown text-warning"></i> DEFNE PRO'ya Yükselt</h2>
+      <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem;">YKS maratonunda sınırları kaldır, yapay zeka ile 1 adım öne geç.</p>
+      
+      <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
+        
+        <!-- Monthly Plan -->
+        <div class="glass-card" style="flex: 1; min-width: 250px; text-align: center; border: 2px solid var(--border-color); cursor: pointer; transition: 0.3s; padding: 1.5rem;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border-color)'" role="button" tabindex="0" onclick="app.upgradeToPro('monthly')">
+          <h3 style="font-family: var(--font-header); font-weight: 800; margin-bottom: 0.5rem;">Aylık Plan</h3>
+          <div style="font-size: 2rem; font-weight: 800; color: var(--primary); margin-bottom: 1rem;">349 ₺<span style="font-size:0.9rem; color:var(--text-muted);"> / ay</span></div>
+          <ul style="text-align: left; list-style: none; padding: 0; margin: 0 0 1.5rem; font-size: 0.85rem; color: var(--text-main); display:flex; flex-direction:column; gap:0.5rem;">
+            <li><i class="fa-solid fa-check text-success"></i> Sınırsız AI Hata Çözüm Asistanı</li>
+            <li><i class="fa-solid fa-check text-success"></i> Detaylı Haftalık Veli Raporu</li>
+            <li><i class="fa-solid fa-check text-success"></i> Sınırsız Çalışma Analizi</li>
+            <li><i class="fa-solid fa-check text-success"></i> Kişiselleştirilmiş Rutinler</li>
+          </ul>
+          <button class="btn btn-primary" style="width: 100%;">Aylık Başla</button>
+        </div>
+
+        <!-- Yearly Plan -->
+        <div class="glass-card" style="flex: 1; min-width: 250px; text-align: center; border: 2px solid var(--primary); position: relative; cursor: pointer; transition: 0.3s; padding: 1.5rem;" role="button" tabindex="0" onclick="app.upgradeToPro('yearly')">
+          <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--primary); color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: bold;">En Avantajlı</div>
+          <h3 style="font-family: var(--font-header); font-weight: 800; margin-bottom: 0.5rem;">Yıllık Plan</h3>
+          <div style="font-size: 2rem; font-weight: 800; color: var(--primary); margin-bottom: 1rem;">2.499 ₺<span style="font-size:0.9rem; color:var(--text-muted);"> / yıl</span></div>
+          <div style="font-size: 0.8rem; color: var(--success); margin-top: -0.75rem; margin-bottom: 1rem; font-weight: bold;">%40 İndirimli</div>
+          <ul style="text-align: left; list-style: none; padding: 0; margin: 0 0 1.5rem; font-size: 0.85rem; color: var(--text-main); display:flex; flex-direction:column; gap:0.5rem;">
+            <li><i class="fa-solid fa-check text-success"></i> Tüm PRO Özellikleri</li>
+            <li><i class="fa-solid fa-check text-success"></i> Öncelikli Destek</li>
+            <li><i class="fa-solid fa-check text-success"></i> Yıl Boyunca Fiyat Garantisi</li>
+          </ul>
+          <button class="btn btn-primary" style="width: 100%;">Yıllık Başla</button>
+        </div>
+
+      </div>
+      
+      <div style="text-align: center; margin-top: 1.5rem;">
+        <button class="btn btn-secondary" style="width: 100%; max-width: 300px; border: 1px solid var(--text-muted); color: var(--text-main); background: transparent; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'" onclick="app.upgradeToPro('trial')">7 Gün Ücretsiz Deneme ile Başla</button>
+      </div>
+
+      <p style="text-align: center; font-size: 0.75rem; color: var(--text-muted); margin-top: 1.5rem;">Ödemeleriniz güvenli altyapı üzerinden gerçekleşir. İstediğiniz zaman iptal edebilirsiniz.</p>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <!-- PDF okuma: metin katmanı olan PDF'lerde OCR'a hiç gerek kalmaz,
+       taranmış PDF'lerde sayfalar görsele çevrilip OCR'a verilir. -->
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+    }
+  </script>
+  <script src="js/notifications/NotificationManager.js"></script>
+
+  <!-- QUOTE POPUP (first login of session) -->
+  <div class="quote-popup-overlay" id="quotePopupOverlay" style="display: none;">
+    <div class="quote-popup-card">
+      <svg class="quote-popup-mascot" viewBox="0 0 120 140">
+        <g transform="rotate(-10 60 70)">
+          <path d="M46 72 Q34 76 31 86" fill="none" stroke="#1E2A4A" stroke-width="3" stroke-linecap="round"></path>
+          <circle cx="31" cy="87" r="4" fill="#FFD93B" stroke="#1E2A4A" stroke-width="2.5"></circle>
+          <path d="M74 68 Q86 62 89 52" fill="none" stroke="#1E2A4A" stroke-width="3" stroke-linecap="round"></path>
+          <circle cx="89" cy="51" r="4" fill="#FFD93B" stroke="#1E2A4A" stroke-width="2.5"></circle>
+          <rect x="46" y="8" width="28" height="15" rx="7" fill="#FFB3C7" stroke="#1E2A4A" stroke-width="2.5"></rect>
+          <rect x="46" y="22" width="28" height="8" fill="#D9DCE5" stroke="#1E2A4A" stroke-width="2.5"></rect>
+          <rect x="46" y="30" width="28" height="60" fill="#FFD93B" stroke="#1E2A4A" stroke-width="2.5"></rect>
+          <rect x="45" y="38" width="30" height="7" fill="#E45C7F" stroke="#1E2A4A" stroke-width="2.5"></rect>
+          <circle cx="55" cy="55" r="2.4" fill="#1E2A4A"></circle>
+          <circle cx="66" cy="55" r="2.4" fill="#1E2A4A"></circle>
+          <path d="M55.5 64 Q60.5 69 65.5 64" fill="none" stroke="#1E2A4A" stroke-width="2.5" stroke-linecap="round"></path>
+          <circle cx="50.5" cy="61" r="2.6" fill="#FFB3C7" opacity="0.85"></circle>
+          <circle cx="70.5" cy="61" r="2.6" fill="#FFB3C7" opacity="0.85"></circle>
+          <path d="M46 90 L74 90 L60 116 Z" fill="#F2D6A8" stroke="#1E2A4A" stroke-width="2.5" stroke-linejoin="round"></path>
+          <path d="M55 106 L65 106 L60 116 Z" fill="#1E2A4A"></path>
+        </g>
+      </svg>
+      <span class="quote-popup-eyebrow"><i class="fa-solid fa-quote-left"></i> Günün Sözü</span>
+      <p class="quote-popup-text" id="quotePopupText">...</p>
+      <p class="quote-popup-author" id="quotePopupAuthor">—</p>
+      <button class="quote-popup-btn" onclick="app.closeQuotePopup()">Hadi Başlayalım! 🚀</button>
+    </div>
+  </div>
+
+  <!-- DAILY BRIEFING POPUP -->
+  <div class="quote-popup-overlay" id="briefingPopupOverlay" style="display: none;">
+    <div class="quote-popup-card briefing-popup-card">
+      <span class="quote-popup-eyebrow"><i class="fa-solid fa-robot"></i> AI Koç Günlük Brifingi</span>
+      <p class="quote-popup-text" id="briefingPopupTitle" style="font-size: 1rem;">Bugünkü Planın</p>
+      <p style="font-size: 0.82rem; color: var(--text-main); font-weight: 600; line-height: 1.5; margin: 0 0 0.5rem; text-align: left;" id="briefingPopupText">Analiz ediliyor...</p>
+      <ul class="briefing-task-list" id="briefingPopupTasks"></ul>
+      <div style="display: flex; gap: 0.75rem;">
+        <button class="quote-popup-btn" style="background: var(--bg-card); color: var(--text-main); border: 1.5px solid var(--border-color);" onclick="app.openNotificationCenter()">Bildirimler</button>
+        <button class="quote-popup-btn" onclick="app.closeBriefingPopup()">Anlaşıldı, Başlıyorum!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTIFICATION CENTER MODAL -->
+  <div class="modal-overlay" role="dialog" aria-modal="true" id="notificationCenterModal">
+    <div class="modal-content" style="max-width: 560px; text-align: left; padding: 2rem;">
+      <button class="modal-close" onclick="app.closeModal('notificationCenterModal')"><i class="fa-solid fa-xmark"></i></button>
+      <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1.25rem;">
+        <span class="stat-icon-badge" style="background: var(--ai-gradient);"><i class="fa-solid fa-bell"></i></span>
+        <h2 style="margin: 0; font-family: var(--font-header); font-weight: 800; font-size: 1.15rem;">Bildirimler</h2>
+        <button onclick="app.clearNotifications()" style="margin-left: auto; background: transparent; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.3rem 0.7rem; font-size: 0.72rem; font-weight: 700; color: var(--text-muted); cursor: pointer;">Tümünü Temizle</button>
+      </div>
+      <div id="notificationCenterList" style="max-height: 420px; overflow-y: auto;"></div>
+    </div>
+  </div>
+
+  <!-- SUMMARY POPUP (day / week / month) -->
+  <div class="quote-popup-overlay" id="summaryPopupOverlay" style="display: none;">
+    <div class="quote-popup-card briefing-popup-card">
+      <span class="quote-popup-eyebrow" id="summaryPopupEyebrow"><i class="fa-solid fa-chart-pie"></i> Günlük Özet</span>
+      <p class="quote-popup-text" id="summaryPopupTitle" style="font-size: 1rem;">Bugünü Tamamladın!</p>
+      <div id="summaryPopupBody" style="text-align: left; font-size: 0.82rem; color: var(--text-main); font-weight: 600; line-height: 1.6; margin-bottom: 1.25rem;"></div>
+      <div id="summaryParentNote" style="font-size: 0.72rem; color: var(--text-muted); background: var(--ai-tint); border: 1px solid var(--ai-border); border-radius: 8px; padding: 0.6rem 0.8rem; margin-bottom: 1rem; text-align: left;"></div>
+      <button class="quote-popup-btn" onclick="app.closeSummaryPopup()">Kapat</button>
+    </div>
+  </div>
+
+  <script src="curriculum.js?v=3"></script>
+  <script src="questions.js"></script>
+  <script src="quotes.js?v=1"></script>
+  <script src="app.js?v=83"></script>
+</body>
+</html>

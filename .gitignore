@@ -1,0 +1,13 @@
+# Eski denemeler, testler ve loglar — yayına girmez
+_archive/
+çalışma plan mimarisi/
+
+# Araç/oturum klasörleri
+.claude/
+.agents/
+
+# Netlify için hazırlanan kopya (kaynak zaten kök dizinde)
+yayin/
+
+# İşletim sistemi
+.DS_Store
