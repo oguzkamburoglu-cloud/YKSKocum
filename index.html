@@ -752,13 +752,13 @@
                   <i class="fa-solid fa-calendar-day text-secondary"></i> Çalışma Programım
                 </h4>
 
-                <!-- Aktif program salt-okunur göstergesi + yönetime yönlendirme -->
+                <!-- Hangi programın aktif olduğunu gösteren salt-okunur etiket.
+                     "Programı Yönet" düğmesi kaldırıldı: yalnızca Program
+                     Sihirbazı'na gidiyordu ve o zaten ana sayfada kart olarak
+                     duruyor; taşınacak ayrı bir işlevi yoktu. -->
                 <span style="display:inline-flex; align-items:center; gap:0.35rem; padding:0.25rem 0.6rem; font-size:0.72rem; font-weight:700; border-radius:99px; background:var(--ai-tint); border:1px solid var(--ai-border); color:var(--primary); white-space:nowrap;">
                   <i class="fa-solid fa-circle-play" style="font-size:0.6rem;"></i> <span id="activeProgramNameLabel">AI Standart Planı</span>
                 </span>
-                <button class="btn btn-secondary" style="padding: 0 0.6rem; font-size: 0.7rem; height: 28px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-weight: 800;" onclick="app.switchTab('programCreator')">
-                  <i class="fa-solid fa-sliders"></i> Programı Yönet
-                </button>
               </div>
 
               <div class="sub-tabs-grid" style="display: grid; gap: 0.5rem; width: 100%; max-width: 420px;">
@@ -2252,6 +2252,6 @@
   <script src="curriculum.js?v=3"></script>
   <script src="questions.js"></script>
   <script src="quotes.js?v=1"></script>
-  <script src="app.js?v=87"></script>
+  <script src="app.js?v=88"></script>
 </body>
 </html>
