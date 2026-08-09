@@ -909,16 +909,12 @@
                    mod seçicinin altında birleştirildi; hiçbir yetenek kaldırılmadı. -->
               <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.25rem;">
                 <button class="btn btn-secondary program-mode-btn active" id="progModeBtn-ai" onclick="app.setProgramCreatorMode('ai')"
-                        style="flex:1; min-width:150px; font-weight:800; font-size:0.82rem;">
+                        style="flex:1; min-width:170px; font-weight:800; font-size:0.85rem;">
                   <i class="fa-solid fa-wand-magic-sparkles"></i> AI Oluştursun
                 </button>
                 <button class="btn btn-secondary program-mode-btn" id="progModeBtn-custom" onclick="app.setProgramCreatorMode('custom')"
-                        style="flex:1; min-width:150px; font-weight:800; font-size:0.82rem;">
+                        style="flex:1; min-width:170px; font-weight:800; font-size:0.85rem;">
                   <i class="fa-solid fa-pen-ruler"></i> Kendim Yapayım
-                </button>
-                <button class="btn btn-secondary program-mode-btn" id="progModeBtn-photo" onclick="app.setProgramCreatorMode('photo')"
-                        style="flex:1; min-width:150px; font-weight:800; font-size:0.82rem;">
-                  <i class="fa-solid fa-camera"></i> Fotoğraftan
                 </button>
               </div>
 
@@ -961,31 +957,6 @@
                 </button>
               </div>
 
-              <!-- AI Tahsis Motoru — oluşturulan programın süre/ders dağılımını açıklayan katman -->
-              <div class="glass-card" id="studyAllocationCard" style="padding: 1.1rem; margin-bottom: 1.5rem; border-color: var(--ai-border); background: var(--ai-tint);">
-                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; cursor:pointer;" onclick="app.toggleStudyAllocationCard()">
-                  <h4 style="margin:0; display:flex; align-items:center; gap:0.5rem; font-family:var(--font-header); font-weight:800; font-size:0.88rem;">
-                    <span class="ai-helper-icon" style="width:26px; height:26px; border-radius:8px; font-size:0.7rem;"><i class="fa-solid fa-scale-balanced"></i></span>
-                    AI Tahsis Motoru <span id="studyAllocationTimeLabel" style="font-weight:700; color:var(--text-muted); font-size:0.72rem;"></span>
-                  </h4>
-                  <i class="fa-solid fa-chevron-down" id="studyAllocationChevron" style="color:var(--text-muted); transition:transform 0.2s;"></i>
-                </div>
-                <p class="panel-intro" style="margin:0.5rem 0 0; font-size:0.78rem;">Oluşturulan programın bugünkü süresini TYT/AYT ve derslere nasıl paylaştırdığını gösterir; dengeyi dilediğin oranda elle de ayarlayabilirsin.</p>
-                <div id="studyAllocationBody" style="display:none; margin-top:0.9rem;">
-                  <div id="studyAllocationTytAyt" style="margin-bottom:0.9rem;"></div>
-                  <div id="studyAllocationManualControl" style="display:none; align-items:center; gap:0.6rem; margin-bottom:0.9rem; padding:0.5rem 0.6rem; background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px;">
-                    <label style="font-size:0.68rem; font-weight:800; color:var(--text-muted); white-space:nowrap;">Manuel Denge:</label>
-                    <input type="range" min="0" max="100" step="5" id="tytAytManualSlider" oninput="app.setManualTytAytSplit(this.value)" style="flex:1;">
-                    <span id="tytAytManualLabel" style="font-size:0.68rem; font-weight:800; color:var(--text-main); white-space:nowrap; min-width:120px; text-align:right;"></span>
-                    <button class="btn btn-secondary" style="padding:0.2rem 0.5rem; font-size:0.62rem; font-weight:800; white-space:nowrap;" onclick="app.resetTytAytSplit()"><i class="fa-solid fa-rotate"></i> AI Otomatik</button>
-                  </div>
-                  <div id="studyAllocationLessons" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:0.6rem; margin-bottom:0.9rem;"></div>
-                  <div id="studyAllocationPortfolio" style="margin-bottom:0.9rem;"></div>
-                  <p id="studyAllocationExplanation" style="font-size:0.78rem; color:var(--text-main); line-height:1.5; margin:0; padding-top:0.75rem; border-top:1px solid var(--border-color);"></p>
-                </div>
-              </div>
-
-              <!-- ============ SECTION B: KENDİ ÖZEL PROGRAM OLUŞTURUCU ============ -->
               <div id="progMode-custom" style="display:none; border: 1.5px solid var(--border-color); border-radius: 14px; padding: 1.5rem;">
                 <h3 style="margin: 0 0 0.4rem; font-size: 1.02rem; font-family: var(--font-header); font-weight: 800; color: var(--text-main); display:flex; align-items:center; gap:0.5rem;">
                   <i class="fa-solid fa-pen-ruler text-secondary"></i> Kendi Özel Program Oluşturucu
@@ -1017,13 +988,11 @@
                     <i class="fa-solid fa-trash-can"></i> Sil
                   </button>
                 </div>
-              </div>
-
               <!-- ============ SECTION C: FOTOĞRAFTAN PROGRAM OLUŞTURMA ============
                    Modül önceden planlayıcı modalının içinde gömülüydü; "Kendim
                    Yapayım" akışında beklenmedik şekilde karşıya çıkıyordu.
                    Artık kendi sekmesinde, olduğu gibi burada duruyor. -->
-              <div id="progMode-photo" style="display:none; border: 1.5px dashed var(--primary); border-radius: 14px; padding: 1.5rem;">
+              <div id="customPhotoSection" style="border: 1.5px dashed var(--primary); border-radius: 14px; padding: 1.5rem; margin-top: 1.5rem;">
                 <h3 style="margin: 0 0 0.4rem; font-size: 1.02rem; font-family: var(--font-header); font-weight: 800; color: var(--text-main); display:flex; align-items:center; gap:0.5rem;">
                   <i class="fa-solid fa-camera text-primary"></i> Fotoğraftan / PDF'ten Program Oluştur
                 </h3>
@@ -1047,6 +1016,31 @@
                 </div>
               </div>
 
+              <!-- AI Tahsis Motoru — oluşturulan programın süre/ders dağılımını açıklayan katman -->
+              <div class="glass-card" id="studyAllocationCard" style="padding: 1.1rem; margin-bottom: 1.5rem; border-color: var(--ai-border); background: var(--ai-tint);">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; cursor:pointer;" onclick="app.toggleStudyAllocationCard()">
+                  <h4 style="margin:0; display:flex; align-items:center; gap:0.5rem; font-family:var(--font-header); font-weight:800; font-size:0.88rem;">
+                    <span class="ai-helper-icon" style="width:26px; height:26px; border-radius:8px; font-size:0.7rem;"><i class="fa-solid fa-scale-balanced"></i></span>
+                    AI Tahsis Motoru <span id="studyAllocationTimeLabel" style="font-weight:700; color:var(--text-muted); font-size:0.72rem;"></span>
+                  </h4>
+                  <i class="fa-solid fa-chevron-down" id="studyAllocationChevron" style="color:var(--text-muted); transition:transform 0.2s;"></i>
+                </div>
+                <p class="panel-intro" style="margin:0.5rem 0 0; font-size:0.78rem;">Oluşturulan programın bugünkü süresini TYT/AYT ve derslere nasıl paylaştırdığını gösterir; dengeyi dilediğin oranda elle de ayarlayabilirsin.</p>
+                <div id="studyAllocationBody" style="display:none; margin-top:0.9rem;">
+                  <div id="studyAllocationTytAyt" style="margin-bottom:0.9rem;"></div>
+                  <div id="studyAllocationManualControl" style="display:none; align-items:center; gap:0.6rem; margin-bottom:0.9rem; padding:0.5rem 0.6rem; background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px;">
+                    <label style="font-size:0.68rem; font-weight:800; color:var(--text-muted); white-space:nowrap;">Manuel Denge:</label>
+                    <input type="range" min="0" max="100" step="5" id="tytAytManualSlider" oninput="app.setManualTytAytSplit(this.value)" style="flex:1;">
+                    <span id="tytAytManualLabel" style="font-size:0.68rem; font-weight:800; color:var(--text-main); white-space:nowrap; min-width:120px; text-align:right;"></span>
+                    <button class="btn btn-secondary" style="padding:0.2rem 0.5rem; font-size:0.62rem; font-weight:800; white-space:nowrap;" onclick="app.resetTytAytSplit()"><i class="fa-solid fa-rotate"></i> AI Otomatik</button>
+                  </div>
+                  <div id="studyAllocationLessons" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:0.6rem; margin-bottom:0.9rem;"></div>
+                  <div id="studyAllocationPortfolio" style="margin-bottom:0.9rem;"></div>
+                  <p id="studyAllocationExplanation" style="font-size:0.78rem; color:var(--text-main); line-height:1.5; margin:0; padding-top:0.75rem; border-top:1px solid var(--border-color);"></p>
+                </div>
+              </div>
+
+              <!-- ============ SECTION B: KENDİ ÖZEL PROGRAM OLUŞTURUCU ============ -->
               <!-- ÇALIŞMA TEMPOSU (ROTA) — Rota Rehberi kaldırılınca kontrolsüz
                    kalmıştı; tempo mantığı program üreticisini beslediği için
                    seçici buraya taşındı. Radyo adı (learningRoute) korunuyor. -->
@@ -1064,6 +1058,8 @@
                         style="width:100%; padding:0.7rem; font-size:0.88rem; font-weight:800; border-radius:8px;">
                   <i class="fa-solid fa-arrows-rotate"></i> Tempoyu Uygula ve Programı Güncelle
                 </button>
+              </div>
+
               </div>
 
               <!-- Müfredat haritası buradan kaldırıldı; artık ana sayfadan
@@ -2256,6 +2252,6 @@
   <script src="curriculum.js?v=3"></script>
   <script src="questions.js"></script>
   <script src="quotes.js?v=1"></script>
-  <script src="app.js?v=86"></script>
+  <script src="app.js?v=87"></script>
 </body>
 </html>

@@ -8625,9 +8625,15 @@ normalizeClause: function(clause) {
   },
 
   // Program oluşturma modu — üç yol tek seçicinin altında
+  // Program olusturma yalnizca IKI moddan ibarettir: AI olustursun / Kendim yapayim.
+  // Fotograftan aktarma, Tahsis Motoru ve Calisma Temposu artik ayri birer mod
+  // degil, "Kendim yapayim" panelinin ALT BOLUMLERIDIR; mod degisiminde ayrica
+  // gosterilip gizlenmeleri gerekmez.
   setProgramCreatorMode: function(mode) {
+    if (mode !== "ai" && mode !== "custom") mode = "ai";
     this._programCreatorMode = mode;
-    ["ai", "custom", "photo"].forEach(m => {
+
+    ["ai", "custom"].forEach(m => {
       const sec = document.getElementById(`progMode-${m}`);
       const btn = document.getElementById(`progModeBtn-${m}`);
       if (sec) sec.style.display = (m === mode) ? "block" : "none";
@@ -8638,9 +8644,6 @@ normalizeClause: function(clause) {
         btn.style.background = (m === mode) ? "var(--ai-tint)" : "var(--bg-card)";
       }
     });
-    // Tahsis Motoru yalnızca AI planı modunda anlamlı
-    const alloc = document.getElementById("studyAllocationCard");
-    if (alloc) alloc.style.display = (mode === "ai") ? "block" : "none";
   },
 
   toggleStudyAllocationCard: function() {
