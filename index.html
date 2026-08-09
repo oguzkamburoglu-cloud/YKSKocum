@@ -1680,7 +1680,7 @@
           <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.5rem; margin-bottom: 0.5rem;">
             <div class="form-group">
               <label style="font-size:0.7rem;">Ders</label>
-              <select id="plannerTaskSubject" style="padding:0.25rem; font-size:0.75rem;" onchange="app.plannerRefreshBookOptions()">
+              <select id="plannerTaskSubject" style="padding:0.25rem; font-size:0.75rem;" onchange="app.plannerRefreshBookOptions(); app.plannerRefreshTopicOptions();">
                 <option value="Matematik">Matematik</option>
                 <option value="Türkçe">Türkçe</option>
                 <option value="Fizik">Fizik</option>
@@ -1697,7 +1697,9 @@
             </div>
             <div class="form-group">
               <label style="font-size:0.7rem;">Yapılacak Çalışma</label>
-              <input type="text" id="plannerTaskTopic" style="padding:0.25rem; font-size:0.75rem; border: 1px solid var(--border-color); border-radius: 4px; height: 32px; width: 100%;" placeholder="Örn: Test 1 çöz veya Kitap oku">
+              <input type="text" id="plannerTaskTopic" list="plannerTopicList" autocomplete="off" onblur="app.plannerCanonicalizeTopic()" style="padding:0.25rem; font-size:0.75rem; border: 1px solid var(--border-color); border-radius: 4px; height: 32px; width: 100%;" placeholder="Birkaç harf yeter: türev, mutlak, ebob...">
+              <datalist id="plannerTopicList"><!-- JS: seçili dersin müfredat konularıyla doldurulur --></datalist>
+              <div id="plannerTopicHint" style="display:none; font-size:0.65rem; color:var(--primary); margin-top:0.2rem; font-weight:700;"></div>
             </div>
           </div>
           <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 0.5rem; align-items:flex-end;">
@@ -1712,7 +1714,7 @@
             </div>
             <div class="form-group">
               <label style="font-size:0.7rem;">Sınav Türü</label>
-              <select id="plannerTaskExamType" style="padding:0.25rem; font-size:0.75rem;">
+              <select id="plannerTaskExamType" style="padding:0.25rem; font-size:0.75rem;" onchange="app.plannerRefreshTopicOptions()">
                 <option value="TYT">TYT</option>
                 <option value="AYT">AYT</option>
                 <option value="Genel">Genel</option>
@@ -1737,17 +1739,17 @@
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.5rem;">
               <div class="form-group">
                 <label style="font-size:0.7rem;">Yayınevi</label>
-                <select id="plannerTaskPublisher" style="padding:0.25rem; font-size:0.75rem;" onchange="app.plannerRefreshBookOptions()">
-                  <option value="">Otomatik seç</option>
-                  <!-- JS: kaynak kitap kataloğundaki yayınevleriyle doldurulur -->
-                </select>
+                <input type="text" id="plannerTaskPublisher" list="plannerPublisherList" autocomplete="off"
+                       onchange="app.plannerCanonicalizePublisher()" placeholder="Boş = otomatik · örn: 3d, palme"
+                       style="padding:0.25rem; font-size:0.75rem; border:1px solid var(--border-color); border-radius:4px; height:32px; width:100%;">
+                <datalist id="plannerPublisherList"><!-- JS: katalogdaki yayınevleriyle doldurulur --></datalist>
               </div>
               <div class="form-group">
                 <label style="font-size:0.7rem;">Kitap</label>
-                <select id="plannerTaskBook" style="padding:0.25rem; font-size:0.75rem;">
-                  <option value="">Önce yayınevi seç</option>
-                  <!-- JS: seçilen yayınevinin kitaplarıyla doldurulur -->
-                </select>
+                <input type="text" id="plannerTaskBook" list="plannerBookList" autocomplete="off"
+                       onchange="app.plannerCanonicalizeBook()" placeholder="Önce yayınevi seç"
+                       style="padding:0.25rem; font-size:0.75rem; border:1px solid var(--border-color); border-radius:4px; height:32px; width:100%;">
+                <datalist id="plannerBookList"><!-- JS: seçilen yayınevinin kitaplarıyla doldurulur --></datalist>
               </div>
               <div class="form-group">
                 <label style="font-size:0.7rem;">Test / Bölüm No</label>
@@ -2262,6 +2264,6 @@
   <script src="curriculum.js?v=3"></script>
   <script src="questions.js"></script>
   <script src="quotes.js?v=1"></script>
-  <script src="app.js?v=89"></script>
+  <script src="app.js?v=94"></script>
 </body>
 </html>

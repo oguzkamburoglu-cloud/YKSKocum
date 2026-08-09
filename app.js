@@ -12157,53 +12157,106 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     this.showToast("Görevler AI öncelik skoruna göre yeniden sıralandı.", "success");
   },
 
-  // Planlayicidaki yayinevi listesini kaynak kitap katalogundan doldurur.
-  plannerPopulatePublisherOptions: function() {
-    const sel = document.getElementById("plannerTaskPublisher");
-    if (!sel) return;
-    const secili = sel.value;
-    sel.innerHTML = '<option value="">Otomatik seç</option>';
-    this.sourceBooks.publishers().forEach(pub => {
+  // Datalist doldurma yardimcisi
+  doldurListe: function(listId, degerler) {
+    const dl = document.getElementById(listId);
+    if (!dl) return;
+    dl.innerHTML = "";
+    degerler.forEach(v => {
       const o = document.createElement("option");
-      o.value = pub;
-      o.textContent = pub;
-      sel.appendChild(o);
+      o.value = typeof v === "string" ? v : v.value;
+      if (v && v.label) o.label = v.label;
+      dl.appendChild(o);
     });
-    if (secili) sel.value = secili;
+  },
+
+  // Yayinevi onerileri katalogdan gelir.
+  plannerPopulatePublisherOptions: function() {
+    this.doldurListe("plannerPublisherList", this.sourceBooks.publishers());
+    this.plannerRefreshBookOptions();
+    this.plannerRefreshTopicOptions();
+  },
+
+  // Secilen yayinevinin (ve dersin) kitaplari
+  plannerRefreshBookOptions: function() {
+    const pubEl = document.getElementById("plannerTaskPublisher");
+    const bookEl = document.getElementById("plannerTaskBook");
+    if (!pubEl || !bookEl) return;
+    const publisher = (pubEl.value || "").trim();
+    if (!publisher) {
+      this.doldurListe("plannerBookList", []);
+      bookEl.placeholder = "Boş = otomatik seçilir";
+      return;
+    }
+    const subjectEl = document.getElementById("plannerTaskSubject");
+    const kitaplar = this.sourceBooks.booksOf(publisher, subjectEl ? subjectEl.value : "");
+    this.doldurListe("plannerBookList", kitaplar.map(b => b.book));
+    bookEl.placeholder = kitaplar.length ? "Birkaç harf yeter" : "Bu yayınevinde kayıtlı kitap yok";
+  },
+
+  // Secili derse gore mufredat konulari
+  plannerRefreshTopicOptions: function() {
+    const subjectEl = document.getElementById("plannerTaskSubject");
+    const examEl = document.getElementById("plannerTaskExamType");
+    const ders = subjectEl ? subjectEl.value : "";
+    let konular = this.curriculumTopicNames(ders, examEl ? examEl.value : "");
+    if (!konular.length) konular = this.curriculumTopicNames(ders);
+    if (!konular.length) konular = this.curriculumTopicNames();
+    this.doldurListe("plannerTopicList", konular);
+  },
+
+  // Yazilan parcayi gercek adiyla degistirir; belirsizse dokunmaz ve
+  // kac aday oldugunu soyler. Yanlis konuya kayit yapmaktansa
+  // kullanicinin yazdigi gibi birakmak yeglenir.
+  _canonicalizeField: function(inputId, adaylar, ipucuId) {
+    const el = document.getElementById(inputId);
+    const ipucu = ipucuId ? document.getElementById(ipucuId) : null;
+    const temizle = () => { if (ipucu) { ipucu.style.display = "none"; ipucu.textContent = ""; } };
+    if (!el) return null;
+    const giris = (el.value || "").trim();
+    if (!giris) { temizle(); return null; }
+
+    const sonuc = this.resolveCanonicalName(giris, adaylar);
+    if (sonuc.ad) {
+      if (sonuc.ad !== giris) {
+        el.value = sonuc.ad;
+        if (ipucu) {
+          ipucu.textContent = `“${giris}” → ${sonuc.ad} olarak kaydedilecek`;
+          ipucu.style.display = "block";
+        }
+      } else temizle();
+      return sonuc.ad;
+    }
+    if (sonuc.adaylar.length > 1 && ipucu) {
+      ipucu.textContent = `${sonuc.adaylar.length} eşleşme var, listeden seç: ${sonuc.adaylar.slice(0, 3).join(" · ")}${sonuc.adaylar.length > 3 ? "…" : ""}`;
+      ipucu.style.display = "block";
+    } else temizle();
+    return null;
+  },
+
+  plannerCanonicalizeTopic: function() {
+    const subjectEl = document.getElementById("plannerTaskSubject");
+    const examEl = document.getElementById("plannerTaskExamType");
+    const ders = subjectEl ? subjectEl.value : "";
+    const sinav = examEl ? examEl.value : "";
+    let konular = this.curriculumTopicNames(ders, sinav);
+    if (!konular.length) konular = this.curriculumTopicNames(ders);
+    if (!konular.length) konular = this.curriculumTopicNames();
+    this._canonicalizeField("plannerTaskTopic", konular, "plannerTopicHint");
+  },
+
+  plannerCanonicalizePublisher: function() {
+    this._canonicalizeField("plannerTaskPublisher", this.sourceBooks.publishers());
     this.plannerRefreshBookOptions();
   },
 
-  // Secilen yayinevinin (ve dersin) kitaplarini kitap listesine yazar.
-  plannerRefreshBookOptions: function() {
-    const pubSel = document.getElementById("plannerTaskPublisher");
-    const bookSel = document.getElementById("plannerTaskBook");
-    if (!pubSel || !bookSel) return;
-
-    const publisher = pubSel.value;
-    if (!publisher) {
-      bookSel.innerHTML = '<option value="">Otomatik seç</option>';
-      return;
-    }
-
+  plannerCanonicalizeBook: function() {
+    const pubEl = document.getElementById("plannerTaskPublisher");
+    const publisher = pubEl ? (pubEl.value || "").trim() : "";
+    if (!publisher) return;
     const subjectEl = document.getElementById("plannerTaskSubject");
-    const subject = subjectEl ? subjectEl.value : "";
-    const onceki = bookSel.value;
-
-    const books = this.sourceBooks.booksOf(publisher, subject);
-    bookSel.innerHTML = books.length
-      ? '<option value="">Kitap seç...</option>'
-      : '<option value="">Bu yayınevinde kayıtlı kitap yok</option>';
-
-    books.forEach(b => {
-      const o = document.createElement("option");
-      o.value = b.book;
-      const tur = b.kind === "konu" ? "Konu Anlatımı" : b.kind === "deneme" ? "Deneme" : "Soru Bankası";
-      o.textContent = `${b.book} (${tur})`;
-      o.dataset.kind = b.kind;
-      bookSel.appendChild(o);
-    });
-
-    if (onceki && books.some(b => b.book === onceki)) bookSel.value = onceki;
+    const kitaplar = this.sourceBooks.booksOf(publisher, subjectEl ? subjectEl.value : "").map(b => b.book);
+    this._canonicalizeField("plannerTaskBook", kitaplar);
   },
 
   plannerAddTaskToSelectedDay: function() {
@@ -12230,6 +12283,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     const dayNum = parseInt(daySelect.value);
 
     const subject = document.getElementById("plannerTaskSubject").value;
+    this.plannerCanonicalizeTopic();
     const topic = document.getElementById("plannerTaskTopic").value;
     const type = document.getElementById("plannerTaskType").value;
     const examType = document.getElementById("plannerTaskExamType").value;
@@ -12287,6 +12341,10 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     // Kaynak: elle yayınevi + kitap seçildiyse o kullanılır, seçilmediyse
     // ders/sınav türüne göre otomatik atanır. Test/bölüm numarası her iki
     // durumda da göreve işlenir.
+    // Yazilan kisaltmalar kayittan ONCE gercek adlariyla degistirilir
+    this.plannerCanonicalizePublisher();
+    this.plannerCanonicalizeBook();
+
     const pubEl = document.getElementById("plannerTaskPublisher");
     const bookEl = document.getElementById("plannerTaskBook");
     const testEl = document.getElementById("plannerTaskTestNo");
@@ -12294,16 +12352,27 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     const secilenBook = bookEl ? bookEl.value.trim() : "";
     const testNo = testEl ? testEl.value.trim() : "";
 
-    if (secilenPub && secilenBook) {
-      const opt = bookEl.options[bookEl.selectedIndex];
+    // Yayinevi ve kitap YALNIZCA katalogda gercekten varsa kaydedilir.
+    // Yazilan parca birden fazla kitaba uyuyorsa (or. "ayt biyo") cozumleme
+    // basarisiz olur; o metni kitap adi diye kaydetmek uydurma veri uretir.
+    const gecerliPub = this.sourceBooks.publishers().indexOf(secilenPub) !== -1;
+    const gecerliKitap = gecerliPub &&
+      this.sourceBooks.booksOf(secilenPub, subject).some(b => b.book === secilenBook);
+
+    if (gecerliPub && gecerliKitap) {
+      const kayit = this.sourceBooks.booksOf(secilenPub, subject).find(b => b.book === secilenBook);
       newTask.source = {
         publisher: secilenPub,
         book: secilenBook,
-        kind: (opt && opt.dataset.kind) || this.sourceBooks.kindForTask(newTask)
+        kind: (kayit && kayit.kind) || this.sourceBooks.kindForTask(newTask)
       };
     } else {
       this.sourceBooks.attach(newTask);
-      if (secilenPub && !secilenBook) {
+      if (secilenPub && !gecerliPub) {
+        this.showToast(`"${secilenPub}" listede yok — kaynak otomatik atandı. Yayınevini listeden seç.`, "warning");
+      } else if (gecerliPub && secilenBook && !gecerliKitap) {
+        this.showToast(`"${secilenBook}" bu yayınevinde bulunamadı — kaynak otomatik atandı. Kitabı listeden seç.`, "warning");
+      } else if (gecerliPub && !secilenBook) {
         this.showToast("Yayınevi seçtin ama kitap seçmedin — kaynak otomatik atandı.", "warning");
       }
     }
@@ -13047,6 +13116,105 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     return null;
   },
 
+  // ADI TAMAMLAMA / GERCEK ADA COZUMLEME
+  // ------------------------------------------------------------
+  // Kullanicinin bir adin tamamini yazmasi beklenmez. Yazilan parca
+  // adaylardan biriyle yeterince ortusuyorsa kayit GERCEK ADIYLA yapilir
+  // ("mat" -> "Matematik", "3d yay" -> "3D Yayinlari").
+  //
+  // Kural: yazilan metin bir adayin herhangi bir KELIMESININ basiysa ve
+  // o kelimenin en az %30'u kadar uzunluktaysa eslesme sayilir. Yuzde
+  // kelime uzerinden hesaplanir; tum ifade uzerinden hesaplansaydi
+  // 49 harflik bir konu adi icin 15 harf yazmak gerekirdi.
+  //
+  // Birden fazla aday eslesirse ASLA tahmin edilmez — secim kullaniciya
+  // birakilir. Yanlis konuya kayit, hic kayit olmamasindan kotudur.
+  AD_COZUMLEME: { oran: 0.3, enAzHarf: 3 },
+
+  resolveCanonicalName: function(giris, adaylar, secenek) {
+    const ayar = Object.assign({}, this.AD_COZUMLEME, secenek || {});
+    const g = this.normalizeOcrText(String(giris || "")).trim();
+    const bos = { ad: null, kesin: false, adaylar: [] };
+    if (!g || !Array.isArray(adaylar) || !adaylar.length) return bos;
+
+    const norm = adaylar.map(a => ({ ad: a, n: this.normalizeOcrText(a).trim() }));
+
+    // 1) Tam eslesme — her zaman kazanir
+    const tam = norm.filter(c => c.n === g);
+    if (tam.length) return { ad: tam[0].ad, kesin: true, adaylar: [tam[0].ad] };
+
+    // Yazilan sey bir adayin TAM BIR KELIMESIYSE alt harf sinirina takilmaz:
+    // "3d" -> "3D Yayinlari" gecerli bir kisaltma.
+    const tamKelime = norm.filter(c => c.n.split(/[^a-z0-9]+/).indexOf(g) !== -1);
+    if (tamKelime.length === 1) return { ad: tamKelime[0].ad, kesin: true, adaylar: [tamKelime[0].ad] };
+
+    if (g.length < ayar.enAzHarf) {
+      return tamKelime.length > 1 ? { ad: null, kesin: false, adaylar: tamKelime.map(c => c.ad) } : bos;
+    }
+
+    const yeterli = (kelime) => g.length >= Math.max(1, Math.ceil(kelime.length * ayar.oran));
+
+    // 2) Ifadenin basindan eslesme (en guvenilir kismi eslesme)
+    let aday = norm.filter(c => c.n.startsWith(g) && yeterli(c.n.split(/[^a-z0-9]+/)[0] || c.n));
+    if (aday.length === 1) return { ad: aday[0].ad, kesin: true, adaylar: [aday[0].ad] };
+
+    // 3) Herhangi bir kelimenin basindan eslesme
+    if (aday.length !== 1) {
+      const kelimeEslesen = norm.filter(c =>
+        c.n.split(/[^a-z0-9]+/).some(k => k && k.startsWith(g) && yeterli(k)));
+      if (kelimeEslesen.length === 1) return { ad: kelimeEslesen[0].ad, kesin: true, adaylar: [kelimeEslesen[0].ad] };
+      if (kelimeEslesen.length > 1) aday = kelimeEslesen;
+    }
+
+    // 4) Belirtec eslesmesi — cekimli sonlari tolere eder.
+    // Girisin HER kelimesi, adayin bir kelimesiyle yeterince uzun ortak
+    // bir bas kismini paylasmali: "hucre bolunmesi" -> "Hucre Bolunmeleri",
+    // "elektrik alan" -> "Elektriksel Kuvvet ve Alan".
+    if (aday.length !== 1) {
+      const parcala = (x) => x.split(/[^a-z0-9]+/).filter(w => w.length > 1);
+      const girisKelimeleri = parcala(g);
+      if (girisKelimeleri.length) {
+        const ortakBas = (x, y) => { let i = 0; while (i < x.length && i < y.length && x[i] === y[i]) i++; return i; };
+        const belirtecEslesen = norm.filter(c => {
+          const adayKelimeleri = parcala(c.n);
+          return girisKelimeleri.every(gk =>
+            adayKelimeleri.some(ak => ortakBas(gk, ak) >= Math.max(3, Math.ceil(gk.length * 0.6))));
+        });
+        if (belirtecEslesen.length === 1) {
+          return { ad: belirtecEslesen[0].ad, kesin: false, adaylar: [belirtecEslesen[0].ad] };
+        }
+        if (belirtecEslesen.length > 1 && !aday.length) aday = belirtecEslesen;
+      }
+    }
+
+    // Belirsiz: adaylari dondur, tahmin etme
+    return { ad: null, kesin: false, adaylar: aday.map(c => c.ad) };
+  },
+
+  // Mufredattaki tum konu adlari (secili derse gore daraltilabilir)
+  curriculumTopicNames: function(subject, examType) {
+    const g = this.curriculum.graph();
+    const cikti = [];
+    const hedef = subject ? this.sourceBooks.normalizeSubject(subject) : null;
+    // Ayni ders adi hem TYT hem AYT grubunda gecebilir (or. Tarih). Sinav
+    // turu verilirse liste daraltilir ve "inkilap" gibi girisler tek
+    // adaya duser.
+    const sinav = (examType && examType !== "Genel") ? String(examType).toUpperCase() : null;
+    Object.keys(g.subjects || {}).forEach(anahtar => {
+      const ders = g.subjects[anahtar];
+      if (!ders || !Array.isArray(ders.units)) return;
+      // Ders adi konunun kendisinde degil, ust gruptadir (subj.subject).
+      const dersAdi = this.sourceBooks.normalizeSubject(ders.subject || "");
+      if (hedef && dersAdi !== hedef) return;
+      if (sinav && String(ders.exam || "").toUpperCase() !== sinav) return;
+      (ders.units || []).forEach(u => (u.topics || []).forEach(t => {
+        if (!t || !t.name) return;
+        if (cikti.indexOf(t.name) === -1) cikti.push(t.name);
+      }));
+    });
+    return cikti.sort((a, b) => a.localeCompare(b, "tr"));
+  },
+
   // Turkce sayi sozcuklerini rakama cevirir: "kirk soru" -> "40 soru",
   // "yirmi bes" -> "25", "yuz yirmi" -> "120". Konusma tanima bazen rakam,
   // bazen yazi dondurdugu icin ikisi de desteklenir.
@@ -13278,6 +13446,26 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
       }
       topic = topic.replace(/^[\s:\-–—]+/, "").trim();
       if (topic === "") topic = subjectMatch ? `${subject} Genel Çalışma` : "Genel Tekrar ve Soru Çözümü";
+
+      // Yazilan/soylenen konu adi mufredattaki GERCEK adla eslesiyorsa
+      // kayit resmi adiyla yapilir ("mutlak" -> "Mutlak Deger"). Konu
+      // adinin yanindaki miktar/eylem sozcukleri ("30 soru coz") ayiklanir.
+      if (subjectMatch) {
+        const mufredat = this.curriculumTopicNames(subject, examType);
+        if (mufredat.length) {
+          // Miktar ve eylem sozcuklerini ayikla. \b KULLANILMAZ: JavaScript'te
+          // kelime siniri yalnizca [A-Za-z0-9_] uzerinden tanimli oldugu icin
+          // "coz", "ozet" gibi Turkce harfli sozcuklerde sinir olusmaz.
+          const H = "A-Za-z0-9_çğıöşüÇĞİÖŞÜ";
+          const eylem = "çöz|coz|çözüm|cozum|izle|dinle|oku|çalış|calis|tekrar|video|özet|ozet|yap";
+          const cekirdek = topic
+            .replace(new RegExp("\\d+\\s*(soru|test|dk|dakika|saat|sayfa)[" + H + "]*", "gi"), " ")
+            .replace(new RegExp("(?<![" + H + "])(?:" + eylem + ")[" + H + "]*", "gi"), " ")
+            .replace(/[\s,;.:]+/g, " ").trim();
+          const eslesme = this.resolveCanonicalName(cekirdek || topic, mufredat);
+          if (eslesme.ad) topic = eslesme.ad;
+        }
+      }
 
       const typeLabels = {
         video: `🎥 ${subject}: Konu Anlatımı`,
