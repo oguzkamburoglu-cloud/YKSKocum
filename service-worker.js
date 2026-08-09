@@ -1,4 +1,4 @@
-const CACHE_NAME = 'defne-v52-haftalik-tekrar';
+const CACHE_NAME = 'defne-v53-mufredat-sekmesi';
 const urlsToCache = [
   './',
   './index.html',

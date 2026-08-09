@@ -731,6 +731,12 @@
                   <span class="ai-helper-question">Düzenli çalışıyor muyum?</span>
                 </button>
 
+                <button class="tab-btn ai-helper-card" id="tabBtn-curriculum" onclick="app.switchTab('curriculum')">
+                  <span class="ai-helper-icon"><i class="fa-solid fa-graduation-cap"></i></span>
+                  <span class="ai-helper-title">Müfredat Haritası</span>
+                  <span class="ai-helper-question">Nereye kadar geldim?</span>
+                </button>
+
               </div>
             </div>
           </div>
@@ -1060,18 +1066,8 @@
                 </button>
               </div>
 
-              <!-- 4 FAZLI MÜFREDAT HARİTASI — Rota Rehberi kaldırıldı,
-                   müfredat ilerlemesi artık Program Sihirbazı'nın içinde.
-                   Aynı müfredat grafiğinden beslenir. -->
-              <div style="border-top: 1.5px dashed var(--border-color); margin-top: 1.5rem; padding-top: 1.5rem;">
-                <h3 style="font-family: var(--font-header); font-weight: 800; font-size: 1.02rem; color: var(--text-main); margin: 0 0 0.4rem; display:flex; align-items:center; gap:0.5rem;">
-                  <i class="fa-solid fa-graduation-cap text-primary"></i> 4 Fazlı YKS Müfredat Haritası
-                </h3>
-                <p class="panel-intro" style="margin-bottom:1rem;">Programın hangi konuları kapsadığını ve hangilerini tamamladığını faz faz gösterir. Bir konuya tıklayarak durumunu işaretleyebilirsin.</p>
-                <div id="phasesContainer" style="display: flex; flex-direction: column; gap: 1rem;">
-                  <!-- Dynamically populated by JS (4 phases with TYT/AYT roadmaps) -->
-                </div>
-              </div>
+              <!-- Müfredat haritası buradan kaldırıldı; artık ana sayfadan
+                   erişilen kendi sekmesinde (panel-curriculum). -->
 
             </div>
           </div>
@@ -1281,6 +1277,53 @@
           </div>
 
           <!-- VIEW 5.5: HABIT MAP (ALISKANLIK HARITASI) -->
+          <!-- TAB PANEL: MÜFREDAT HARİTASI — ana sayfadan erişilen üst düzey bölüm -->
+          <div class="tab-panel" id="panel-curriculum">
+            <div class="glass-card" style="margin-bottom: 1.5rem; padding: 2rem;">
+              <button class="btn btn-secondary" onclick="app.switchTab('today')" style="margin-bottom: 1.25rem; font-family: var(--font-header); font-weight: 800; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 0.4rem; border: 1.5px solid var(--border-color); border-radius: 6px; padding: 0.35rem 0.75rem; background: var(--bg-card); color: var(--text-main); cursor: pointer;">
+                <i class="fa-solid fa-arrow-left"></i> ✏️ Ana Sayfaya Dön
+              </button>
+
+              <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.5rem; border-bottom:1px solid var(--border-color); padding-bottom:0.75rem;">
+                <span class="ai-helper-icon" style="width:36px; height:36px; border-radius:10px; font-size:0.95rem;"><i class="fa-solid fa-graduation-cap"></i></span>
+                <h2 style="margin:0; font-family: var(--font-header); font-weight: 800; color: var(--text-main);">Müfredat Haritası</h2>
+              </div>
+              <p class="panel-intro">
+                Programın hangi konuları kapsadığını ve nereye kadar geldiğini faz faz gösterir.
+                Konu durumları kendiliğinden güncellenir: bir konuyu çalıştığında <strong>çalışıldı</strong>,
+                Öğrenme Doğrulama Testi'ni (ÖDT) geçtiğinde <strong>öğrenildi</strong> olur.
+                Bir faza tıklayarak içindeki konuları açabilirsin.
+              </p>
+
+              <!-- Genel ilerleme — yüzdeler renderCurriculumMap() içinde zaten
+                   hesaplanıyordu ama yazılacak bir yer yoktu. -->
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:1rem; margin:1.25rem 0 1.5rem;">
+                <div style="border:1.5px solid var(--border-color); border-radius:10px; padding:0.9rem; background:var(--bg-card);">
+                  <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:0.5rem;">
+                    <span style="font-family:var(--font-header); font-weight:800; font-size:0.82rem; color:var(--text-main);">TYT İlerlemesi</span>
+                    <span id="tytPercentVal" style="font-family:var(--font-header); font-weight:900; font-size:1.05rem; color:var(--primary); font-variant-numeric:tabular-nums;">0%</span>
+                  </div>
+                  <div style="height:8px; background:var(--border-color); border-radius:99px; overflow:hidden;">
+                    <div id="tytProgressBar" style="height:100%; width:0%; background:var(--primary); border-radius:99px; transition:width 0.4s ease;"></div>
+                  </div>
+                </div>
+                <div style="border:1.5px solid var(--border-color); border-radius:10px; padding:0.9rem; background:var(--bg-card);">
+                  <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:0.5rem;">
+                    <span style="font-family:var(--font-header); font-weight:800; font-size:0.82rem; color:var(--text-main);">AYT İlerlemesi</span>
+                    <span id="aytPercentVal" style="font-family:var(--font-header); font-weight:900; font-size:1.05rem; color:var(--success, #10b981); font-variant-numeric:tabular-nums;">0%</span>
+                  </div>
+                  <div style="height:8px; background:var(--border-color); border-radius:99px; overflow:hidden;">
+                    <div id="aytProgressBar" style="height:100%; width:0%; background:var(--success, #10b981); border-radius:99px; transition:width 0.4s ease;"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="phasesContainer" style="display: flex; flex-direction: column; gap: 1rem;">
+                <!-- Dynamically populated by JS (4 phases with TYT/AYT roadmaps) -->
+              </div>
+            </div>
+          </div>
+
           <div class="tab-panel" id="panel-habitMap">
             <div class="glass-card" style="margin-bottom: 1.5rem; padding: 2rem;">
               <button class="btn btn-secondary" onclick="app.switchTab('today')" style="margin-bottom: 1.25rem; font-family: var(--font-header); font-weight: 800; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 0.4rem; border: 1.5px solid var(--border-color); border-radius: 6px; padding: 0.35rem 0.75rem; background: var(--bg-card); color: var(--text-main); cursor: pointer;">
@@ -2213,6 +2256,6 @@
   <script src="curriculum.js?v=3"></script>
   <script src="questions.js"></script>
   <script src="quotes.js?v=1"></script>
-  <script src="app.js?v=85"></script>
+  <script src="app.js?v=86"></script>
 </body>
 </html>

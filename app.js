@@ -6997,7 +6997,8 @@ normalizeClause: function(clause) {
       "calendar": ["Takvim Analizi", "Gelecek planlarınız gözden geçiriliyor..."],
       "monthly": ["Aylık Bakış", "30 günlük projeksiyonunuz oluşturuluyor..."],
       "year": ["Yıllık Projeksiyon", "360 günlük yol haritası taranıyor..."],
-      "programCreator": ["Program Sihirbazı", "Program ve müfredat haritanız hazırlanıyor..."],
+      "programCreator": ["Program Sihirbazı", "Çalışma programınız hazırlanıyor..."],
+      "curriculum": ["Müfredat Haritası", "Konu ilerlemeniz faz faz hesaplanıyor..."],
       "vault": ["Hata Zindanı", "Eksik konularınız ve hatalarınız taranıyor..."],
       "badges": ["AI Motivasyon", "Ödül sistemi ve günlük alıntılar güncelleniyor..."]
     };
@@ -7016,6 +7017,8 @@ normalizeClause: function(clause) {
         this.renderCharts();
       } else if (tabId === "habitMap") {
         this.renderHabitMap();
+      } else if (tabId === "curriculum") {
+        this.renderCurriculumMap();
       } else if (tabId === "programCreator") {
         this.syncLevelSelectLabels();
         const levelSel = document.getElementById("creatorLevelSelect");
@@ -7024,8 +7027,7 @@ normalizeClause: function(clause) {
         this.syncProgramTypeUI(this.state.selectedProgramType || "standard");
         this.renderStudyAllocationEngine(this.state.activeDay || 1);
         this.setProgramCreatorMode(this._programCreatorMode || "ai");
-        // 4 fazlı müfredat haritası + çalışma temposu Rota Rehberi'nden buraya taşındı
-        this.renderCurriculumMap();
+        // Müfredat haritası buradan kaldırıldı, kendi sekmesinde çiziliyor.
         this.renderRouteTempoOptions();
       } else if (tabId === "badges") {
         this.renderBadges();
@@ -8111,8 +8113,8 @@ normalizeClause: function(clause) {
 
       const detailsEl = document.createElement("details");
       detailsEl.style.cssText = "background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 8px; overflow: hidden; transition: all 0.3s ease;";
-      // Add open attribute to first phase for better UX
-      if (i === 1) detailsEl.setAttribute("open", "");
+      // Tum fazlar KAPALI baslar; ogrenci hangisine bakacagini kendisi secer.
+      // (Eskiden 1. faz acik geliyordu ve sayfa uzun bir listeyle aciliyordu.)
       
       const summaryEl = document.createElement("summary");
       summaryEl.style.cssText = "padding: 1rem; cursor: pointer; list-style: none; display: flex; flex-direction: column; gap: 0.5rem; user-select: none; border-bottom: 1px solid transparent; background: var(--bg-card-hover);";
