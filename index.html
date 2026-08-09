@@ -1563,6 +1563,41 @@
              Fotoğraftan" sekmesine taşındı. Planlayıcı modalı artık yalnızca
              elle plan düzenlemeye ayrılmıştır; aynı yetenek iki yerde durmuyor. -->
 
+        <!-- HIZLI GİRİŞ — görev görev form doldurmak yerine programı
+             tek seferde yaz ya da söyle. Fotoğraf/PDF ile aynı ayrıştırıcıyı
+             kullanır (app.importProgramTextIntoPlanner). -->
+        <div style="border: 1.5px dashed var(--primary); border-radius: 12px; padding: 1rem; background: rgba(37,99,235,0.03);">
+          <h4 style="margin:0 0 0.35rem; font-size:0.85rem; display:flex; align-items:center; gap:0.4rem; color:var(--primary); font-family:var(--font-header);">
+            <i class="fa-solid fa-bolt"></i> Hızlı Giriş — Yaz ya da Söyle
+          </h4>
+          <p style="font-size:0.7rem; color:var(--text-muted); line-height:1.4; margin-bottom:0.6rem;">
+            Programı tek seferde gir; görev görev form doldurmana gerek yok.
+            Gün başlıklarını <strong>Pazartesi</strong> / <strong>Gün 1</strong> gibi yaz, altına görevleri sırala.
+          </p>
+
+          <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem; flex-wrap:wrap;">
+            <button type="button" class="btn btn-secondary" id="plannerVoiceBtn" onclick="app.plannerToggleVoiceInput()"
+                    style="padding:0.4rem 0.75rem; font-size:0.78rem; font-weight:800; display:inline-flex; align-items:center; gap:0.4rem;">
+              <i class="fa-solid fa-microphone"></i> <span id="plannerVoiceBtnText">Sesli Gir</span>
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="app.plannerInsertBulkExample()"
+                    style="padding:0.4rem 0.75rem; font-size:0.78rem; font-weight:700;">
+              <i class="fa-solid fa-lightbulb"></i> Örnek doldur
+            </button>
+          </div>
+
+          <div id="plannerVoiceStatus" style="display:none; font-size:0.72rem; font-weight:600; color:var(--primary); margin-bottom:0.5rem; line-height:1.4;"></div>
+
+          <textarea id="plannerBulkText" rows="7"
+                    style="width:100%; font-family:monospace; font-size:0.78rem; padding:0.5rem; border:1px solid var(--border-color); border-radius:6px;"
+                    placeholder="Pazartesi:&#10;- Matematik: Türev 40 soru çöz&#10;- Fizik: Elektrik video izle&#10;&#10;Salı:&#10;- Kimya: Mol 25 soru çöz"></textarea>
+
+          <button type="button" class="btn btn-primary" onclick="app.plannerBulkTextImport()"
+                  style="width:100%; margin-top:0.5rem; padding:0.55rem; font-size:0.85rem; font-weight:800;">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Metni Plana Aktar
+          </button>
+        </div>
+
         <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
           <div class="form-group">
             <label>Program Adı</label>
@@ -2171,6 +2206,6 @@
   <script src="curriculum.js?v=3"></script>
   <script src="questions.js"></script>
   <script src="quotes.js?v=1"></script>
-  <script src="app.js?v=83"></script>
+  <script src="app.js?v=84"></script>
 </body>
 </html>

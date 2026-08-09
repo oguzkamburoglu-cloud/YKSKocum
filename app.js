@@ -12928,12 +12928,143 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     return null;
   },
 
-  plannerParseOCRTextAndImport: function() {
-    const textEl = document.getElementById("ocrResultText");
-    const text = textEl ? textEl.value : "";
-    if (!text || text.trim() === "") {
-      this.showToast("Önce fotoğrafı tarat veya programı metin alanına yaz.", "error");
-      return;
+  // Turkce sayi sozcuklerini rakama cevirir: "kirk soru" -> "40 soru",
+  // "yirmi bes" -> "25", "yuz yirmi" -> "120". Konusma tanima bazen rakam,
+  // bazen yazi dondurdugu icin ikisi de desteklenir.
+  SAYI_SOZCUKLERI: {
+    "yüz": 100, "yuz": 100,
+    on: 10, yirmi: 20, otuz: 30, "kırk": 40, kirk: 40, elli: 50,
+    "altmış": 60, altmis: 60, "yetmiş": 70, yetmis: 70, seksen: 80, doksan: 90,
+    bir: 1, iki: 2, "üç": 3, uc: 3, "dört": 4, dort: 4, "beş": 5, bes: 5,
+    "altı": 6, alti: 6, yedi: 7, sekiz: 8, dokuz: 9
+  },
+
+  turkishNumberWordsToDigits: function(text) {
+    const tablo = this.SAYI_SOZCUKLERI;
+    // Uzun sozcukler once denensin ki "on" , "onuncu" gibi kisalar
+    // uzun eslesmeleri bolmesin.
+    const desen = Object.keys(tablo).sort((a, b) => b.length - a.length).join("|");
+    // Ardisik sayi sozcuklerini TEK parca olarak yakala; boylece sondaki
+    // bosluk tuketilmez ("kirk soru" -> "40 soru", "40soru" degil).
+    // \\b KULLANILMAZ: JavaScript'te kelime siniri yalnizca [A-Za-z0-9_]
+    // uzerinden tanimlidir, bu yuzden "bes" gibi Turkce harfle biten
+    // sozcuklerde sinir olusmaz ve "yirmi bes" yarim eslesirdi.
+    const HARF = "A-Za-z0-9_çğıöşüÇĞİÖŞÜ";
+    const re = new RegExp(
+      "(?<![" + HARF + "])(?:" + desen + ")(?:\\s+(?:" + desen + "))*(?![" + HARF + "])",
+      "gi"
+    );
+
+    return String(text || "").replace(re, (eslesme) => {
+      const parcalar = eslesme.toLowerCase().split(/\s+/);
+      // Tek basina "bir" cogu zaman sayi degil, belirtec ("bir de", "bir tane").
+      if (parcalar.length === 1 && (parcalar[0] === "bir")) return eslesme;
+      let toplam = 0;
+      for (const kelime of parcalar) {
+        const deger = tablo[kelime];
+        if (deger === undefined) return eslesme;
+        toplam += deger;
+      }
+      return toplam > 0 ? String(toplam) : eslesme;
+    });
+  },
+
+  // Sozle soylenen gun isaretleri: "pazartesi", "birinci gun", "gun 3", "2. gun"
+  SIRA_SAYILARI: {
+    birinci: 1, ikinci: 2, ucuncu: 3, dorduncu: 4, besinci: 5, altinci: 6,
+    yedinci: 7, sekizinci: 8, dokuzuncu: 9, onuncu: 10
+  },
+
+  // Sesli giris TEK BIR UZUN CUMLE olarak gelir; ayristirici ise satir
+  // tabanli calisir. Bu fonksiyon konusmayi gun ve ders sinirlarindan
+  // bolerek ayristiricinin bekledigi bicime sokar:
+  //   "pazartesi matematik turev kirk soru fizik elektrik izle"
+  //   -> "Pazartesi:" / "- matematik turev 40 soru" / "- fizik elektrik izle"
+  voiceTextToProgramLines: function(raw) {
+    const text = this.turkishNumberWordsToDigits(String(raw || "").replace(/\s+/g, " ").trim());
+    if (!text) return "";
+
+    // normalizeOcrText karakter sayisini korur -> indeksler orijinalde de gecerli
+    const norm = this.normalizeOcrText(text);
+
+    // 1) Gun isaretleri: konum + isaretin uzunlugu (kalan kismi ayirmak icin)
+    const gunler = {};
+    const sira = Object.keys(this.SIRA_SAYILARI).join("|");
+    const gunDeseni = new RegExp(
+      "(?:^|\\s)((?:pazartesi|cumartesi|carsamba|persembe|cuma|sali|pazar)" +
+      "|(?:" + sira + ")\\s+gun[a-z]*" +
+      "|\\d{1,3}\\s*\\.?\\s*(?:gun|day)[a-z]*" +
+      "|(?:gun|day)\\s*\\d{1,3})(?![a-z0-9])", "g");
+
+    const kesim = new Set([0]);
+    let m;
+    while ((m = gunDeseni.exec(norm)) !== null) {
+      const bas = m.index + (m[0].length - m[1].length);
+      gunler[bas] = m[1].length;
+      kesim.add(bas);
+      if (gunDeseni.lastIndex === m.index) gunDeseni.lastIndex++;
+    }
+
+    // 2) Ders sinirlari — yalnizca uzun takma adlar; "mat", "geo" gibi
+    //    kisalar cumle icinde yanlis bolme yapardi.
+    const dersler = [];
+    this.OCR_SUBJECT_ALIASES.forEach(e => e.keys.forEach(k => { if (k.length >= 5) dersler.push(k); }));
+    if (dersler.length) {
+      const dersDeseni = new RegExp("(?:^|\\s)(?:" + dersler.join("|") + ")(?![a-z0-9])", "g");
+      while ((m = dersDeseni.exec(norm)) !== null) {
+        const bas = m.index + (m[0].length - m[0].replace(/^\s+/, "").length);
+        if (gunler[bas] === undefined) kesim.add(bas);
+        if (dersDeseni.lastIndex === m.index) dersDeseni.lastIndex++;
+      }
+    }
+
+    const noktalar = Array.from(kesim).sort((a, b) => a - b);
+    const temizle = (x) => x.trim().replace(/^[\s,;.]+|[\s,;.]+$/g, "");
+
+    // Once parcalari topla (gun basligi / is satiri), sonra birlestir.
+    const parcalar = [];
+    for (let i = 0; i < noktalar.length; i++) {
+      const dilim = text.slice(noktalar[i], noktalar[i + 1]);
+      const gunUzunlugu = gunler[noktalar[i]];
+      if (gunUzunlugu === undefined) {
+        const g = temizle(dilim);
+        if (g) parcalar.push({ gun: false, metin: g });
+        continue;
+      }
+      const etiket = temizle(dilim.slice(0, gunUzunlugu));
+      const kalan = temizle(dilim.slice(gunUzunlugu));
+      if (etiket) parcalar.push({ gun: true, metin: etiket });
+      if (kalan) parcalar.push({ gun: false, metin: kalan });
+    }
+
+    // Yalnizca ders adindan ibaret parcalar ("türkçe") bir sonraki
+    // parcayla birlesir: "türkçe paragraf 30 soru" tek gorevdir, iki degil.
+    const yalnizDers = (metin) => {
+      const n = this.normalizeOcrText(metin).trim();
+      return this.OCR_SUBJECT_ALIASES.some(e => e.keys.some(k => k === n));
+    };
+    const birlesik = [];
+    for (let i = 0; i < parcalar.length; i++) {
+      const p = parcalar[i];
+      const sonraki = parcalar[i + 1];
+      if (!p.gun && sonraki && !sonraki.gun && yalnizDers(p.metin)) {
+        birlesik.push({ gun: false, metin: p.metin + " " + sonraki.metin });
+        i++;
+        continue;
+      }
+      birlesik.push(p);
+    }
+
+    return birlesik.map(p => (p.gun ? p.metin + ":" : "- " + p.metin)).join("\n");
+  },
+
+  // Metinden programa — TEK AYRISTIRICI.
+  // Foto/PDF okuma, elle yazma ve sesli giris ayni bu fonksiyonu cagirir.
+  // Basarili olursa { taskCount, importedDays } dondurur, aksi halde null.
+  importProgramTextIntoPlanner: function(text) {
+    if (!text || String(text).trim() === "") {
+      this.showToast("Aktarılacak metin boş.", "error");
+      return null;
     }
 
     // Modül artık planlayıcı modalının içinde değil, Sihirbaz'ın
@@ -13068,7 +13199,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
 
     if (taskCount === 0) {
       this.showToast("Metinden görev çıkarılamadı. Satırları 'Gün 1:' ve '- Matematik: Limit 30 soru' biçiminde düzenleyip tekrar dene.", "error");
-      return;
+      return null;
     }
 
     const importedDays = Object.keys(clearedDays).map(Number).sort((a, b) => a - b);
@@ -13078,6 +13209,21 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     if (daySelect) daySelect.value = String(firstDay);
     this.plannerSelectDay(firstDay);
 
+    return { taskCount: taskCount, importedDays: importedDays };
+  },
+
+  // Aktarim sonrasi ortak bildirim
+  announceProgramImport: function(sonuc) {
+    alert(`${sonuc.importedDays.length} güne ${sonuc.taskCount} görev aktarıldı (Gün: ${sonuc.importedDays.join(", ")}).\n\n` +
+      `Metinde geçmeyen günler mevcut programındaki hâliyle korundu. Günleri kontrol edip "Kaydet & Kapat" ile programını güncelleyebilirsin.`);
+  },
+
+  // Giris 1: Fotograf / PDF akisi
+  plannerParseOCRTextAndImport: function() {
+    const textEl = document.getElementById("ocrResultText");
+    const sonuc = this.importProgramTextIntoPlanner(textEl ? textEl.value : "");
+    if (!sonuc) return;
+
     const resultArea = document.getElementById("ocrResultArea");
     const statusDiv = document.getElementById("ocrStatus");
     const fileInput = document.getElementById("plannerPhotoOCR");
@@ -13085,8 +13231,157 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     if (statusDiv) statusDiv.style.display = "none";
     if (fileInput) fileInput.value = "";
 
-    alert(`${importedDays.length} güne ${taskCount} görev aktarıldı (Gün: ${importedDays.join(", ")}).\n\n` +
-      `Dosyada geçmeyen günler mevcut programındaki hâliyle korundu. Günleri kontrol edip "Kaydet & Kapat" ile programını güncelleyebilirsin.`);
+    this.announceProgramImport(sonuc);
+  },
+
+  // Ornek metni doldurur — bicimi bir kez gorunce yazmak kolaylasiyor.
+  plannerInsertBulkExample: function() {
+    const el = document.getElementById("plannerBulkText");
+    if (!el) return;
+    el.value = "Pazartesi:\n" +
+      "- Matematik: Türev 40 soru çöz\n" +
+      "- Fizik: Elektrik konusu video izle\n\n" +
+      "Salı:\n" +
+      "- Kimya: Mol 25 soru çöz\n" +
+      "- Biyoloji: Hücre özet oku 45 dk\n\n" +
+      "Çarşamba:\n" +
+      "- Türkçe: Paragraf 30 soru çöz";
+    el.focus();
+  },
+
+  // ============================================================
+  // SESLI GIRIS (Web Speech API)
+  // ------------------------------------------------------------
+  // Konusma tek uzun cumle olarak gelir; durdurulunca
+  // voiceTextToProgramLines() ile gun/ders sinirlarindan satirlara
+  // bolunup metin alanina eklenir.
+  // Tarayici destegi ve mikrofon izni SESSIZCE gecilmez; her durum
+  // ekranda yazili olarak bildirilir.
+  // ============================================================
+  _voiceRec: null,
+  _voiceBuffer: "",
+
+  plannerVoiceUI: function(dinliyor, mesaj, hataMi) {
+    const btnText = document.getElementById("plannerVoiceBtnText");
+    const btn = document.getElementById("plannerVoiceBtn");
+    const durum = document.getElementById("plannerVoiceStatus");
+    if (btnText) btnText.textContent = dinliyor ? "Dinlemeyi Durdur" : "Sesli Gir";
+    if (btn) {
+      btn.style.borderColor = dinliyor ? "var(--danger, #dc2626)" : "";
+      btn.style.color = dinliyor ? "var(--danger, #dc2626)" : "";
+    }
+    if (durum) {
+      if (mesaj) {
+        durum.style.display = "block";
+        durum.style.color = hataMi ? "var(--danger, #dc2626)" : "var(--primary)";
+        durum.innerHTML = mesaj;
+      } else {
+        durum.style.display = "none";
+      }
+    }
+  },
+
+  plannerToggleVoiceInput: function() {
+    // Zaten dinliyorsa durdur
+    if (this._voiceRec) {
+      try { this._voiceRec.stop(); } catch (e) { /* zaten durmus */ }
+      return;
+    }
+
+    const Tanima = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Tanima) {
+      this.plannerVoiceUI(false,
+        "Bu tarayıcı sesli girişi desteklemiyor. Chrome veya Safari'de çalışır — " +
+        "programı aşağıya yazarak da girebilirsin.", true);
+      return;
+    }
+    if (!window.isSecureContext) {
+      this.plannerVoiceUI(false,
+        "Sesli giriş yalnızca güvenli bağlantıda (https) çalışır. " +
+        "Programı aşağıya yazarak girebilirsin.", true);
+      return;
+    }
+
+    const rec = new Tanima();
+    rec.lang = "tr-TR";
+    rec.continuous = true;
+    rec.interimResults = true;
+
+    this._voiceRec = rec;
+    this._voiceBuffer = "";
+
+    rec.onstart = () => {
+      this.plannerVoiceUI(true, "🎤 <strong>Dinleniyor…</strong> Programı söyle, örneğin: " +
+        "&laquo;Pazartesi matematik türev kırk soru, fizik elektrik video izle, salı kimya mol yirmi beş soru&raquo;");
+    };
+
+    rec.onresult = (olay) => {
+      let gecici = "";
+      for (let i = olay.resultIndex; i < olay.results.length; i++) {
+        const parca = olay.results[i][0].transcript;
+        if (olay.results[i].isFinal) this._voiceBuffer += parca + " ";
+        else gecici += parca;
+      }
+      const yazili = this.escapeHtml((this._voiceBuffer + gecici).trim());
+      this.plannerVoiceUI(true, "🎤 <strong>Dinleniyor…</strong><br><span style=\"color:var(--text-muted); font-weight:500;\">" +
+        (yazili || "…") + "</span>");
+    };
+
+    rec.onerror = (olay) => {
+      const kod = olay && olay.error;
+      const mesajlar = {
+        "not-allowed": "Mikrofon izni verilmedi. Tarayıcı adres çubuğundaki mikrofon simgesinden izin verip tekrar dene.",
+        "service-not-allowed": "Mikrofon izni engellenmiş. Tarayıcı ayarlarından bu siteye mikrofon izni ver.",
+        "no-speech": "Ses algılanmadı. Mikrofonuna daha yakın konuşup tekrar dene.",
+        "audio-capture": "Mikrofon bulunamadı. Bir mikrofon bağlı mı kontrol et.",
+        "network": "Konuşma tanıma sunucusuna ulaşılamadı (internet bağlantısı gerekiyor)."
+      };
+      this.plannerVoiceUI(false, mesajlar[kod] || ("Sesli giriş hatası: " + (kod || "bilinmeyen") + "."), true);
+      this._voiceRec = null;
+    };
+
+    rec.onend = () => {
+      this._voiceRec = null;
+      const soylenen = this._voiceBuffer.trim();
+      if (!soylenen) {
+        this.plannerVoiceUI(false, "Hiçbir şey algılanmadı. Tekrar deneyebilir ya da aşağıya yazabilirsin.", true);
+        return;
+      }
+      const satirlar = this.voiceTextToProgramLines(soylenen);
+      const el = document.getElementById("plannerBulkText");
+      if (el) {
+        el.value = (el.value.trim() ? el.value.trim() + "\n" : "") + satirlar;
+        el.focus();
+      }
+      const gunSayisi = satirlar.split("\n").filter(l => /:$/.test(l)).length;
+      const isSayisi = satirlar.split("\n").filter(l => /^-/.test(l)).length;
+      this.plannerVoiceUI(false,
+        `✓ Söylediklerin metne eklendi (${gunSayisi} gün, ${isSayisi} görev). ` +
+        `Kontrol edip <strong>&laquo;Metni Plana Aktar&raquo;</strong> düğmesine bas.`);
+      this._voiceBuffer = "";
+    };
+
+    try {
+      rec.start();
+    } catch (e) {
+      this._voiceRec = null;
+      this.plannerVoiceUI(false, "Sesli giriş başlatılamadı: " + (e && e.message ? e.message : e), true);
+    }
+  },
+
+  // Giris 2: Planlayicidaki toplu metin / sesli giris alani
+  plannerBulkTextImport: function() {
+    const el = document.getElementById("plannerBulkText");
+    if (!el) return;
+    if (!el.value.trim()) {
+      this.showToast("Önce programı yaz veya mikrofonla söyle.", "error");
+      el.focus();
+      return;
+    }
+    const sonuc = this.importProgramTextIntoPlanner(el.value);
+    if (!sonuc) return;
+    el.value = "";
+    this.announceProgramImport(sonuc);
   },
 
   syncCustomProgramListSelector: function() {
