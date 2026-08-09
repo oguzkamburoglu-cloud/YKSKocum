@@ -305,9 +305,19 @@
               <input type="time" id="sleepTime" value="23:00" onchange="app.checkHabitsFeedback()">
             </div>
             <div class="form-group">
-              <label for="parentContact">Veli İletişim (E-posta veya Telefon)</label>
-              <input type="text" id="parentContact" placeholder="Örn: veli@mail.com veya 05xxxxxxxxx" required style="border: 1.5px solid var(--border-color);">
+              <label for="parentEmail">Veli E-postası <span style="font-weight:600; color:var(--text-muted);">(isteğe bağlı)</span></label>
+              <input type="email" id="parentEmail" placeholder="veli@mail.com" autocomplete="email" style="border: 1.5px solid var(--border-color);">
+            </div>
+            <div class="form-group">
+              <label for="parentPhone">Veli Telefonu <span style="font-weight:600; color:var(--text-muted);">(isteğe bağlı)</span></label>
+              <input type="tel" id="parentPhone" placeholder="05xxxxxxxxx" autocomplete="tel" style="border: 1.5px solid var(--border-color);">
               <div id="parentContactError" style="display:none; font-size:0.72rem; color:var(--danger); margin-top:0.25rem; font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> Geçerli bir e-posta veya telefon numarası giriniz.</div>
+              <div id="parentContactLockNote" style="display:none; font-size:0.72rem; color:var(--primary); margin-top:0.4rem; font-weight:700;">
+                <i class="fa-solid fa-lock"></i> Veli bilgileri kayıtlı ve değiştirilemez. Raporlar bu adrese gider.
+              </div>
+              <div style="font-size:0.68rem; color:var(--text-muted); line-height:1.4; margin-top:0.35rem;">
+                Doldurursan çalışma raporun veline iletilir. Bir kez kaydedildikten sonra bu bilgiler kaldırılamaz.
+              </div>
             </div>
           </div>
 
@@ -2252,6 +2262,6 @@
   <script src="curriculum.js?v=3"></script>
   <script src="questions.js"></script>
   <script src="quotes.js?v=1"></script>
-  <script src="app.js?v=88"></script>
+  <script src="app.js?v=89"></script>
 </body>
 </html>

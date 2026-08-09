@@ -170,7 +170,9 @@ const app = {
     weekendHours: 8,
     wakeTime: "07:00",
     sleepTime: "23:00",
-    parentContact: "",
+    parentContact: "",   // gonderim hedefi: e-posta varsa o, yoksa telefon
+    parentEmail: "",
+    parentPhone: "",
     isLoggedOut: false,
 
     // Notifications & summaries
@@ -1734,12 +1736,18 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
         this.updateDeptPercentileNotice(e.target.value);
       });
     }
-    const parentContactInput = document.getElementById("parentContact");
-    if (parentContactInput) {
-      parentContactInput.addEventListener("input", (e) => {
-        this.state.parentContact = e.target.value;
+    // Veli alanlari: yazildikca state'e islenir, ama KAYITLI bir deger
+    // asla bosaltilamaz (paylasimi kapatmanin yolu olmamali).
+    [["parentEmail", "parentEmail"], ["parentPhone", "parentPhone"]].forEach(([id, alan]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("input", (e) => {
+        const deger = e.target.value.trim();
+        if (deger) this.state[alan] = deger;
+        this.syncParentContact();
       });
-    }
+    });
+    this.applyParentContactLock();
   },
 
   // YKS Countdown timer (Target: June 19, 2027) — split-flap style
@@ -1934,7 +1942,9 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     this.state.weekendHours = 8;
     this.state.wakeTime = "07:00";
     this.state.sleepTime = "23:00";
-    this.state.parentContact = "";
+    // VELI BILGISI KORUNUR — sihirbazi yeniden calistirmak paylasimi
+    // kapatmanin yolu olmamali. parentContact/parentEmail/parentPhone
+    // bilerek sifirlanmiyor.
     this.state.diagnosticAccuracy = null;
     this.state.selectedProgramType = "standard";
     this.state.daysData = {};
@@ -1970,14 +1980,18 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     const emailIn = document.getElementById("studentEmail");
     const deptIn = document.getElementById("targetDepartment");
     const rankIn = document.getElementById("targetRank");
-    const parentIn = document.getElementById("parentContact");
+    const parentEmailIn = document.getElementById("parentEmail");
+    const parentPhoneIn = document.getElementById("parentPhone");
     const acceptPlanCh = document.getElementById("acceptPlanCheck");
 
     if (nameIn) nameIn.value = "";
     if (emailIn) emailIn.value = "";
     if (deptIn) deptIn.value = "";
     if (rankIn) rankIn.value = "";
-    if (parentIn) parentIn.value = "";
+    // Veli alanlari temizlenmez; kayitliysa geri yazilir ve kilitlenir.
+    if (parentEmailIn) parentEmailIn.value = this.state.parentEmail || "";
+    if (parentPhoneIn) parentPhoneIn.value = this.state.parentPhone || "";
+    this.applyParentContactLock();
     if (acceptPlanCh) acceptPlanCh.checked = false;
 
     const previewBox = document.getElementById("goalPlanPreviewBox");
@@ -1994,6 +2008,8 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
   },
 
   showWizardPage: function(pageNum) {
+    // Veli alanlari kayitliysa kilitli gorunsun
+    setTimeout(() => this.applyParentContactLock(), 0);
     document.querySelectorAll(".wizard-page").forEach(page => {
       page.style.display = "none";
     });
@@ -2732,31 +2748,82 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     this.saveState();
   },
 
+  // Veli bilgileri BIR KEZ kaydedildikten sonra ogrenci tarafindan
+  // degistirilemez veya silinemez. Paylasimi kapatan bir anahtar da yoktur.
+  // NOT: bu istemci tarafi bir kilittir; tarayici gelistirici araclariyla
+  // localStorage'a erisen biri yine de degistirebilir. Gercek zorunluluk
+  // ancak sunucu tarafinda (Asama 3) saglanabilir.
+  parentContactLocked: function() {
+    return !!((this.state.parentEmail || "").trim() || (this.state.parentPhone || "").trim());
+  },
+
+  applyParentContactLock: function() {
+    const kilitli = this.parentContactLocked();
+    const not = document.getElementById("parentContactLockNote");
+    [["parentEmail", "parentEmail"], ["parentPhone", "parentPhone"]].forEach(([id, alan]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const kayitli = (this.state[alan] || "").trim();
+      if (kilitli && kayitli) {
+        el.value = kayitli;
+        el.readOnly = true;
+        el.style.background = "var(--bg-card-hover, rgba(0,0,0,0.03))";
+        el.style.cursor = "not-allowed";
+      } else {
+        el.readOnly = false;
+        el.style.background = "";
+        el.style.cursor = "";
+      }
+    });
+    if (not) not.style.display = kilitli ? "block" : "none";
+  },
+
+  // Gonderim hedefi: e-posta varsa e-posta, yoksa telefon.
+  syncParentContact: function() {
+    const eposta = (this.state.parentEmail || "").trim();
+    const telefon = (this.state.parentPhone || "").trim();
+    this.state.parentContact = eposta || telefon;
+  },
+
   goToSeviyeTespit: function() {
     this.checkHabitsFeedback(true);
     
-    const contactEl = document.getElementById("parentContact");
+    // Veli bilgileri ISTEGE BAGLI: bos birakilabilir. Ama doldurulduysa
+    // gecerli olmali, yoksa rapor hicbir yere ulasmaz.
+    const emailEl = document.getElementById("parentEmail");
+    const phoneEl = document.getElementById("parentPhone");
     const errorEl = document.getElementById("parentContactError");
-    const contactVal = contactEl ? contactEl.value.trim() : '';
-    
-    // Email or Phone validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailVal = emailEl ? emailEl.value.trim() : "";
+    const phoneVal = phoneEl ? phoneEl.value.trim() : "";
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     const phoneRegex = /^[0-9\s\-\+\(\)]{7,15}$/;
-    if (!contactVal || (!emailRegex.test(contactVal) && !phoneRegex.test(contactVal))) {
+
+    const hataGoster = (msg, el) => {
       if (errorEl) {
-        errorEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Geçerli bir e-posta veya telefon numarası giriniz.';
-        errorEl.style.display = 'block';
+        errorEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + msg;
+        errorEl.style.display = "block";
       }
-      if (contactEl) {
-        contactEl.style.borderColor = 'var(--danger)';
-        contactEl.focus();
-      }
+      if (el) { el.style.borderColor = "var(--danger)"; el.focus(); }
+    };
+
+    if (emailVal && !emailRegex.test(emailVal)) {
+      hataGoster("Geçerli bir veli e-postası gir veya alanı boş bırak.", emailEl);
       return;
     }
-    if (errorEl) errorEl.style.display = 'none';
-    if (contactEl) contactEl.style.borderColor = 'var(--success)';
-    
-    this.state.parentContact = contactVal;
+    if (phoneVal && !phoneRegex.test(phoneVal)) {
+      hataGoster("Geçerli bir veli telefonu gir veya alanı boş bırak.", phoneEl);
+      return;
+    }
+    if (errorEl) errorEl.style.display = "none";
+    if (emailEl) emailEl.style.borderColor = emailVal ? "var(--success)" : "";
+    if (phoneEl) phoneEl.style.borderColor = phoneVal ? "var(--success)" : "";
+
+    // Kayitli bilgi SILINEMEZ: alan bosaltilmis olsa bile eskisi korunur.
+    if (emailVal) this.state.parentEmail = emailVal;
+    if (phoneVal) this.state.parentPhone = phoneVal;
+    this.syncParentContact();
+    this.applyParentContactLock();
 
     // Mezun öğrenciler seviye tespit sınavı yerine mevcut konumlarını
     // (sıralama + net) girer; okula gidenler için mevcut konum sınav sonucudur.
@@ -13726,6 +13793,8 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
           wakeTime: parsed.wakeTime || "07:00",
           sleepTime: parsed.sleepTime || "23:00",
           parentContact: parsed.parentContact || "",
+          parentEmail: parsed.parentEmail || "",
+          parentPhone: parsed.parentPhone || "",
           diagnosticAccuracy: parsed.diagnosticAccuracy !== undefined ? parsed.diagnosticAccuracy : null,
           currentPositionRank: parsed.currentPositionRank !== undefined ? parsed.currentPositionRank : null,
           currentNetTYT: parsed.currentNetTYT !== undefined ? parsed.currentNetTYT : null,
@@ -13882,6 +13951,8 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
           wakeTime: "07:00",
           sleepTime: "23:00",
           parentContact: "",
+          parentEmail: "",
+          parentPhone: "",
           isLoggedOut: false,
           testSubjects: [],
           testQuestions: {},
