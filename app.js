@@ -12006,6 +12006,9 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
       this.renderMonthlyCalendarGrid();
     }
 
+    // Tekrarlama onizlemesi secili gune gore guncellenir
+    this.plannerUpdateRepeatHint();
+
     // Modal List Rendering (reveals list section only if tasks exist for selected day)
     const container = document.getElementById("plannerTaskList");
     const section = document.getElementById("plannerTaskListSection");
@@ -12508,10 +12511,49 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     this.closeModal("customProgramPlannerModal");
   },
 
+  // Tekrarlama hedeflerini hesaplar. Haftalik modda 7'ser atlanir, boylece
+  // Pazartesi Pazartesi'ye denk gelir; kapaliyken davranis eskisiyle aynidir.
+  plannerRepeatTargets: function(dayNum, count, haftalik) {
+    const adim = haftalik ? 7 : 1;
+    const hedefler = [];
+    for (let i = 1; i <= count; i++) {
+      const hedef = dayNum + i * adim;
+      if (hedef > this.PROGRAM_DAYS) break;
+      hedefler.push(hedef);
+    }
+    return hedefler;
+  },
+
+  // Kullanici tiklamadan once ne olacagini yazar.
+  plannerUpdateRepeatHint: function() {
+    const ipucu = document.getElementById("plannerRepeatHint");
+    const etiket = document.getElementById("plannerRepeatCountLabel");
+    const haftalikEl = document.getElementById("plannerRepeatWeekly");
+    const daySelect = document.getElementById("plannerDaySelect");
+    if (!ipucu || !haftalikEl || !daySelect) return;
+
+    const haftalik = haftalikEl.checked;
+    const dayNum = parseInt(daySelect.value, 10) || 1;
+    const count = parseInt(document.getElementById("plannerRepeatNextCount").value, 10) || 0;
+
+    if (etiket) etiket.textContent = haftalik ? "Kaç Hafta Boyunca Tekrarla" : "Sonraki X Gün Boyunca Tekrarla";
+
+    if (count <= 0) { ipucu.textContent = ""; return; }
+    const hedefler = this.plannerRepeatTargets(dayNum, count, haftalik);
+    if (!hedefler.length) { ipucu.textContent = "Program sonuna gelindi, kopyalanacak gün kalmadı."; return; }
+
+    const onizleme = hedefler.slice(0, 5).join(", ") + (hedefler.length > 5 ? "…" : "");
+    ipucu.textContent = haftalik
+      ? `Gün ${dayNum} → ${hedefler.length} güne yazılacak: ${onizleme}`
+      : `Gün ${dayNum} → sonraki ${hedefler.length} güne yazılacak: ${onizleme}`;
+  },
+
   plannerRepeatDayToNextRange: function() {
     const daySelect = document.getElementById("plannerDaySelect");
     const dayNum = parseInt(daySelect.value);
     const count = parseInt(document.getElementById("plannerRepeatNextCount").value) || 7;
+    const haftalikEl = document.getElementById("plannerRepeatWeekly");
+    const haftalik = !!(haftalikEl && haftalikEl.checked);
 
     const sourceTasks = this.plannerBuffer[dayNum] ? this.plannerBuffer[dayNum].tasks : [];
     if (sourceTasks.length === 0) {
@@ -12519,11 +12561,13 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
       return;
     }
 
-    // Copy to the next X days
-    for (let i = 1; i <= count; i++) {
-      const targetDay = dayNum + i;
-      if (targetDay > this.PROGRAM_DAYS) break;
+    const hedefler = this.plannerRepeatTargets(dayNum, count, haftalik);
+    if (!hedefler.length) {
+      alert("Program sonuna gelindi, kopyalanacak gün kalmadı.");
+      return;
+    }
 
+    hedefler.forEach(targetDay => {
       // Duplicate tasks with unique IDs
       const duplicatedTasks = sourceTasks.map(t => ({
         ...t,
@@ -12534,11 +12578,14 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
         completed: false,
         tasks: duplicatedTasks
       };
-    }
+    });
 
     this.renderDashboard();
     this.renderMonthlyCalendarGrid();
-    alert(`Gün ${dayNum} görevleri sonraki ${count} güne başarıyla kopyalandı!`);
+    this.plannerUpdateRepeatHint();
+    alert(haftalik
+      ? `Gün ${dayNum} görevleri ${hedefler.length} hafta boyunca aynı güne kopyalandı (${hedefler.slice(0, 6).join(", ")}${hedefler.length > 6 ? "…" : ""}).`
+      : `Gün ${dayNum} görevleri sonraki ${hedefler.length} güne başarıyla kopyalandı!`);
   },
 
   plannerCopyDayToSpecificDays: function() {

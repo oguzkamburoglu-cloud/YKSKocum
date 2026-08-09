@@ -1737,11 +1737,18 @@
             </p>
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:0.5rem;">
               <div style="border: 1px solid rgba(0,0,0,0.05); padding:0.5rem; border-radius:6px; background:#fff; text-align:left;">
-                <label style="font-size:0.65rem; font-weight:700; display:block; margin-bottom:0.25rem;">Sonraki X Gün Boyunca Tekrarla</label>
+                <label id="plannerRepeatCountLabel" style="font-size:0.65rem; font-weight:700; display:block; margin-bottom:0.25rem;">Sonraki X Gün Boyunca Tekrarla</label>
                 <div style="display:flex; gap:0.25rem;">
-                  <input type="number" id="plannerRepeatNextCount" min="1" max="360" value="7" style="width:70px; padding:0.25rem; font-size:0.75rem; border: 1px solid var(--border-color); border-radius: 4px; height: 28px;">
+                  <input type="number" id="plannerRepeatNextCount" min="1" max="360" value="7" oninput="app.plannerUpdateRepeatHint()" style="width:70px; padding:0.25rem; font-size:0.75rem; border: 1px solid var(--border-color); border-radius: 4px; height: 28px;">
                   <button class="btn btn-secondary" style="padding:0.25rem 0.5rem; font-size:0.7rem; flex:1;" onclick="app.plannerRepeatDayToNextRange()">Tekrarla</button>
                 </div>
+                <!-- Haftalık mod: gün gün değil, 7'şer atlayarak kopyalar.
+                     İşaretsizken davranış eskisiyle birebir aynı kalır. -->
+                <label style="display:flex; align-items:center; gap:0.35rem; margin-top:0.4rem; font-size:0.65rem; font-weight:700; cursor:pointer; color:var(--primary);">
+                  <input type="checkbox" id="plannerRepeatWeekly" onchange="app.plannerUpdateRepeatHint()" style="width:14px; height:14px; accent-color:var(--primary);">
+                  Haftalık tekrarla (aynı güne denk gelsin)
+                </label>
+                <div id="plannerRepeatHint" style="font-size:0.6rem; color:var(--text-muted); line-height:1.35; margin-top:0.25rem;"></div>
               </div>
               <div style="border: 1px solid rgba(0,0,0,0.05); padding:0.5rem; border-radius:6px; background:#fff; text-align:left;">
                 <label style="font-size:0.65rem; font-weight:700; display:block; margin-bottom:0.25rem;">Belirli Günlere Kopyala</label>
@@ -2206,6 +2213,6 @@
   <script src="curriculum.js?v=3"></script>
   <script src="questions.js"></script>
   <script src="quotes.js?v=1"></script>
-  <script src="app.js?v=84"></script>
+  <script src="app.js?v=85"></script>
 </body>
 </html>
