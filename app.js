@@ -170,7 +170,9 @@ const app = {
     weekendHours: 8,
     wakeTime: "07:00",
     sleepTime: "23:00",
-    parentContact: "",
+    parentContact: "",   // gonderim hedefi: e-posta varsa o, yoksa telefon
+    parentEmail: "",
+    parentPhone: "",
     isLoggedOut: false,
 
     // Notifications & summaries
@@ -1734,12 +1736,18 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
         this.updateDeptPercentileNotice(e.target.value);
       });
     }
-    const parentContactInput = document.getElementById("parentContact");
-    if (parentContactInput) {
-      parentContactInput.addEventListener("input", (e) => {
-        this.state.parentContact = e.target.value;
+    // Veli alanlari: yazildikca state'e islenir, ama KAYITLI bir deger
+    // asla bosaltilamaz (paylasimi kapatmanin yolu olmamali).
+    [["parentEmail", "parentEmail"], ["parentPhone", "parentPhone"]].forEach(([id, alan]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("input", (e) => {
+        const deger = e.target.value.trim();
+        if (deger) this.state[alan] = deger;
+        this.syncParentContact();
       });
-    }
+    });
+    this.applyParentContactLock();
   },
 
   // YKS Countdown timer (Target: June 19, 2027) — split-flap style
@@ -1934,7 +1942,9 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     this.state.weekendHours = 8;
     this.state.wakeTime = "07:00";
     this.state.sleepTime = "23:00";
-    this.state.parentContact = "";
+    // VELI BILGISI KORUNUR — sihirbazi yeniden calistirmak paylasimi
+    // kapatmanin yolu olmamali. parentContact/parentEmail/parentPhone
+    // bilerek sifirlanmiyor.
     this.state.diagnosticAccuracy = null;
     this.state.selectedProgramType = "standard";
     this.state.daysData = {};
@@ -1970,14 +1980,18 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     const emailIn = document.getElementById("studentEmail");
     const deptIn = document.getElementById("targetDepartment");
     const rankIn = document.getElementById("targetRank");
-    const parentIn = document.getElementById("parentContact");
+    const parentEmailIn = document.getElementById("parentEmail");
+    const parentPhoneIn = document.getElementById("parentPhone");
     const acceptPlanCh = document.getElementById("acceptPlanCheck");
 
     if (nameIn) nameIn.value = "";
     if (emailIn) emailIn.value = "";
     if (deptIn) deptIn.value = "";
     if (rankIn) rankIn.value = "";
-    if (parentIn) parentIn.value = "";
+    // Veli alanlari temizlenmez; kayitliysa geri yazilir ve kilitlenir.
+    if (parentEmailIn) parentEmailIn.value = this.state.parentEmail || "";
+    if (parentPhoneIn) parentPhoneIn.value = this.state.parentPhone || "";
+    this.applyParentContactLock();
     if (acceptPlanCh) acceptPlanCh.checked = false;
 
     const previewBox = document.getElementById("goalPlanPreviewBox");
@@ -1994,6 +2008,8 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
   },
 
   showWizardPage: function(pageNum) {
+    // Veli alanlari kayitliysa kilitli gorunsun
+    setTimeout(() => this.applyParentContactLock(), 0);
     document.querySelectorAll(".wizard-page").forEach(page => {
       page.style.display = "none";
     });
@@ -2732,31 +2748,82 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     this.saveState();
   },
 
+  // Veli bilgileri BIR KEZ kaydedildikten sonra ogrenci tarafindan
+  // degistirilemez veya silinemez. Paylasimi kapatan bir anahtar da yoktur.
+  // NOT: bu istemci tarafi bir kilittir; tarayici gelistirici araclariyla
+  // localStorage'a erisen biri yine de degistirebilir. Gercek zorunluluk
+  // ancak sunucu tarafinda (Asama 3) saglanabilir.
+  parentContactLocked: function() {
+    return !!((this.state.parentEmail || "").trim() || (this.state.parentPhone || "").trim());
+  },
+
+  applyParentContactLock: function() {
+    const kilitli = this.parentContactLocked();
+    const not = document.getElementById("parentContactLockNote");
+    [["parentEmail", "parentEmail"], ["parentPhone", "parentPhone"]].forEach(([id, alan]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const kayitli = (this.state[alan] || "").trim();
+      if (kilitli && kayitli) {
+        el.value = kayitli;
+        el.readOnly = true;
+        el.style.background = "var(--bg-card-hover, rgba(0,0,0,0.03))";
+        el.style.cursor = "not-allowed";
+      } else {
+        el.readOnly = false;
+        el.style.background = "";
+        el.style.cursor = "";
+      }
+    });
+    if (not) not.style.display = kilitli ? "block" : "none";
+  },
+
+  // Gonderim hedefi: e-posta varsa e-posta, yoksa telefon.
+  syncParentContact: function() {
+    const eposta = (this.state.parentEmail || "").trim();
+    const telefon = (this.state.parentPhone || "").trim();
+    this.state.parentContact = eposta || telefon;
+  },
+
   goToSeviyeTespit: function() {
     this.checkHabitsFeedback(true);
     
-    const contactEl = document.getElementById("parentContact");
+    // Veli bilgileri ISTEGE BAGLI: bos birakilabilir. Ama doldurulduysa
+    // gecerli olmali, yoksa rapor hicbir yere ulasmaz.
+    const emailEl = document.getElementById("parentEmail");
+    const phoneEl = document.getElementById("parentPhone");
     const errorEl = document.getElementById("parentContactError");
-    const contactVal = contactEl ? contactEl.value.trim() : '';
-    
-    // Email or Phone validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailVal = emailEl ? emailEl.value.trim() : "";
+    const phoneVal = phoneEl ? phoneEl.value.trim() : "";
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     const phoneRegex = /^[0-9\s\-\+\(\)]{7,15}$/;
-    if (!contactVal || (!emailRegex.test(contactVal) && !phoneRegex.test(contactVal))) {
+
+    const hataGoster = (msg, el) => {
       if (errorEl) {
-        errorEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Geçerli bir e-posta veya telefon numarası giriniz.';
-        errorEl.style.display = 'block';
+        errorEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + msg;
+        errorEl.style.display = "block";
       }
-      if (contactEl) {
-        contactEl.style.borderColor = 'var(--danger)';
-        contactEl.focus();
-      }
+      if (el) { el.style.borderColor = "var(--danger)"; el.focus(); }
+    };
+
+    if (emailVal && !emailRegex.test(emailVal)) {
+      hataGoster("Geçerli bir veli e-postası gir veya alanı boş bırak.", emailEl);
       return;
     }
-    if (errorEl) errorEl.style.display = 'none';
-    if (contactEl) contactEl.style.borderColor = 'var(--success)';
-    
-    this.state.parentContact = contactVal;
+    if (phoneVal && !phoneRegex.test(phoneVal)) {
+      hataGoster("Geçerli bir veli telefonu gir veya alanı boş bırak.", phoneEl);
+      return;
+    }
+    if (errorEl) errorEl.style.display = "none";
+    if (emailEl) emailEl.style.borderColor = emailVal ? "var(--success)" : "";
+    if (phoneEl) phoneEl.style.borderColor = phoneVal ? "var(--success)" : "";
+
+    // Kayitli bilgi SILINEMEZ: alan bosaltilmis olsa bile eskisi korunur.
+    if (emailVal) this.state.parentEmail = emailVal;
+    if (phoneVal) this.state.parentPhone = phoneVal;
+    this.syncParentContact();
+    this.applyParentContactLock();
 
     // Mezun öğrenciler seviye tespit sınavı yerine mevcut konumlarını
     // (sıralama + net) girer; okula gidenler için mevcut konum sınav sonucudur.
@@ -6997,7 +7064,8 @@ normalizeClause: function(clause) {
       "calendar": ["Takvim Analizi", "Gelecek planlarınız gözden geçiriliyor..."],
       "monthly": ["Aylık Bakış", "30 günlük projeksiyonunuz oluşturuluyor..."],
       "year": ["Yıllık Projeksiyon", "360 günlük yol haritası taranıyor..."],
-      "programCreator": ["Program Sihirbazı", "Program ve müfredat haritanız hazırlanıyor..."],
+      "programCreator": ["Program Sihirbazı", "Çalışma programınız hazırlanıyor..."],
+      "curriculum": ["Müfredat Haritası", "Konu ilerlemeniz faz faz hesaplanıyor..."],
       "vault": ["Hata Zindanı", "Eksik konularınız ve hatalarınız taranıyor..."],
       "badges": ["AI Motivasyon", "Ödül sistemi ve günlük alıntılar güncelleniyor..."]
     };
@@ -7016,6 +7084,8 @@ normalizeClause: function(clause) {
         this.renderCharts();
       } else if (tabId === "habitMap") {
         this.renderHabitMap();
+      } else if (tabId === "curriculum") {
+        this.renderCurriculumMap();
       } else if (tabId === "programCreator") {
         this.syncLevelSelectLabels();
         const levelSel = document.getElementById("creatorLevelSelect");
@@ -7024,8 +7094,7 @@ normalizeClause: function(clause) {
         this.syncProgramTypeUI(this.state.selectedProgramType || "standard");
         this.renderStudyAllocationEngine(this.state.activeDay || 1);
         this.setProgramCreatorMode(this._programCreatorMode || "ai");
-        // 4 fazlı müfredat haritası + çalışma temposu Rota Rehberi'nden buraya taşındı
-        this.renderCurriculumMap();
+        // Müfredat haritası buradan kaldırıldı, kendi sekmesinde çiziliyor.
         this.renderRouteTempoOptions();
       } else if (tabId === "badges") {
         this.renderBadges();
@@ -8111,8 +8180,8 @@ normalizeClause: function(clause) {
 
       const detailsEl = document.createElement("details");
       detailsEl.style.cssText = "background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 8px; overflow: hidden; transition: all 0.3s ease;";
-      // Add open attribute to first phase for better UX
-      if (i === 1) detailsEl.setAttribute("open", "");
+      // Tum fazlar KAPALI baslar; ogrenci hangisine bakacagini kendisi secer.
+      // (Eskiden 1. faz acik geliyordu ve sayfa uzun bir listeyle aciliyordu.)
       
       const summaryEl = document.createElement("summary");
       summaryEl.style.cssText = "padding: 1rem; cursor: pointer; list-style: none; display: flex; flex-direction: column; gap: 0.5rem; user-select: none; border-bottom: 1px solid transparent; background: var(--bg-card-hover);";
@@ -8623,9 +8692,15 @@ normalizeClause: function(clause) {
   },
 
   // Program oluşturma modu — üç yol tek seçicinin altında
+  // Program olusturma yalnizca IKI moddan ibarettir: AI olustursun / Kendim yapayim.
+  // Fotograftan aktarma, Tahsis Motoru ve Calisma Temposu artik ayri birer mod
+  // degil, "Kendim yapayim" panelinin ALT BOLUMLERIDIR; mod degisiminde ayrica
+  // gosterilip gizlenmeleri gerekmez.
   setProgramCreatorMode: function(mode) {
+    if (mode !== "ai" && mode !== "custom") mode = "ai";
     this._programCreatorMode = mode;
-    ["ai", "custom", "photo"].forEach(m => {
+
+    ["ai", "custom"].forEach(m => {
       const sec = document.getElementById(`progMode-${m}`);
       const btn = document.getElementById(`progModeBtn-${m}`);
       if (sec) sec.style.display = (m === mode) ? "block" : "none";
@@ -8636,9 +8711,6 @@ normalizeClause: function(clause) {
         btn.style.background = (m === mode) ? "var(--ai-tint)" : "var(--bg-card)";
       }
     });
-    // Tahsis Motoru yalnızca AI planı modunda anlamlı
-    const alloc = document.getElementById("studyAllocationCard");
-    if (alloc) alloc.style.display = (mode === "ai") ? "block" : "none";
   },
 
   toggleStudyAllocationCard: function() {
@@ -12006,6 +12078,9 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
       this.renderMonthlyCalendarGrid();
     }
 
+    // Tekrarlama onizlemesi secili gune gore guncellenir
+    this.plannerUpdateRepeatHint();
+
     // Modal List Rendering (reveals list section only if tasks exist for selected day)
     const container = document.getElementById("plannerTaskList");
     const section = document.getElementById("plannerTaskListSection");
@@ -12082,53 +12157,106 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     this.showToast("Görevler AI öncelik skoruna göre yeniden sıralandı.", "success");
   },
 
-  // Planlayicidaki yayinevi listesini kaynak kitap katalogundan doldurur.
-  plannerPopulatePublisherOptions: function() {
-    const sel = document.getElementById("plannerTaskPublisher");
-    if (!sel) return;
-    const secili = sel.value;
-    sel.innerHTML = '<option value="">Otomatik seç</option>';
-    this.sourceBooks.publishers().forEach(pub => {
+  // Datalist doldurma yardimcisi
+  doldurListe: function(listId, degerler) {
+    const dl = document.getElementById(listId);
+    if (!dl) return;
+    dl.innerHTML = "";
+    degerler.forEach(v => {
       const o = document.createElement("option");
-      o.value = pub;
-      o.textContent = pub;
-      sel.appendChild(o);
+      o.value = typeof v === "string" ? v : v.value;
+      if (v && v.label) o.label = v.label;
+      dl.appendChild(o);
     });
-    if (secili) sel.value = secili;
+  },
+
+  // Yayinevi onerileri katalogdan gelir.
+  plannerPopulatePublisherOptions: function() {
+    this.doldurListe("plannerPublisherList", this.sourceBooks.publishers());
+    this.plannerRefreshBookOptions();
+    this.plannerRefreshTopicOptions();
+  },
+
+  // Secilen yayinevinin (ve dersin) kitaplari
+  plannerRefreshBookOptions: function() {
+    const pubEl = document.getElementById("plannerTaskPublisher");
+    const bookEl = document.getElementById("plannerTaskBook");
+    if (!pubEl || !bookEl) return;
+    const publisher = (pubEl.value || "").trim();
+    if (!publisher) {
+      this.doldurListe("plannerBookList", []);
+      bookEl.placeholder = "Boş = otomatik seçilir";
+      return;
+    }
+    const subjectEl = document.getElementById("plannerTaskSubject");
+    const kitaplar = this.sourceBooks.booksOf(publisher, subjectEl ? subjectEl.value : "");
+    this.doldurListe("plannerBookList", kitaplar.map(b => b.book));
+    bookEl.placeholder = kitaplar.length ? "Birkaç harf yeter" : "Bu yayınevinde kayıtlı kitap yok";
+  },
+
+  // Secili derse gore mufredat konulari
+  plannerRefreshTopicOptions: function() {
+    const subjectEl = document.getElementById("plannerTaskSubject");
+    const examEl = document.getElementById("plannerTaskExamType");
+    const ders = subjectEl ? subjectEl.value : "";
+    let konular = this.curriculumTopicNames(ders, examEl ? examEl.value : "");
+    if (!konular.length) konular = this.curriculumTopicNames(ders);
+    if (!konular.length) konular = this.curriculumTopicNames();
+    this.doldurListe("plannerTopicList", konular);
+  },
+
+  // Yazilan parcayi gercek adiyla degistirir; belirsizse dokunmaz ve
+  // kac aday oldugunu soyler. Yanlis konuya kayit yapmaktansa
+  // kullanicinin yazdigi gibi birakmak yeglenir.
+  _canonicalizeField: function(inputId, adaylar, ipucuId) {
+    const el = document.getElementById(inputId);
+    const ipucu = ipucuId ? document.getElementById(ipucuId) : null;
+    const temizle = () => { if (ipucu) { ipucu.style.display = "none"; ipucu.textContent = ""; } };
+    if (!el) return null;
+    const giris = (el.value || "").trim();
+    if (!giris) { temizle(); return null; }
+
+    const sonuc = this.resolveCanonicalName(giris, adaylar);
+    if (sonuc.ad) {
+      if (sonuc.ad !== giris) {
+        el.value = sonuc.ad;
+        if (ipucu) {
+          ipucu.textContent = `“${giris}” → ${sonuc.ad} olarak kaydedilecek`;
+          ipucu.style.display = "block";
+        }
+      } else temizle();
+      return sonuc.ad;
+    }
+    if (sonuc.adaylar.length > 1 && ipucu) {
+      ipucu.textContent = `${sonuc.adaylar.length} eşleşme var, listeden seç: ${sonuc.adaylar.slice(0, 3).join(" · ")}${sonuc.adaylar.length > 3 ? "…" : ""}`;
+      ipucu.style.display = "block";
+    } else temizle();
+    return null;
+  },
+
+  plannerCanonicalizeTopic: function() {
+    const subjectEl = document.getElementById("plannerTaskSubject");
+    const examEl = document.getElementById("plannerTaskExamType");
+    const ders = subjectEl ? subjectEl.value : "";
+    const sinav = examEl ? examEl.value : "";
+    let konular = this.curriculumTopicNames(ders, sinav);
+    if (!konular.length) konular = this.curriculumTopicNames(ders);
+    if (!konular.length) konular = this.curriculumTopicNames();
+    this._canonicalizeField("plannerTaskTopic", konular, "plannerTopicHint");
+  },
+
+  plannerCanonicalizePublisher: function() {
+    this._canonicalizeField("plannerTaskPublisher", this.sourceBooks.publishers());
     this.plannerRefreshBookOptions();
   },
 
-  // Secilen yayinevinin (ve dersin) kitaplarini kitap listesine yazar.
-  plannerRefreshBookOptions: function() {
-    const pubSel = document.getElementById("plannerTaskPublisher");
-    const bookSel = document.getElementById("plannerTaskBook");
-    if (!pubSel || !bookSel) return;
-
-    const publisher = pubSel.value;
-    if (!publisher) {
-      bookSel.innerHTML = '<option value="">Otomatik seç</option>';
-      return;
-    }
-
+  plannerCanonicalizeBook: function() {
+    const pubEl = document.getElementById("plannerTaskPublisher");
+    const publisher = pubEl ? (pubEl.value || "").trim() : "";
+    if (!publisher) return;
     const subjectEl = document.getElementById("plannerTaskSubject");
-    const subject = subjectEl ? subjectEl.value : "";
-    const onceki = bookSel.value;
-
-    const books = this.sourceBooks.booksOf(publisher, subject);
-    bookSel.innerHTML = books.length
-      ? '<option value="">Kitap seç...</option>'
-      : '<option value="">Bu yayınevinde kayıtlı kitap yok</option>';
-
-    books.forEach(b => {
-      const o = document.createElement("option");
-      o.value = b.book;
-      const tur = b.kind === "konu" ? "Konu Anlatımı" : b.kind === "deneme" ? "Deneme" : "Soru Bankası";
-      o.textContent = `${b.book} (${tur})`;
-      o.dataset.kind = b.kind;
-      bookSel.appendChild(o);
-    });
-
-    if (onceki && books.some(b => b.book === onceki)) bookSel.value = onceki;
+    const kitaplar = this.sourceBooks.booksOf(publisher, subjectEl ? subjectEl.value : "").map(b => b.book);
+    this._canonicalizeField("plannerTaskBook", kitaplar);
   },
 
   plannerAddTaskToSelectedDay: function() {
@@ -12155,6 +12283,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     const dayNum = parseInt(daySelect.value);
 
     const subject = document.getElementById("plannerTaskSubject").value;
+    this.plannerCanonicalizeTopic();
     const topic = document.getElementById("plannerTaskTopic").value;
     const type = document.getElementById("plannerTaskType").value;
     const examType = document.getElementById("plannerTaskExamType").value;
@@ -12212,6 +12341,10 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     // Kaynak: elle yayınevi + kitap seçildiyse o kullanılır, seçilmediyse
     // ders/sınav türüne göre otomatik atanır. Test/bölüm numarası her iki
     // durumda da göreve işlenir.
+    // Yazilan kisaltmalar kayittan ONCE gercek adlariyla degistirilir
+    this.plannerCanonicalizePublisher();
+    this.plannerCanonicalizeBook();
+
     const pubEl = document.getElementById("plannerTaskPublisher");
     const bookEl = document.getElementById("plannerTaskBook");
     const testEl = document.getElementById("plannerTaskTestNo");
@@ -12219,16 +12352,27 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     const secilenBook = bookEl ? bookEl.value.trim() : "";
     const testNo = testEl ? testEl.value.trim() : "";
 
-    if (secilenPub && secilenBook) {
-      const opt = bookEl.options[bookEl.selectedIndex];
+    // Yayinevi ve kitap YALNIZCA katalogda gercekten varsa kaydedilir.
+    // Yazilan parca birden fazla kitaba uyuyorsa (or. "ayt biyo") cozumleme
+    // basarisiz olur; o metni kitap adi diye kaydetmek uydurma veri uretir.
+    const gecerliPub = this.sourceBooks.publishers().indexOf(secilenPub) !== -1;
+    const gecerliKitap = gecerliPub &&
+      this.sourceBooks.booksOf(secilenPub, subject).some(b => b.book === secilenBook);
+
+    if (gecerliPub && gecerliKitap) {
+      const kayit = this.sourceBooks.booksOf(secilenPub, subject).find(b => b.book === secilenBook);
       newTask.source = {
         publisher: secilenPub,
         book: secilenBook,
-        kind: (opt && opt.dataset.kind) || this.sourceBooks.kindForTask(newTask)
+        kind: (kayit && kayit.kind) || this.sourceBooks.kindForTask(newTask)
       };
     } else {
       this.sourceBooks.attach(newTask);
-      if (secilenPub && !secilenBook) {
+      if (secilenPub && !gecerliPub) {
+        this.showToast(`"${secilenPub}" listede yok — kaynak otomatik atandı. Yayınevini listeden seç.`, "warning");
+      } else if (gecerliPub && secilenBook && !gecerliKitap) {
+        this.showToast(`"${secilenBook}" bu yayınevinde bulunamadı — kaynak otomatik atandı. Kitabı listeden seç.`, "warning");
+      } else if (gecerliPub && !secilenBook) {
         this.showToast("Yayınevi seçtin ama kitap seçmedin — kaynak otomatik atandı.", "warning");
       }
     }
@@ -12508,10 +12652,49 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     this.closeModal("customProgramPlannerModal");
   },
 
+  // Tekrarlama hedeflerini hesaplar. Haftalik modda 7'ser atlanir, boylece
+  // Pazartesi Pazartesi'ye denk gelir; kapaliyken davranis eskisiyle aynidir.
+  plannerRepeatTargets: function(dayNum, count, haftalik) {
+    const adim = haftalik ? 7 : 1;
+    const hedefler = [];
+    for (let i = 1; i <= count; i++) {
+      const hedef = dayNum + i * adim;
+      if (hedef > this.PROGRAM_DAYS) break;
+      hedefler.push(hedef);
+    }
+    return hedefler;
+  },
+
+  // Kullanici tiklamadan once ne olacagini yazar.
+  plannerUpdateRepeatHint: function() {
+    const ipucu = document.getElementById("plannerRepeatHint");
+    const etiket = document.getElementById("plannerRepeatCountLabel");
+    const haftalikEl = document.getElementById("plannerRepeatWeekly");
+    const daySelect = document.getElementById("plannerDaySelect");
+    if (!ipucu || !haftalikEl || !daySelect) return;
+
+    const haftalik = haftalikEl.checked;
+    const dayNum = parseInt(daySelect.value, 10) || 1;
+    const count = parseInt(document.getElementById("plannerRepeatNextCount").value, 10) || 0;
+
+    if (etiket) etiket.textContent = haftalik ? "Kaç Hafta Boyunca Tekrarla" : "Sonraki X Gün Boyunca Tekrarla";
+
+    if (count <= 0) { ipucu.textContent = ""; return; }
+    const hedefler = this.plannerRepeatTargets(dayNum, count, haftalik);
+    if (!hedefler.length) { ipucu.textContent = "Program sonuna gelindi, kopyalanacak gün kalmadı."; return; }
+
+    const onizleme = hedefler.slice(0, 5).join(", ") + (hedefler.length > 5 ? "…" : "");
+    ipucu.textContent = haftalik
+      ? `Gün ${dayNum} → ${hedefler.length} güne yazılacak: ${onizleme}`
+      : `Gün ${dayNum} → sonraki ${hedefler.length} güne yazılacak: ${onizleme}`;
+  },
+
   plannerRepeatDayToNextRange: function() {
     const daySelect = document.getElementById("plannerDaySelect");
     const dayNum = parseInt(daySelect.value);
     const count = parseInt(document.getElementById("plannerRepeatNextCount").value) || 7;
+    const haftalikEl = document.getElementById("plannerRepeatWeekly");
+    const haftalik = !!(haftalikEl && haftalikEl.checked);
 
     const sourceTasks = this.plannerBuffer[dayNum] ? this.plannerBuffer[dayNum].tasks : [];
     if (sourceTasks.length === 0) {
@@ -12519,11 +12702,13 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
       return;
     }
 
-    // Copy to the next X days
-    for (let i = 1; i <= count; i++) {
-      const targetDay = dayNum + i;
-      if (targetDay > this.PROGRAM_DAYS) break;
+    const hedefler = this.plannerRepeatTargets(dayNum, count, haftalik);
+    if (!hedefler.length) {
+      alert("Program sonuna gelindi, kopyalanacak gün kalmadı.");
+      return;
+    }
 
+    hedefler.forEach(targetDay => {
       // Duplicate tasks with unique IDs
       const duplicatedTasks = sourceTasks.map(t => ({
         ...t,
@@ -12534,11 +12719,14 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
         completed: false,
         tasks: duplicatedTasks
       };
-    }
+    });
 
     this.renderDashboard();
     this.renderMonthlyCalendarGrid();
-    alert(`Gün ${dayNum} görevleri sonraki ${count} güne başarıyla kopyalandı!`);
+    this.plannerUpdateRepeatHint();
+    alert(haftalik
+      ? `Gün ${dayNum} görevleri ${hedefler.length} hafta boyunca aynı güne kopyalandı (${hedefler.slice(0, 6).join(", ")}${hedefler.length > 6 ? "…" : ""}).`
+      : `Gün ${dayNum} görevleri sonraki ${hedefler.length} güne başarıyla kopyalandı!`);
   },
 
   plannerCopyDayToSpecificDays: function() {
@@ -12928,12 +13116,242 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     return null;
   },
 
-  plannerParseOCRTextAndImport: function() {
-    const textEl = document.getElementById("ocrResultText");
-    const text = textEl ? textEl.value : "";
-    if (!text || text.trim() === "") {
-      this.showToast("Önce fotoğrafı tarat veya programı metin alanına yaz.", "error");
-      return;
+  // ADI TAMAMLAMA / GERCEK ADA COZUMLEME
+  // ------------------------------------------------------------
+  // Kullanicinin bir adin tamamini yazmasi beklenmez. Yazilan parca
+  // adaylardan biriyle yeterince ortusuyorsa kayit GERCEK ADIYLA yapilir
+  // ("mat" -> "Matematik", "3d yay" -> "3D Yayinlari").
+  //
+  // Kural: yazilan metin bir adayin herhangi bir KELIMESININ basiysa ve
+  // o kelimenin en az %30'u kadar uzunluktaysa eslesme sayilir. Yuzde
+  // kelime uzerinden hesaplanir; tum ifade uzerinden hesaplansaydi
+  // 49 harflik bir konu adi icin 15 harf yazmak gerekirdi.
+  //
+  // Birden fazla aday eslesirse ASLA tahmin edilmez — secim kullaniciya
+  // birakilir. Yanlis konuya kayit, hic kayit olmamasindan kotudur.
+  AD_COZUMLEME: { oran: 0.3, enAzHarf: 3 },
+
+  resolveCanonicalName: function(giris, adaylar, secenek) {
+    const ayar = Object.assign({}, this.AD_COZUMLEME, secenek || {});
+    const g = this.normalizeOcrText(String(giris || "")).trim();
+    const bos = { ad: null, kesin: false, adaylar: [] };
+    if (!g || !Array.isArray(adaylar) || !adaylar.length) return bos;
+
+    const norm = adaylar.map(a => ({ ad: a, n: this.normalizeOcrText(a).trim() }));
+
+    // 1) Tam eslesme — her zaman kazanir
+    const tam = norm.filter(c => c.n === g);
+    if (tam.length) return { ad: tam[0].ad, kesin: true, adaylar: [tam[0].ad] };
+
+    // Yazilan sey bir adayin TAM BIR KELIMESIYSE alt harf sinirina takilmaz:
+    // "3d" -> "3D Yayinlari" gecerli bir kisaltma.
+    const tamKelime = norm.filter(c => c.n.split(/[^a-z0-9]+/).indexOf(g) !== -1);
+    if (tamKelime.length === 1) return { ad: tamKelime[0].ad, kesin: true, adaylar: [tamKelime[0].ad] };
+
+    if (g.length < ayar.enAzHarf) {
+      return tamKelime.length > 1 ? { ad: null, kesin: false, adaylar: tamKelime.map(c => c.ad) } : bos;
+    }
+
+    const yeterli = (kelime) => g.length >= Math.max(1, Math.ceil(kelime.length * ayar.oran));
+
+    // 2) Ifadenin basindan eslesme (en guvenilir kismi eslesme)
+    let aday = norm.filter(c => c.n.startsWith(g) && yeterli(c.n.split(/[^a-z0-9]+/)[0] || c.n));
+    if (aday.length === 1) return { ad: aday[0].ad, kesin: true, adaylar: [aday[0].ad] };
+
+    // 3) Herhangi bir kelimenin basindan eslesme
+    if (aday.length !== 1) {
+      const kelimeEslesen = norm.filter(c =>
+        c.n.split(/[^a-z0-9]+/).some(k => k && k.startsWith(g) && yeterli(k)));
+      if (kelimeEslesen.length === 1) return { ad: kelimeEslesen[0].ad, kesin: true, adaylar: [kelimeEslesen[0].ad] };
+      if (kelimeEslesen.length > 1) aday = kelimeEslesen;
+    }
+
+    // 4) Belirtec eslesmesi — cekimli sonlari tolere eder.
+    // Girisin HER kelimesi, adayin bir kelimesiyle yeterince uzun ortak
+    // bir bas kismini paylasmali: "hucre bolunmesi" -> "Hucre Bolunmeleri",
+    // "elektrik alan" -> "Elektriksel Kuvvet ve Alan".
+    if (aday.length !== 1) {
+      const parcala = (x) => x.split(/[^a-z0-9]+/).filter(w => w.length > 1);
+      const girisKelimeleri = parcala(g);
+      if (girisKelimeleri.length) {
+        const ortakBas = (x, y) => { let i = 0; while (i < x.length && i < y.length && x[i] === y[i]) i++; return i; };
+        const belirtecEslesen = norm.filter(c => {
+          const adayKelimeleri = parcala(c.n);
+          return girisKelimeleri.every(gk =>
+            adayKelimeleri.some(ak => ortakBas(gk, ak) >= Math.max(3, Math.ceil(gk.length * 0.6))));
+        });
+        if (belirtecEslesen.length === 1) {
+          return { ad: belirtecEslesen[0].ad, kesin: false, adaylar: [belirtecEslesen[0].ad] };
+        }
+        if (belirtecEslesen.length > 1 && !aday.length) aday = belirtecEslesen;
+      }
+    }
+
+    // Belirsiz: adaylari dondur, tahmin etme
+    return { ad: null, kesin: false, adaylar: aday.map(c => c.ad) };
+  },
+
+  // Mufredattaki tum konu adlari (secili derse gore daraltilabilir)
+  curriculumTopicNames: function(subject, examType) {
+    const g = this.curriculum.graph();
+    const cikti = [];
+    const hedef = subject ? this.sourceBooks.normalizeSubject(subject) : null;
+    // Ayni ders adi hem TYT hem AYT grubunda gecebilir (or. Tarih). Sinav
+    // turu verilirse liste daraltilir ve "inkilap" gibi girisler tek
+    // adaya duser.
+    const sinav = (examType && examType !== "Genel") ? String(examType).toUpperCase() : null;
+    Object.keys(g.subjects || {}).forEach(anahtar => {
+      const ders = g.subjects[anahtar];
+      if (!ders || !Array.isArray(ders.units)) return;
+      // Ders adi konunun kendisinde degil, ust gruptadir (subj.subject).
+      const dersAdi = this.sourceBooks.normalizeSubject(ders.subject || "");
+      if (hedef && dersAdi !== hedef) return;
+      if (sinav && String(ders.exam || "").toUpperCase() !== sinav) return;
+      (ders.units || []).forEach(u => (u.topics || []).forEach(t => {
+        if (!t || !t.name) return;
+        if (cikti.indexOf(t.name) === -1) cikti.push(t.name);
+      }));
+    });
+    return cikti.sort((a, b) => a.localeCompare(b, "tr"));
+  },
+
+  // Turkce sayi sozcuklerini rakama cevirir: "kirk soru" -> "40 soru",
+  // "yirmi bes" -> "25", "yuz yirmi" -> "120". Konusma tanima bazen rakam,
+  // bazen yazi dondurdugu icin ikisi de desteklenir.
+  SAYI_SOZCUKLERI: {
+    "yüz": 100, "yuz": 100,
+    on: 10, yirmi: 20, otuz: 30, "kırk": 40, kirk: 40, elli: 50,
+    "altmış": 60, altmis: 60, "yetmiş": 70, yetmis: 70, seksen: 80, doksan: 90,
+    bir: 1, iki: 2, "üç": 3, uc: 3, "dört": 4, dort: 4, "beş": 5, bes: 5,
+    "altı": 6, alti: 6, yedi: 7, sekiz: 8, dokuz: 9
+  },
+
+  turkishNumberWordsToDigits: function(text) {
+    const tablo = this.SAYI_SOZCUKLERI;
+    // Uzun sozcukler once denensin ki "on" , "onuncu" gibi kisalar
+    // uzun eslesmeleri bolmesin.
+    const desen = Object.keys(tablo).sort((a, b) => b.length - a.length).join("|");
+    // Ardisik sayi sozcuklerini TEK parca olarak yakala; boylece sondaki
+    // bosluk tuketilmez ("kirk soru" -> "40 soru", "40soru" degil).
+    // \\b KULLANILMAZ: JavaScript'te kelime siniri yalnizca [A-Za-z0-9_]
+    // uzerinden tanimlidir, bu yuzden "bes" gibi Turkce harfle biten
+    // sozcuklerde sinir olusmaz ve "yirmi bes" yarim eslesirdi.
+    const HARF = "A-Za-z0-9_çğıöşüÇĞİÖŞÜ";
+    const re = new RegExp(
+      "(?<![" + HARF + "])(?:" + desen + ")(?:\\s+(?:" + desen + "))*(?![" + HARF + "])",
+      "gi"
+    );
+
+    return String(text || "").replace(re, (eslesme) => {
+      const parcalar = eslesme.toLowerCase().split(/\s+/);
+      // Tek basina "bir" cogu zaman sayi degil, belirtec ("bir de", "bir tane").
+      if (parcalar.length === 1 && (parcalar[0] === "bir")) return eslesme;
+      let toplam = 0;
+      for (const kelime of parcalar) {
+        const deger = tablo[kelime];
+        if (deger === undefined) return eslesme;
+        toplam += deger;
+      }
+      return toplam > 0 ? String(toplam) : eslesme;
+    });
+  },
+
+  // Sozle soylenen gun isaretleri: "pazartesi", "birinci gun", "gun 3", "2. gun"
+  SIRA_SAYILARI: {
+    birinci: 1, ikinci: 2, ucuncu: 3, dorduncu: 4, besinci: 5, altinci: 6,
+    yedinci: 7, sekizinci: 8, dokuzuncu: 9, onuncu: 10
+  },
+
+  // Sesli giris TEK BIR UZUN CUMLE olarak gelir; ayristirici ise satir
+  // tabanli calisir. Bu fonksiyon konusmayi gun ve ders sinirlarindan
+  // bolerek ayristiricinin bekledigi bicime sokar:
+  //   "pazartesi matematik turev kirk soru fizik elektrik izle"
+  //   -> "Pazartesi:" / "- matematik turev 40 soru" / "- fizik elektrik izle"
+  voiceTextToProgramLines: function(raw) {
+    const text = this.turkishNumberWordsToDigits(String(raw || "").replace(/\s+/g, " ").trim());
+    if (!text) return "";
+
+    // normalizeOcrText karakter sayisini korur -> indeksler orijinalde de gecerli
+    const norm = this.normalizeOcrText(text);
+
+    // 1) Gun isaretleri: konum + isaretin uzunlugu (kalan kismi ayirmak icin)
+    const gunler = {};
+    const sira = Object.keys(this.SIRA_SAYILARI).join("|");
+    const gunDeseni = new RegExp(
+      "(?:^|\\s)((?:pazartesi|cumartesi|carsamba|persembe|cuma|sali|pazar)" +
+      "|(?:" + sira + ")\\s+gun[a-z]*" +
+      "|\\d{1,3}\\s*\\.?\\s*(?:gun|day)[a-z]*" +
+      "|(?:gun|day)\\s*\\d{1,3})(?![a-z0-9])", "g");
+
+    const kesim = new Set([0]);
+    let m;
+    while ((m = gunDeseni.exec(norm)) !== null) {
+      const bas = m.index + (m[0].length - m[1].length);
+      gunler[bas] = m[1].length;
+      kesim.add(bas);
+      if (gunDeseni.lastIndex === m.index) gunDeseni.lastIndex++;
+    }
+
+    // 2) Ders sinirlari — yalnizca uzun takma adlar; "mat", "geo" gibi
+    //    kisalar cumle icinde yanlis bolme yapardi.
+    const dersler = [];
+    this.OCR_SUBJECT_ALIASES.forEach(e => e.keys.forEach(k => { if (k.length >= 5) dersler.push(k); }));
+    if (dersler.length) {
+      const dersDeseni = new RegExp("(?:^|\\s)(?:" + dersler.join("|") + ")(?![a-z0-9])", "g");
+      while ((m = dersDeseni.exec(norm)) !== null) {
+        const bas = m.index + (m[0].length - m[0].replace(/^\s+/, "").length);
+        if (gunler[bas] === undefined) kesim.add(bas);
+        if (dersDeseni.lastIndex === m.index) dersDeseni.lastIndex++;
+      }
+    }
+
+    const noktalar = Array.from(kesim).sort((a, b) => a - b);
+    const temizle = (x) => x.trim().replace(/^[\s,;.]+|[\s,;.]+$/g, "");
+
+    // Once parcalari topla (gun basligi / is satiri), sonra birlestir.
+    const parcalar = [];
+    for (let i = 0; i < noktalar.length; i++) {
+      const dilim = text.slice(noktalar[i], noktalar[i + 1]);
+      const gunUzunlugu = gunler[noktalar[i]];
+      if (gunUzunlugu === undefined) {
+        const g = temizle(dilim);
+        if (g) parcalar.push({ gun: false, metin: g });
+        continue;
+      }
+      const etiket = temizle(dilim.slice(0, gunUzunlugu));
+      const kalan = temizle(dilim.slice(gunUzunlugu));
+      if (etiket) parcalar.push({ gun: true, metin: etiket });
+      if (kalan) parcalar.push({ gun: false, metin: kalan });
+    }
+
+    // Yalnizca ders adindan ibaret parcalar ("türkçe") bir sonraki
+    // parcayla birlesir: "türkçe paragraf 30 soru" tek gorevdir, iki degil.
+    const yalnizDers = (metin) => {
+      const n = this.normalizeOcrText(metin).trim();
+      return this.OCR_SUBJECT_ALIASES.some(e => e.keys.some(k => k === n));
+    };
+    const birlesik = [];
+    for (let i = 0; i < parcalar.length; i++) {
+      const p = parcalar[i];
+      const sonraki = parcalar[i + 1];
+      if (!p.gun && sonraki && !sonraki.gun && yalnizDers(p.metin)) {
+        birlesik.push({ gun: false, metin: p.metin + " " + sonraki.metin });
+        i++;
+        continue;
+      }
+      birlesik.push(p);
+    }
+
+    return birlesik.map(p => (p.gun ? p.metin + ":" : "- " + p.metin)).join("\n");
+  },
+
+  // Metinden programa — TEK AYRISTIRICI.
+  // Foto/PDF okuma, elle yazma ve sesli giris ayni bu fonksiyonu cagirir.
+  // Basarili olursa { taskCount, importedDays } dondurur, aksi halde null.
+  importProgramTextIntoPlanner: function(text) {
+    if (!text || String(text).trim() === "") {
+      this.showToast("Aktarılacak metin boş.", "error");
+      return null;
     }
 
     // Modül artık planlayıcı modalının içinde değil, Sihirbaz'ın
@@ -13029,6 +13447,26 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
       topic = topic.replace(/^[\s:\-–—]+/, "").trim();
       if (topic === "") topic = subjectMatch ? `${subject} Genel Çalışma` : "Genel Tekrar ve Soru Çözümü";
 
+      // Yazilan/soylenen konu adi mufredattaki GERCEK adla eslesiyorsa
+      // kayit resmi adiyla yapilir ("mutlak" -> "Mutlak Deger"). Konu
+      // adinin yanindaki miktar/eylem sozcukleri ("30 soru coz") ayiklanir.
+      if (subjectMatch) {
+        const mufredat = this.curriculumTopicNames(subject, examType);
+        if (mufredat.length) {
+          // Miktar ve eylem sozcuklerini ayikla. \b KULLANILMAZ: JavaScript'te
+          // kelime siniri yalnizca [A-Za-z0-9_] uzerinden tanimli oldugu icin
+          // "coz", "ozet" gibi Turkce harfli sozcuklerde sinir olusmaz.
+          const H = "A-Za-z0-9_çğıöşüÇĞİÖŞÜ";
+          const eylem = "çöz|coz|çözüm|cozum|izle|dinle|oku|çalış|calis|tekrar|video|özet|ozet|yap";
+          const cekirdek = topic
+            .replace(new RegExp("\\d+\\s*(soru|test|dk|dakika|saat|sayfa)[" + H + "]*", "gi"), " ")
+            .replace(new RegExp("(?<![" + H + "])(?:" + eylem + ")[" + H + "]*", "gi"), " ")
+            .replace(/[\s,;.:]+/g, " ").trim();
+          const eslesme = this.resolveCanonicalName(cekirdek || topic, mufredat);
+          if (eslesme.ad) topic = eslesme.ad;
+        }
+      }
+
       const typeLabels = {
         video: `🎥 ${subject}: Konu Anlatımı`,
         quiz: `🎯 ${subject}: Kazanım Testi`,
@@ -13068,7 +13506,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
 
     if (taskCount === 0) {
       this.showToast("Metinden görev çıkarılamadı. Satırları 'Gün 1:' ve '- Matematik: Limit 30 soru' biçiminde düzenleyip tekrar dene.", "error");
-      return;
+      return null;
     }
 
     const importedDays = Object.keys(clearedDays).map(Number).sort((a, b) => a - b);
@@ -13078,6 +13516,21 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     if (daySelect) daySelect.value = String(firstDay);
     this.plannerSelectDay(firstDay);
 
+    return { taskCount: taskCount, importedDays: importedDays };
+  },
+
+  // Aktarim sonrasi ortak bildirim
+  announceProgramImport: function(sonuc) {
+    alert(`${sonuc.importedDays.length} güne ${sonuc.taskCount} görev aktarıldı (Gün: ${sonuc.importedDays.join(", ")}).\n\n` +
+      `Metinde geçmeyen günler mevcut programındaki hâliyle korundu. Günleri kontrol edip "Kaydet & Kapat" ile programını güncelleyebilirsin.`);
+  },
+
+  // Giris 1: Fotograf / PDF akisi
+  plannerParseOCRTextAndImport: function() {
+    const textEl = document.getElementById("ocrResultText");
+    const sonuc = this.importProgramTextIntoPlanner(textEl ? textEl.value : "");
+    if (!sonuc) return;
+
     const resultArea = document.getElementById("ocrResultArea");
     const statusDiv = document.getElementById("ocrStatus");
     const fileInput = document.getElementById("plannerPhotoOCR");
@@ -13085,8 +13538,157 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     if (statusDiv) statusDiv.style.display = "none";
     if (fileInput) fileInput.value = "";
 
-    alert(`${importedDays.length} güne ${taskCount} görev aktarıldı (Gün: ${importedDays.join(", ")}).\n\n` +
-      `Dosyada geçmeyen günler mevcut programındaki hâliyle korundu. Günleri kontrol edip "Kaydet & Kapat" ile programını güncelleyebilirsin.`);
+    this.announceProgramImport(sonuc);
+  },
+
+  // Ornek metni doldurur — bicimi bir kez gorunce yazmak kolaylasiyor.
+  plannerInsertBulkExample: function() {
+    const el = document.getElementById("plannerBulkText");
+    if (!el) return;
+    el.value = "Pazartesi:\n" +
+      "- Matematik: Türev 40 soru çöz\n" +
+      "- Fizik: Elektrik konusu video izle\n\n" +
+      "Salı:\n" +
+      "- Kimya: Mol 25 soru çöz\n" +
+      "- Biyoloji: Hücre özet oku 45 dk\n\n" +
+      "Çarşamba:\n" +
+      "- Türkçe: Paragraf 30 soru çöz";
+    el.focus();
+  },
+
+  // ============================================================
+  // SESLI GIRIS (Web Speech API)
+  // ------------------------------------------------------------
+  // Konusma tek uzun cumle olarak gelir; durdurulunca
+  // voiceTextToProgramLines() ile gun/ders sinirlarindan satirlara
+  // bolunup metin alanina eklenir.
+  // Tarayici destegi ve mikrofon izni SESSIZCE gecilmez; her durum
+  // ekranda yazili olarak bildirilir.
+  // ============================================================
+  _voiceRec: null,
+  _voiceBuffer: "",
+
+  plannerVoiceUI: function(dinliyor, mesaj, hataMi) {
+    const btnText = document.getElementById("plannerVoiceBtnText");
+    const btn = document.getElementById("plannerVoiceBtn");
+    const durum = document.getElementById("plannerVoiceStatus");
+    if (btnText) btnText.textContent = dinliyor ? "Dinlemeyi Durdur" : "Sesli Gir";
+    if (btn) {
+      btn.style.borderColor = dinliyor ? "var(--danger, #dc2626)" : "";
+      btn.style.color = dinliyor ? "var(--danger, #dc2626)" : "";
+    }
+    if (durum) {
+      if (mesaj) {
+        durum.style.display = "block";
+        durum.style.color = hataMi ? "var(--danger, #dc2626)" : "var(--primary)";
+        durum.innerHTML = mesaj;
+      } else {
+        durum.style.display = "none";
+      }
+    }
+  },
+
+  plannerToggleVoiceInput: function() {
+    // Zaten dinliyorsa durdur
+    if (this._voiceRec) {
+      try { this._voiceRec.stop(); } catch (e) { /* zaten durmus */ }
+      return;
+    }
+
+    const Tanima = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Tanima) {
+      this.plannerVoiceUI(false,
+        "Bu tarayıcı sesli girişi desteklemiyor. Chrome veya Safari'de çalışır — " +
+        "programı aşağıya yazarak da girebilirsin.", true);
+      return;
+    }
+    if (!window.isSecureContext) {
+      this.plannerVoiceUI(false,
+        "Sesli giriş yalnızca güvenli bağlantıda (https) çalışır. " +
+        "Programı aşağıya yazarak girebilirsin.", true);
+      return;
+    }
+
+    const rec = new Tanima();
+    rec.lang = "tr-TR";
+    rec.continuous = true;
+    rec.interimResults = true;
+
+    this._voiceRec = rec;
+    this._voiceBuffer = "";
+
+    rec.onstart = () => {
+      this.plannerVoiceUI(true, "🎤 <strong>Dinleniyor…</strong> Programı söyle, örneğin: " +
+        "&laquo;Pazartesi matematik türev kırk soru, fizik elektrik video izle, salı kimya mol yirmi beş soru&raquo;");
+    };
+
+    rec.onresult = (olay) => {
+      let gecici = "";
+      for (let i = olay.resultIndex; i < olay.results.length; i++) {
+        const parca = olay.results[i][0].transcript;
+        if (olay.results[i].isFinal) this._voiceBuffer += parca + " ";
+        else gecici += parca;
+      }
+      const yazili = this.escapeHtml((this._voiceBuffer + gecici).trim());
+      this.plannerVoiceUI(true, "🎤 <strong>Dinleniyor…</strong><br><span style=\"color:var(--text-muted); font-weight:500;\">" +
+        (yazili || "…") + "</span>");
+    };
+
+    rec.onerror = (olay) => {
+      const kod = olay && olay.error;
+      const mesajlar = {
+        "not-allowed": "Mikrofon izni verilmedi. Tarayıcı adres çubuğundaki mikrofon simgesinden izin verip tekrar dene.",
+        "service-not-allowed": "Mikrofon izni engellenmiş. Tarayıcı ayarlarından bu siteye mikrofon izni ver.",
+        "no-speech": "Ses algılanmadı. Mikrofonuna daha yakın konuşup tekrar dene.",
+        "audio-capture": "Mikrofon bulunamadı. Bir mikrofon bağlı mı kontrol et.",
+        "network": "Konuşma tanıma sunucusuna ulaşılamadı (internet bağlantısı gerekiyor)."
+      };
+      this.plannerVoiceUI(false, mesajlar[kod] || ("Sesli giriş hatası: " + (kod || "bilinmeyen") + "."), true);
+      this._voiceRec = null;
+    };
+
+    rec.onend = () => {
+      this._voiceRec = null;
+      const soylenen = this._voiceBuffer.trim();
+      if (!soylenen) {
+        this.plannerVoiceUI(false, "Hiçbir şey algılanmadı. Tekrar deneyebilir ya da aşağıya yazabilirsin.", true);
+        return;
+      }
+      const satirlar = this.voiceTextToProgramLines(soylenen);
+      const el = document.getElementById("plannerBulkText");
+      if (el) {
+        el.value = (el.value.trim() ? el.value.trim() + "\n" : "") + satirlar;
+        el.focus();
+      }
+      const gunSayisi = satirlar.split("\n").filter(l => /:$/.test(l)).length;
+      const isSayisi = satirlar.split("\n").filter(l => /^-/.test(l)).length;
+      this.plannerVoiceUI(false,
+        `✓ Söylediklerin metne eklendi (${gunSayisi} gün, ${isSayisi} görev). ` +
+        `Kontrol edip <strong>&laquo;Metni Plana Aktar&raquo;</strong> düğmesine bas.`);
+      this._voiceBuffer = "";
+    };
+
+    try {
+      rec.start();
+    } catch (e) {
+      this._voiceRec = null;
+      this.plannerVoiceUI(false, "Sesli giriş başlatılamadı: " + (e && e.message ? e.message : e), true);
+    }
+  },
+
+  // Giris 2: Planlayicidaki toplu metin / sesli giris alani
+  plannerBulkTextImport: function() {
+    const el = document.getElementById("plannerBulkText");
+    if (!el) return;
+    if (!el.value.trim()) {
+      this.showToast("Önce programı yaz veya mikrofonla söyle.", "error");
+      el.focus();
+      return;
+    }
+    const sonuc = this.importProgramTextIntoPlanner(el.value);
+    if (!sonuc) return;
+    el.value = "";
+    this.announceProgramImport(sonuc);
   },
 
   syncCustomProgramListSelector: function() {
@@ -13379,6 +13981,8 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
           wakeTime: parsed.wakeTime || "07:00",
           sleepTime: parsed.sleepTime || "23:00",
           parentContact: parsed.parentContact || "",
+          parentEmail: parsed.parentEmail || "",
+          parentPhone: parsed.parentPhone || "",
           diagnosticAccuracy: parsed.diagnosticAccuracy !== undefined ? parsed.diagnosticAccuracy : null,
           currentPositionRank: parsed.currentPositionRank !== undefined ? parsed.currentPositionRank : null,
           currentNetTYT: parsed.currentNetTYT !== undefined ? parsed.currentNetTYT : null,
@@ -13535,6 +14139,8 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
           wakeTime: "07:00",
           sleepTime: "23:00",
           parentContact: "",
+          parentEmail: "",
+          parentPhone: "",
           isLoggedOut: false,
           testSubjects: [],
           testQuestions: {},

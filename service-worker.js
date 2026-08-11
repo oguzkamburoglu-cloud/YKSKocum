@@ -1,4 +1,4 @@
-const CACHE_NAME = 'defne-v50-kaynak-secimi';
+const CACHE_NAME = 'defne-v54-ad-tamamlama';
 const urlsToCache = [
   './',
   './index.html',
