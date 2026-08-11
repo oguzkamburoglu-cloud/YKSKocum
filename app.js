@@ -170,6 +170,7 @@ const app = {
     weekendHours: 8,
     wakeTime: "07:00",
     sleepTime: "23:00",
+    role: "ogrenci",     // "ogrenci" | "koc" — karsilama ekraninda secilir
     parentContact: "",   // gonderim hedefi: e-posta varsa o, yoksa telefon
     parentEmail: "",
     parentPhone: "",
@@ -1818,6 +1819,8 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
   showView: function(viewId) {
     // Ücretli sürüm kapalıyken paket yüzeyleri her ekran geçişinde gizli kalır.
     this.applyMonetizationVisibility();
+    // Rol'e göre sadeleştirme (koç modunda öğrenciye özel sekmeler gizli)
+    this.applyRoleUI();
     document.querySelectorAll(".app-view").forEach(view => {
       view.classList.remove("active");
       view.hidden = true;
@@ -1923,6 +1926,99 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
 
     if (this.state.parentReportDueTime) {
       this.startParentNotificationTimer();
+    }
+  },
+
+  // ROL GIRIS NOKTALARI
+  // Ogrenci: hedef sihirbazi -> gunluk program takibi.
+  // Koc: sihirbaza girmez; dogrudan program hazirlama ekranina gider ve
+  // hazirladigi programi METIN olarak paylasir (sunucu olmadigi icin
+  // canli koc-ogrenci baglantisi yok; bkz. exportProgramAsText).
+  startAsStudent: function() {
+    this.state.role = "ogrenci";
+    this.saveState();
+    this.startWizard();
+  },
+
+  startAsCoach: function() {
+    this.state.role = "koc";
+    this.state.isLoggedOut = false;
+    // Koc icin hedef/seviye tespiti anlamsiz; program uretimi calissin diye
+    // makul varsayilanlar kurulur ve dogrudan panele gecilir.
+    if (!this.state.name) this.state.name = "Koç";
+    if (!this.state.targetRank) this.state.targetRank = 50000;
+    if (!this.state.daysData || Object.keys(this.state.daysData).length === 0) {
+      this.generateWeeklyCalendarData();
+      this.state.standardDaysData = JSON.parse(JSON.stringify(this.state.daysData));
+    }
+    this.saveState();
+    this.showView("dashboardView");
+    this.applyRoleUI();
+    this.switchTab("programCreator");
+    this.showToast("Koç modu: program hazırla, sonra “Metin olarak paylaş” ile öğrencine gönder.", "info");
+  },
+
+  // Rol'e gore arayuzu sadelestirir. Kocun gunluk gorev/ODT/geri sayim
+  // ekranlarina ihtiyaci yok; program hazirlama yuzeyleri kalir.
+  applyRoleUI: function() {
+    const koc = this.state.role === "koc";
+    const rozet = document.getElementById("roleBadge");
+    if (rozet) {
+      rozet.style.display = koc ? "inline-flex" : "none";
+      rozet.textContent = "🧭 Koç modu";
+    }
+    ["tabBtn-vault", "tabBtn-habitMap", "tabBtn-charts"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = koc ? "none" : "";
+    });
+    const exportBtn = document.getElementById("coachExportWrap");
+    if (exportBtn) exportBtn.style.display = koc ? "block" : "none";
+  },
+
+  // Aktif programi, ice aktarma ayristiricisinin okudugu bicimde metne cevirir.
+  // Koc bu metni ogrenciye gonderir, ogrenci "Metinden aktar" ile yukler.
+  exportProgramAsText: function(gunSayisi) {
+    const limit = Math.min(gunSayisi || 7, this.PROGRAM_DAYS);
+    const kaynak = (this.state.selectedProgramType === "custom" && this.state.customDaysData &&
+                    Object.keys(this.state.customDaysData).length)
+      ? this.state.customDaysData : this.state.daysData;
+    const satirlar = [];
+    for (let g = 1; g <= limit; g++) {
+      const gun = kaynak[g];
+      if (!gun || !Array.isArray(gun.tasks) || !gun.tasks.length) continue;
+      satirlar.push(`Gün ${g}:`);
+      gun.tasks.forEach(t => {
+        const parcalar = [];
+        if (t.topic) parcalar.push(t.topic);
+        if (t.qCount) parcalar.push(`${t.qCount} soru`);
+        if (t.duration) parcalar.push(t.duration);
+        if (t.source && t.source.publisher) {
+          parcalar.push(`(${t.source.publisher} — ${t.source.book}${t.source.testNo ? " · " + t.source.testNo : ""})`);
+        }
+        const ders = t.subject && t.subject !== "Rehberlik" ? `${t.subject}: ` : "";
+        satirlar.push(`- ${ders}${parcalar.join(" ")}`.trim());
+      });
+      satirlar.push("");
+    }
+    return satirlar.join("\n").trim();
+  },
+
+  copyProgramAsText: function() {
+    const sayiEl = document.getElementById("coachExportDays");
+    const gun = sayiEl ? parseInt(sayiEl.value, 10) || 7 : 7;
+    const metin = this.exportProgramAsText(gun);
+    const alan = document.getElementById("coachExportText");
+    if (!metin) {
+      this.showToast("Aktarılacak görev bulunamadı — önce program oluştur.", "error");
+      return;
+    }
+    if (alan) { alan.value = metin; alan.style.display = "block"; alan.select(); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(metin)
+        .then(() => this.showToast(`${gun} günlük program panoya kopyalandı.`, "success"))
+        .catch(() => this.showToast("Panoya kopyalanamadı — metni aşağıdan elle kopyala.", "warning"));
+    } else {
+      this.showToast("Metin aşağıda — elle kopyalayabilirsin.", "info");
     }
   },
 
@@ -8711,6 +8807,8 @@ normalizeClause: function(clause) {
         btn.style.background = (m === mode) ? "var(--ai-tint)" : "var(--bg-card)";
       }
     });
+    // Koç modundaki paylaşım bölümü mod değişiminde de doğru görünsün
+    this.applyRoleUI();
   },
 
   toggleStudyAllocationCard: function() {
@@ -13980,6 +14078,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
           weekendHours: parsed.weekendHours !== undefined ? parsed.weekendHours : 8,
           wakeTime: parsed.wakeTime || "07:00",
           sleepTime: parsed.sleepTime || "23:00",
+          role: parsed.role === "koc" ? "koc" : "ogrenci",
           parentContact: parsed.parentContact || "",
           parentEmail: parsed.parentEmail || "",
           parentPhone: parsed.parentPhone || "",
