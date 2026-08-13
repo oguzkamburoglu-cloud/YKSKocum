@@ -13792,16 +13792,31 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
   syncCustomProgramListSelector: function() {
     const selector = document.getElementById("activeProgramSelector");
     if (!selector) return;
-    selector.innerHTML = '<option value="standard">🤖 AI Standart Planı</option>';
 
-    this.state.savedPrograms.forEach(prog => {
+    // "AI Standart Planı" bu listeden kaldırıldı: burası "Kendim Yapayım"
+    // paneli ve yalnızca kendi programlarını listeler. AI planına dönmek
+    // için üstteki "AI Oluştursun" sekmesi kullanılır.
+    selector.innerHTML = "";
+    const programlar = this.state.savedPrograms || [];
+    programlar.forEach(prog => {
       const opt = document.createElement("option");
       opt.value = prog.id;
       opt.textContent = "📝 " + prog.name;
       selector.appendChild(opt);
     });
 
-    selector.value = this.state.selectedProgramType === "standard" ? "standard" : this.state.activeCustomProgramId;
+    const varMi = programlar.length > 0;
+    const not = document.getElementById("noCustomProgramNote");
+    const kontroller = document.getElementById("customProgramManageControls");
+    if (not) not.style.display = varMi ? "none" : "block";
+    if (kontroller) kontroller.style.display = varMi ? "flex" : "none";
+    selector.style.display = varMi ? "block" : "none";
+
+    if (varMi) {
+      const secili = programlar.some(p => p.id === this.state.activeCustomProgramId)
+        ? this.state.activeCustomProgramId : programlar[0].id;
+      selector.value = secili;
+    }
   },
 
   openAddCustomTaskModal: function() {

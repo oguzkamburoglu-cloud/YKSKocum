@@ -986,39 +986,38 @@
 
               <div id="progMode-custom" style="display:none; border: 1.5px solid var(--border-color); border-radius: 14px; padding: 1.5rem;">
                 <h3 style="margin: 0 0 0.4rem; font-size: 1.02rem; font-family: var(--font-header); font-weight: 800; color: var(--text-main); display:flex; align-items:center; gap:0.5rem;">
-                  <i class="fa-solid fa-pen-ruler text-secondary"></i> Kendi Özel Program Oluşturucu
+                  <i class="fa-solid fa-pen-ruler text-secondary"></i> Kendi Programım
                 </h3>
                 <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.6; margin-bottom: 1.25rem;">
-                  İstediğin kadar özel program oluşturup aralarında geçiş yapabilirsin. "Kendi Programımı Oluştur" dediğinde <strong>şu an aktif olan program (AI'ın oluşturduğu plan dahil) planlayıcıya olduğu gibi yüklenir</strong>; üzerinde ekleme-çıkarma yapıp kaydedebilirsin. Kaydettiğin değişiklikler günlük, haftalık ve aylık programlarına da anında yansır. Kağıda yazdığın bir programı aktarmak istersen yukarıdaki <strong>"Fotoğraftan"</strong> sekmesini kullan.
+                  İstediğin kadar özel program oluşturup aralarında geçiş yapabilirsin. Kaydettiğin değişiklikler günlük, haftalık ve aylık programına anında yansır. AI planına dönmek için yukarıdaki <strong>"AI Oluştursun"</strong> sekmesini kullan.
                 </p>
 
-                <div class="form-group" style="margin-bottom: 1rem;">
-                  <label style="font-weight: 700; font-size: 0.85rem; color: var(--text-main); margin-bottom: 0.5rem; display: block;">Aktif Program</label>
-                  <select id="activeProgramSelector" onchange="app.switchActiveProgram(this.value)" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-weight: 700; font-size: 0.9rem; background: var(--bg-card); color: var(--text-main); cursor: pointer;">
-                    <option value="standard">🤖 AI Standart Planı</option>
-                    <!-- JS: kayıtlı özel programlarla doldurulur -->
+                <!-- Program seçimi + yönetimi tek blokta; "Kendim Yapayım"a
+                     basıldığı anda görünür. Eskiden Düzenle/Sil kontrolleri
+                     oluşturma düğmesinin altında ve gizliydi. -->
+                <div style="border: 1.5px solid var(--border-color); border-radius: 10px; padding: 1rem; background: var(--bg-card);">
+                  <label style="font-weight: 700; font-size: 0.8rem; color: var(--text-main); margin-bottom: 0.4rem; display: block;">Aktif Program</label>
+                  <select id="activeProgramSelector" onchange="app.switchActiveProgram(this.value)" style="width: 100%; padding: 0.6rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-weight: 700; font-size: 0.88rem; background: var(--bg-card); color: var(--text-main); cursor: pointer;">
+                    <!-- JS: yalnızca kayıtlı özel programlarla doldurulur -->
                   </select>
+                  <p id="noCustomProgramNote" style="display:none; font-size:0.72rem; color:var(--text-muted); margin:0.5rem 0 0; line-height:1.45;">
+                    Henüz özel programın yok. Aşağıdan oluşturduğunda burada listelenecek.
+                  </p>
+
+                  <div id="customProgramManageControls" style="display:flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem;">
+                    <button class="btn btn-secondary" style="flex:1; min-width:130px; font-weight:800; font-size:0.82rem;" onclick="app.openCustomProgramPlannerForCurrent()">
+                      <i class="fa-solid fa-pen-to-square"></i> Düzenle
+                    </button>
+                    <button class="btn btn-secondary text-danger" style="flex:1; min-width:130px; font-weight:800; font-size:0.82rem;" onclick="app.deleteActiveCustomProgram()">
+                      <i class="fa-solid fa-trash-can"></i> Sil
+                    </button>
+                  </div>
                 </div>
 
-                <div style="display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1rem;">
-                  <button class="btn btn-secondary" style="flex:1; min-width:180px; font-weight:800; font-size:0.85rem;" onclick="app.plannerCreateNewProgramFromScratch()">
-                    <i class="fa-solid fa-pen"></i> Kendi Programımı Oluştur
-                  </button>
-                </div>
+                <button class="btn btn-secondary" style="width:100%; margin-top:0.9rem; font-weight:800; font-size:0.85rem;" onclick="app.plannerCreateNewProgramFromScratch()">
+                  <i class="fa-solid fa-plus"></i> Yeni Program Oluştur
+                </button>
 
-                <!-- Seçili özel program için yönetim kontrolleri (Standart plan aktifken gizli) -->
-                <div id="customProgramManageControls" style="display:none; gap: 0.6rem; flex-wrap: wrap; border-top: 1px dashed var(--border-color); padding-top: 1rem;">
-                  <button class="btn btn-secondary" style="flex:1; min-width:140px; font-weight:800; font-size:0.85rem;" onclick="app.openCustomProgramPlannerForCurrent()">
-                    <i class="fa-solid fa-pen-to-square"></i> Düzenle
-                  </button>
-                  <button class="btn btn-secondary text-danger" style="flex:1; min-width:140px; font-weight:800; font-size:0.85rem;" onclick="app.deleteActiveCustomProgram()">
-                    <i class="fa-solid fa-trash-can"></i> Sil
-                  </button>
-                </div>
-              <!-- ============ SECTION C: FOTOĞRAFTAN PROGRAM OLUŞTURMA ============
-                   Modül önceden planlayıcı modalının içinde gömülüydü; "Kendim
-                   Yapayım" akışında beklenmedik şekilde karşıya çıkıyordu.
-                   Artık kendi sekmesinde, olduğu gibi burada duruyor. -->
               <!-- KOÇ MODU: programi metin olarak paylasma.
                    Sunucu olmadigi icin canli koc-ogrenci baglantisi yok;
                    koc programi metne cevirip ogrenciye gonderir, ogrenci de
@@ -2302,6 +2301,6 @@
   <script src="curriculum.js?v=3"></script>
   <script src="questions.js"></script>
   <script src="quotes.js?v=1"></script>
-  <script src="app.js?v=96"></script>
+  <script src="app.js?v=97"></script>
 </body>
 </html>
