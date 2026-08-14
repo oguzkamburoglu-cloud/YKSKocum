@@ -43,7 +43,7 @@
 
   <!-- App Header -->
   <header>
-    <div class="logo" role="button" tabindex="0" onclick="app.showView('dashboardView')" style="display: flex; align-items: center; gap: 0.45rem; cursor: pointer; flex-shrink: 0;">
+    <div class="logo" role="button" tabindex="0" onclick="app.goHome()" style="display: flex; align-items: center; gap: 0.45rem; cursor: pointer; flex-shrink: 0;">
       <svg viewBox="0 0 120 140" style="width: 38px; height: 44px; flex-shrink: 0;">
         <g transform="rotate(-10 60 70)">
           <path d="M46 72 Q34 76 31 86" fill="none" stroke="#1E2A4A" stroke-width="3" stroke-linecap="round"></path>
@@ -1444,6 +1444,41 @@
       </div> <!-- Close dashboard-grid -->
     </section>
 
+    <!-- VIEW: COACH WORKSPACE — öğrenci günlük planından tamamen ayrı takip alanı -->
+    <section id="coachDashboardView" class="app-view" hidden>
+      <div class="coach-shell">
+        <div class="coach-hero">
+          <div>
+            <span class="coach-kicker"><i class="fa-solid fa-compass"></i> KOÇ ÇALIŞMA ALANI</span>
+            <h1>Öğrencilerinin rotasını yönet.</h1>
+            <p>Programı ata, onay sürecini takip et ve desteğe ihtiyacı olan öğrenciyi erkenden gör.</p>
+          </div>
+          <button class="btn btn-primary" onclick="app.openCoachInvite()"><i class="fa-solid fa-user-plus"></i> Öğrenci Davet Et</button>
+        </div>
+
+        <div class="coach-metric-grid">
+          <article class="coach-metric"><span>Aktif öğrenci</span><strong id="coachMetricActive">0</strong><small>Bu hafta çalışma kaydı olanlar</small></article>
+          <article class="coach-metric"><span>Bugün takip bekleyen</span><strong id="coachMetricAttention">0</strong><small>Son 3 günde aksama görülenler</small></article>
+          <article class="coach-metric"><span>Program onayı</span><strong id="coachMetricPending">0</strong><small>Öğrenci yanıtı bekleyen taslaklar</small></article>
+          <article class="coach-metric"><span>Haftalık uyum</span><strong id="coachMetricCompletion">%0</strong><small>Aktif programların ortalaması</small></article>
+        </div>
+
+        <div class="coach-workspace-grid">
+          <section class="coach-panel coach-roster-panel">
+            <div class="coach-panel-head">
+              <div><h2>Öğrencilerim</h2><p>Duruma göre önceliklendirilmiş takip listesi</p></div>
+              <button class="coach-text-btn" onclick="app.openCoachInvite()">+ Davet et</button>
+            </div>
+            <div id="coachStudentRoster" class="coach-roster"></div>
+          </section>
+
+          <section class="coach-panel coach-detail-panel">
+            <div id="coachStudentDetail"></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- MODAL 0.5: WEEKLY AI REPORT & REVISION -->
@@ -2301,6 +2336,6 @@
   <script src="curriculum.js?v=3"></script>
   <script src="questions.js"></script>
   <script src="quotes.js?v=1"></script>
-  <script src="app.js?v=97"></script>
+  <script src="app.js?v=98"></script>
 </body>
 </html>

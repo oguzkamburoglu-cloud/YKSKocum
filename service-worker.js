@@ -1,4 +1,4 @@
-const CACHE_NAME = 'defne-v55-rol-secimi';
+const CACHE_NAME = 'defne-v56-koc-alani';
 const urlsToCache = [
   './',
   './index.html',

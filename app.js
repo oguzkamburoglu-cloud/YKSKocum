@@ -171,6 +171,8 @@ const app = {
     wakeTime: "07:00",
     sleepTime: "23:00",
     role: "ogrenci",     // "ogrenci" | "koc" — karsilama ekraninda secilir
+    coachStudents: [],
+    selectedCoachStudentId: null,
     parentContact: "",   // gonderim hedefi: e-posta varsa o, yoksa telefon
     parentEmail: "",
     parentPhone: "",
@@ -1839,11 +1841,15 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     }
 
     const onDashboard = viewId === "dashboardView";
+    const onWorkspace = onDashboard || viewId === "coachDashboardView";
     const logoutBtn = document.getElementById("headerLogoutBtn");
-    if (logoutBtn) logoutBtn.style.display = onDashboard ? "flex" : "none";
+    if (logoutBtn) logoutBtn.style.display = onWorkspace ? "flex" : "none";
 
     const notifBtn = document.getElementById("headerNotifBtn");
-    if (notifBtn) notifBtn.style.display = onDashboard ? "flex" : "none";
+    if (notifBtn) notifBtn.style.display = onWorkspace ? "flex" : "none";
+
+    const navStats = document.getElementById("navStats");
+    if (navStats && viewId === "coachDashboardView") navStats.style.display = "none";
 
     const aiChatbotWrapper = document.getElementById("aiChatbotWrapper");
     if (aiChatbotWrapper) {
@@ -1883,6 +1889,11 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     }
   },
 
+  goHome: function() {
+    if (this.state.role === "koc" && !this.state.isLoggedOut) this.showCoachDashboard();
+    else this.showView("dashboardView");
+  },
+
   logoutUser: function() {
     if (confirm("Sistemden çıkış yapmak istediğinize emin misiniz? (Çalışmalarınız ve verileriniz bu cihazda güvenle saklanmaya devam edecektir.)")) {
       // Clear active timers
@@ -1905,6 +1916,11 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
 
     this.state.isLoggedOut = false;
     this.saveState();
+
+    if (this.state.role === "koc") {
+      this.showCoachDashboard();
+      return;
+    }
 
     this.updateHeaderStats();
     
@@ -1952,10 +1968,109 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       this.state.standardDaysData = JSON.parse(JSON.stringify(this.state.daysData));
     }
     this.saveState();
-    this.showView("dashboardView");
+    this.showCoachDashboard();
+    this.showToast("Koç çalışma alanın hazır. Öğrenci davet ederek başlayabilirsin.", "success");
+  },
+
+  coachDemoStudents: function() {
+    return [
+      { id: "demo-elif", name: "Elif Y.", track: "Sayısal", source: "coach", progress: 82, lastActive: "Bugün, 09:20", risk: "good", pending: false, note: "Bu hafta deneme analizi yapılacak.", next: "Cuma · 18:00" },
+      { id: "demo-berk", name: "Berk A.", track: "Eşit Ağırlık", source: "ai", progress: 61, lastActive: "Dün, 21:10", risk: "watch", pending: false, note: "Paragraf rutini iki gündür aksıyor.", next: "Perşembe · 17:30" },
+      { id: "demo-deniz", name: "Deniz K.", track: "Sayısal", source: "proposal", progress: 0, lastActive: "2 gün önce", risk: "pending", pending: true, note: "Yeni 2. hafta programı onay bekliyor.", next: "Program yanıtı bekleniyor" },
+      { id: "demo-selin", name: "Selin T.", track: "Dil", source: "ai", progress: 38, lastActive: "4 gün önce", risk: "risk", pending: false, note: "Çalışma kaydı yok; kısa kontrol mesajı öneriliyor.", next: "Bugün · Takip gerekli" }
+    ];
+  },
+
+  getCoachStudents: function() {
+    const students = Array.isArray(this.state.coachStudents) ? this.state.coachStudents : [];
+    return students.length ? students : this.coachDemoStudents();
+  },
+
+  showCoachDashboard: function() {
+    this.state.role = "koc";
+    this.state.isLoggedOut = false;
+    this.saveState();
     this.applyRoleUI();
+    this.showView("coachDashboardView");
+    this.renderCoachDashboard();
+  },
+
+  renderCoachDashboard: function() {
+    const students = this.getCoachStudents();
+    const selectedId = this.state.selectedCoachStudentId || students[0]?.id;
+    const selected = students.find(s => s.id === selectedId) || students[0];
+    this.state.selectedCoachStudentId = selected?.id || null;
+
+    const active = students.filter(s => s.lastActive.startsWith("Bugün") || s.lastActive.startsWith("Dün")).length;
+    const attention = students.filter(s => s.risk === "risk" || s.risk === "watch").length;
+    const pending = students.filter(s => s.pending).length;
+    const average = students.length ? Math.round(students.reduce((sum, s) => sum + (s.progress || 0), 0) / students.length) : 0;
+    [["coachMetricActive", active], ["coachMetricAttention", attention], ["coachMetricPending", pending], ["coachMetricCompletion", `%${average}`]].forEach(([id, value]) => {
+      const el = document.getElementById(id); if (el) el.textContent = value;
+    });
+
+    const roster = document.getElementById("coachStudentRoster");
+    if (roster) roster.innerHTML = students.map(s => {
+      const source = s.source === "coach" ? "Koç programı" : s.source === "proposal" ? "Onay bekliyor" : "DEFNE AI programı";
+      const risk = s.risk === "good" ? "Rayında" : s.risk === "pending" ? "Onay bekliyor" : s.risk === "watch" ? "İzle" : "Takip et";
+      return `<button class="coach-student-row ${s.id === selected?.id ? "is-selected" : ""}" onclick="app.selectCoachStudent('${s.id}')">
+        <span class="coach-avatar">${this.escapeHtml(s.name.charAt(0))}</span>
+        <span class="coach-student-main"><strong>${this.escapeHtml(s.name)}</strong><small>${this.escapeHtml(s.track)} · ${source}</small></span>
+        <span class="coach-status coach-status-${s.risk}">${risk}</span>
+      </button>`;
+    }).join("");
+
+    const detail = document.getElementById("coachStudentDetail");
+    if (!detail || !selected) return;
+    const sourceName = selected.source === "coach" ? "Koç programı aktif" : selected.source === "proposal" ? "Koç programı önerisi" : "DEFNE AI programı aktif";
+    const sourceCopy = selected.source === "coach" ? "Bu planı sen oluşturdun. Yeni değişiklikler öğrenciye sürüm olarak gönderilir." : selected.source === "proposal" ? "Öğrencinin kabulü bekleniyor. Onaylanmadan aktif program değişmez." : "Öğrenci kendi AI planıyla ilerliyor. Planı izleyebilir, not ve öneri gönderebilirsin.";
+    detail.innerHTML = `<div class="coach-detail-head">
+      <div><span class="coach-detail-eyebrow">ÖĞRENCİ GÖRÜNÜMÜ</span><h2>${this.escapeHtml(selected.name)}</h2><p>${this.escapeHtml(selected.track)} · Son etkinlik: ${this.escapeHtml(selected.lastActive)}</p></div>
+      <span class="coach-source-label ${selected.source}">${sourceName}</span>
+    </div>
+    <div class="coach-progress-box"><div><strong>Bu haftaki program uyumu</strong><span>%${selected.progress}</span></div><div class="coach-progress-track"><i style="width:${selected.progress}%"></i></div></div>
+    <div class="coach-insight"><i class="fa-solid fa-lightbulb"></i><p>${this.escapeHtml(selected.note)}</p></div>
+    <div class="coach-detail-grid">
+      <div><span>Sonraki adım</span><strong>${this.escapeHtml(selected.next)}</strong></div>
+      <div><span>Plan kaynağı</span><strong>${sourceName}</strong></div>
+    </div>
+    <p class="coach-source-copy">${sourceCopy}</p>
+    <div class="coach-actions">
+      <button class="btn btn-primary" onclick="app.createCoachPlanFor('${selected.id}')"><i class="fa-solid fa-wand-magic-sparkles"></i> ${selected.source === "coach" ? "Yeni sürüm hazırla" : "Koç programı öner"}</button>
+      <button class="btn btn-secondary" onclick="app.addCoachNote('${selected.id}')"><i class="fa-solid fa-note-sticky"></i> Not bırak</button>
+    </div>
+    <div class="coach-permission-note"><i class="fa-solid fa-lock"></i> Koç, öğrencinin görevlerini tamamlayamaz veya kişisel AI planını doğrudan değiştiremez.</div>`;
+  },
+
+  selectCoachStudent: function(id) {
+    this.state.selectedCoachStudentId = id;
+    this.saveState();
+    this.renderCoachDashboard();
+  },
+
+  openCoachInvite: function() {
+    const email = prompt("Öğrencinin e-posta adresini gir:");
+    if (!email) return;
+    const local = Array.isArray(this.state.coachStudents) ? this.state.coachStudents : [];
+    local.push({ id: `local-${Date.now()}`, name: email.split("@")[0], track: "Bekliyor", source: "proposal", progress: 0, lastActive: "Davet gönderildi", risk: "pending", pending: true, note: "Öğrencinin daveti kabul etmesi bekleniyor.", next: "Davet kabulü bekleniyor" });
+    this.state.coachStudents = local;
+    this.saveState();
+    this.renderCoachDashboard();
+    this.showToast("Davet taslağı eklendi. Canlı e-posta daveti sunucu bağlantısı ile gönderilecek.", "info");
+  },
+
+  createCoachPlanFor: function(id) {
+    this.state.coachDraftFor = id;
+    this.saveState();
+    this.showView("dashboardView");
     this.switchTab("programCreator");
-    this.showToast("Koç modu: program hazırla, sonra “Metin olarak paylaş” ile öğrencine gönder.", "info");
+    this.showToast("Programı hazırla; yayınlandığında öğrenciye onay bekleyen öneri olarak gider.", "info");
+  },
+
+  addCoachNote: function(id) {
+    const note = prompt("Öğrenciye veya kendi takip kaydına not ekle:");
+    if (!note) return;
+    this.showToast("Koç notu kaydedildi. Canlı öğrenci hesabı bağlandığında öğrenciye iletilecek.", "success");
   },
 
   // Rol'e gore arayuzu sadelestirir. Kocun gunluk gorev/ODT/geri sayim
@@ -1965,7 +2080,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     const rozet = document.getElementById("roleBadge");
     if (rozet) {
       rozet.style.display = koc ? "inline-flex" : "none";
-      rozet.textContent = "🧭 Koç modu";
+      rozet.textContent = "🧭 Koç alanı";
     }
     ["tabBtn-vault", "tabBtn-habitMap", "tabBtn-charts"].forEach(id => {
       const el = document.getElementById(id);
@@ -14094,6 +14209,9 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
           wakeTime: parsed.wakeTime || "07:00",
           sleepTime: parsed.sleepTime || "23:00",
           role: parsed.role === "koc" ? "koc" : "ogrenci",
+          coachStudents: Array.isArray(parsed.coachStudents) ? parsed.coachStudents : [],
+          selectedCoachStudentId: parsed.selectedCoachStudentId || null,
+          coachDraftFor: parsed.coachDraftFor || null,
           parentContact: parsed.parentContact || "",
           parentEmail: parsed.parentEmail || "",
           parentPhone: parsed.parentPhone || "",
