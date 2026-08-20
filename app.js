@@ -178,6 +178,7 @@ const app = {
     wakeTime: "07:00",
     sleepTime: "23:00",
     role: "ogrenci",     // "ogrenci" | "koc" — karsilama ekraninda secilir
+    programAccepted: false,  // program ancak ogrenci kabul edince olusturulur
     coachStudents: [],
     selectedCoachStudentId: null,
     parentContact: "",   // gonderim hedefi: e-posta varsa o, yoksa telefon
@@ -1830,6 +1831,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
   showView: function(viewId) {
     // Ücretli sürüm kapalıyken paket yüzeyleri her ekran geçişinde gizli kalır.
     this.applyMonetizationVisibility();
+    if (typeof this.renderProgramSuggestion === "function") this.renderProgramSuggestion();
     // Rol'e göre sadeleştirme (koç modunda öğrenciye özel sekmeler gizli)
     this.applyRoleUI();
     document.querySelectorAll(".app-view").forEach(view => {
@@ -3651,6 +3653,97 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
   },
 
   // Custom 7-Day & 30-Day Calendar Generator (Okul vs. Mezun)
+  // ============================================================
+  // PROGRAM ONERISI
+  // Kurulum bittiginde program otomatik uretilmez. Ogrencinin girdigi
+  // hedef siralama ve seviye tespiti sonucuna dayali bir oneri sunulur;
+  // kabul ederse program o anda olusturulur, istemezse uygulamayi bos
+  // gezip kendi programini kurabilir.
+  // ============================================================
+  programSuggestionData: function() {
+    const seviye = this.state.level || 3;
+    const hedef = this.state.targetRank;
+    const dogruluk = this.state.diagnosticAccuracy;
+    const li = (this.LEVEL_META && this.LEVEL_META[seviye]) || null;
+    return {
+      seviye: seviye,
+      hedef: hedef,
+      dogruluk: dogruluk,
+      saat: li ? li.hours : null,
+      soru: li ? li.questions : null,
+      alan: this.state.track || "Sayısal",
+      seviyeAdi: li ? li.name : ""
+    };
+  },
+
+  renderProgramSuggestion: function() {
+    const kart = document.getElementById("programSuggestionCard");
+    if (!kart) return;
+
+    // Program kabul edildiyse ya da zaten doluysa kart gosterilmez
+    const doluMu = this.state.daysData && Object.keys(this.state.daysData).length > 0;
+    if (this.state.programAccepted || doluMu || this.state.role === "koc") {
+      kart.style.display = "none";
+      return;
+    }
+
+    const d = this.programSuggestionData();
+    const fmt = n => (typeof n === "number" ? n.toLocaleString("tr-TR") : "—");
+    const gerekce = [];
+    if (typeof d.dogruluk === "number") gerekce.push(`seviye tespitinde <strong>%${d.dogruluk}</strong> doğruluk`);
+    if (d.hedef) gerekce.push(`hedefin <strong>ilk ${fmt(d.hedef)}</strong>`);
+    gerekce.push(`<strong>${d.alan}</strong> alanı`);
+
+    kart.style.display = "block";
+    kart.innerHTML = `
+      <div class="glass-card" style="padding:1.5rem; border:1.5px solid var(--primary); background:var(--ai-tint); border-radius:12px;">
+        <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.6rem;">
+          <span class="ai-helper-icon" style="width:32px; height:32px; border-radius:9px; font-size:0.85rem;"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+          <h3 style="margin:0; font-family:var(--font-header); font-weight:800; font-size:1.02rem; color:var(--text-main);">Sana bir program önerim var</h3>
+        </div>
+        <p style="font-size:0.88rem; color:var(--text-main); line-height:1.6; margin:0 0 0.9rem;">
+          ${gerekce.join(", ")} bilgilerine göre <strong>${d.seviye}. Seviye${d.seviyeAdi ? " · " + d.seviyeAdi : ""}</strong> bir çalışma programı hazırlayabilirim${d.saat ? ` — toplam <strong>${fmt(d.saat)} saat</strong> ve <strong>${fmt(d.soru)}</strong> soru hedefiyle` : ""}.
+        </p>
+        <p style="font-size:0.78rem; color:var(--text-muted); line-height:1.5; margin:0 0 1.1rem;">
+          Kabul edersen program hemen oluşturulur ve günlük listene düşer. İstemezsen boş başlarsın, programı kendin kurarsın — sonradan da bu öneriye dönebilirsin.
+        </p>
+        <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+          <button class="btn btn-primary" style="flex:1; min-width:190px; font-weight:800;" onclick="app.acceptProgramSuggestion()">
+            <i class="fa-solid fa-check"></i> Programı Oluştur
+          </button>
+          <button class="btn btn-secondary" style="flex:1; min-width:170px; font-weight:800;" onclick="app.declineProgramSuggestion()">
+            <i class="fa-solid fa-pen-ruler"></i> Kendim Kurayım
+          </button>
+        </div>
+      </div>`;
+  },
+
+  acceptProgramSuggestion: function() {
+    this.state.daysData = {};
+    this.generateWeeklyCalendarData();
+    this.state.standardDaysData = JSON.parse(JSON.stringify(this.state.daysData));
+    this.state.customDaysData = JSON.parse(JSON.stringify(this.state.daysData));
+    this.state.selectedProgramType = "standard";
+    this.state.programAccepted = true;
+    this.saveState();
+
+    this.renderProgramSuggestion();
+    this.updateHeaderStats();
+    this.renderDashboard();
+    this.renderMonthlyCalendarGrid();
+    this.switchTab("today");
+    this.showToast(`${this.state.level}. Seviye programın oluşturuldu ve günlük listene eklendi.`, "success");
+  },
+
+  declineProgramSuggestion: function() {
+    // Oneri kapatilir ama program "kabul edilmis" sayilmaz; ogrenci
+    // Program Sihirbazi'ndan istedigi zaman geri donebilir.
+    const kart = document.getElementById("programSuggestionCard");
+    if (kart) kart.style.display = "none";
+    this.switchTab("programCreator");
+    this.showToast("Programı kendin kurabilirsin. Önerimi istediğinde Program Sihirbazı'ndan alabilirsin.", "info");
+  },
+
   startMainDashboard: function() {
     try {
       if (this.state.subscriptionTier === "pending") {
@@ -3674,7 +3767,13 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     const hasMathRoutine = day2 && day2.tasks && day2.tasks.some(t => t && t.id && t.id.includes("math_routine"));
 
     let freshlyGenerated = false;
-    if (!this.state.standardDaysData || Object.keys(this.state.standardDaysData).length === 0 || !hasMathRoutine) {
+    // Program ARTIK OTOMATIK OLUSTURULMAZ. Ogrenci hedefini ve seviye
+    // tespitini tamamladiktan sonra uygulamanin icine girer; bu verilere
+    // dayali bir oneri gosterilir ve ancak kabul ederse program uretilir.
+    if (!this.state.programAccepted) {
+      this.state.selectedProgramType = this.state.selectedProgramType || "standard";
+      this.saveState();
+    } else if (!this.state.standardDaysData || Object.keys(this.state.standardDaysData).length === 0 || !hasMathRoutine) {
       this.state.daysData = {};
       this.generateWeeklyCalendarData(); // populates this.state.daysData with YKS template
       this.state.standardDaysData = JSON.parse(JSON.stringify(this.state.daysData));
@@ -14393,6 +14492,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
           wakeTime: parsed.wakeTime || "07:00",
           sleepTime: parsed.sleepTime || "23:00",
           role: parsed.role === "koc" ? "koc" : "ogrenci",
+          programAccepted: !!parsed.programAccepted,
           coachStudents: Array.isArray(parsed.coachStudents) ? parsed.coachStudents : [],
           selectedCoachStudentId: parsed.selectedCoachStudentId || null,
           coachDraftFor: parsed.coachDraftFor || null,
@@ -14469,7 +14569,8 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
         const day2 = this.state.standardDaysData && (this.state.standardDaysData[2] || this.state.standardDaysData["2"]);
         const hasMathRoutine = day2 && day2.tasks && day2.tasks.some(t => t && t.id && t.id.includes("math_routine"));
 
-        if (!this.state.daysData || Object.keys(this.state.daysData).length !== this.PROGRAM_DAYS || !hasMathRoutine) {
+        if (this.state.programAccepted &&
+            (!this.state.daysData || Object.keys(this.state.daysData).length !== this.PROGRAM_DAYS || !hasMathRoutine)) {
           this.generateWeeklyCalendarData();
           this.state.standardDaysData = JSON.parse(JSON.stringify(this.state.daysData));
           this.state.customDaysData = JSON.parse(JSON.stringify(this.state.daysData));

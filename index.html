@@ -795,6 +795,10 @@
 
           <!-- TAB PANEL: TODAY TASKS (GÜNLÜK PLAN) -->
           <div class="tab-panel" id="panel-today">
+            <!-- PROGRAM ÖNERİSİ — kurulum sonrası program otomatik oluşturulmaz;
+                 girilen hedef ve seviye tespiti sonucuna göre öneri sunulur,
+                 öğrenci kabul ederse uygulanır. -->
+            <div id="programSuggestionCard" style="display:none; margin-bottom:1.25rem;"></div>
             <div class="glass-card" style="padding: 1.5rem; background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 12px; position: relative;">
               <!-- Tape on top -->
               <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%) rotate(-1.5deg); width: 80px; height: 18px; background: rgba(190, 205, 225, 0.45); border-radius: 2px; z-index: 10;"></div>
@@ -2323,6 +2327,6 @@
   <script src="curriculum.js?v=3"></script>
   <script src="questions.js"></script>
   <script src="quotes.js?v=1"></script>
-  <script src="app.js?v=101"></script>
+  <script src="app.js?v=102"></script>
 </body>
 </html>
