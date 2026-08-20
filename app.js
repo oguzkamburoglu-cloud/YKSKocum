@@ -2555,25 +2555,76 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
   ],
 
   _programCache: null,
+
+  // ============================================================
+  // PROGRAM VERISI — GERCEK OSYM KAYITLARI
+  // ------------------------------------------------------------
+  // Kaynak: osym-data.js (ÖSYM 2026-YKS Tercih Kılavuzu, Tablo-4'ten
+  // ayrıştırılmıştır). Sıralamalar kılavuzdaki "2025-YKS BAŞARI SIRASI"
+  // sütunudur — tercih döneminde yayımlanan en güncel yerleştirme verisi.
+  //
+  // ÖNEMLİ: Eskiden bu liste `bölüm tabanı × üniversite katman çarpanı`
+  // formülüyle ÜRETİLİYORDU; gerçek veri değildi ama ekranda ÖSYM verisi
+  // gibi sunuluyordu. Artık gerçek kayıtlar kullanılıyor.
+  //
+  // Veri dosyası yüklenemezse (çevrimdışı ilk açılış) eski türetilmiş
+  // liste yedek olarak devreye girer ve kaynak etiketi bunu söyler.
+  // ============================================================
+  get osymVeri() {
+    return (typeof window !== "undefined" && window.OSYM_TABLO4) ? window.OSYM_TABLO4 : null;
+  },
+
+  get osymKaynakEtiketi() {
+    const v = this.osymVeri;
+    return v ? `${v.kaynak} · ${v.yil} taban başarı sıralamaları`
+             : "Tahmini değerler (resmî veri yüklenemedi)";
+  },
+
+  get osymGercekVeriMi() { return !!this.osymVeri; },
+
   get OSYM_2025_PROGRAMS() {
-    if (!this._programCache) {
-      const list = [];
-      this.OSYM_2025_UNIS.forEach(entry => {
-        const name = entry[0], tier = entry[1], depts = entry[2], overrides = entry[3] || {};
-        depts.forEach(d => {
-          const base = this.OSYM_2025_DEPT_BASE[d];
-          if (!base) return;
-          const t = overrides[d] || tier;
-          const total = this.OSYM_2025_RANKED[base[0]] || 2310579;
-          let rank = base[1] * (this.OSYM_2025_TIER_MULT[t] || 1);
-          rank = Math.min(rank, total * 0.85);
-          rank = rank < 10000 ? Math.round(rank / 50) * 50 : rank < 100000 ? Math.round(rank / 500) * 500 : Math.round(rank / 1000) * 1000;
-          list.push({ uni: name, dept: d, track: base[0], rank: rank });
-        });
-      });
-      this._programCache = list;
+    if (this._programCache) return this._programCache;
+    const v = this.osymVeri;
+
+    if (v && Array.isArray(v.kayitlar)) {
+      this._programCache = v.kayitlar.map(k => ({
+        uni: v.uniler[k[0]],
+        dept: k[2],                 // tam program adı: "Tıp (İngilizce) (Burslu)"
+        deptBase: v.bolumler[k[1]], // niteleyicisiz taban ad: "Tıp"
+        track: k[3],
+        rank: k[4]
+      }));
+      return this._programCache;
     }
+
+    // ---- YEDEK: veri dosyası yoksa eski türetilmiş liste ----
+    const list = [];
+    this.OSYM_2025_UNIS.forEach(entry => {
+      const name = entry[0], tier = entry[1], depts = entry[2], overrides = entry[3] || {};
+      depts.forEach(d => {
+        const base = this.OSYM_2025_DEPT_BASE[d];
+        if (!base) return;
+        const t = overrides[d] || tier;
+        const total = this.OSYM_2025_RANKED[base[0]] || 2310579;
+        let rank = base[1] * (this.OSYM_2025_TIER_MULT[t] || 1);
+        rank = Math.min(rank, total * 0.85);
+        rank = rank < 10000 ? Math.round(rank / 50) * 50 : rank < 100000 ? Math.round(rank / 500) * 500 : Math.round(rank / 1000) * 1000;
+        list.push({ uni: name, dept: d, deptBase: d, track: base[0], rank: rank });
+      });
+    });
+    this._programCache = list;
     return this._programCache;
+  },
+
+  // Alana göre taban bölüm adları (açılır liste için)
+  osymBolumleri: function(track) {
+    const seen = {};
+    this.OSYM_2025_PROGRAMS.forEach(p => {
+      if (track && p.track !== track) return;
+      const ad = p.deptBase || p.dept;
+      if (ad) seen[ad] = true;
+    });
+    return Object.keys(seen).sort((a, b) => a.localeCompare(b, "tr"));
   },
 
   populateDeptSelect: function() {
@@ -2583,9 +2634,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     const track = trackEl ? trackEl.value : this.state.track;
     const current = sel.value;
     while (sel.options.length > 1) sel.remove(1);
-    Object.keys(this.OSYM_2025_DEPT_BASE)
-      .filter(d => this.OSYM_2025_DEPT_BASE[d][0] === track)
-      .sort((a, b) => a.localeCompare(b, "tr"))
+    this.osymBolumleri(track)
       .forEach(d => {
         const o = document.createElement("option");
         o.value = d;
@@ -2626,8 +2675,9 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     const lower = txt.toLowerCase();
     return this.OSYM_2025_PROGRAMS.filter(p => {
       if (track && p.track !== track) return false;
-      const d = p.dept.toLowerCase();
-      return d === lower || d.startsWith(lower + " (") || d.includes(lower);
+      const d = (p.dept || "").toLowerCase();
+      const b = (p.deptBase || "").toLowerCase();
+      return b === lower || d === lower || d.startsWith(lower + " (") || b.includes(lower) || d.includes(lower);
     });
   },
 
@@ -2658,7 +2708,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       if (atUni.length > 0) {
         const p = atUni[0];
         const ok = hasRank ? rank <= p.rank : null;
-        title = `🎓 <strong>${p.uni} — ${p.dept}</strong> için 2025 YKS'de yaklaşık <strong>ilk ${fmt(p.rank)}</strong> sıralama gerekiyordu.`;
+        title = `🎓 <strong>${p.uni} — ${p.dept}</strong> için <strong>ilk ${fmt(p.rank)}</strong> taban başarı sıralaması gerekiyordu.`;
         if (hasRank) {
           title += ok
             ? ` Hedef sıralaman (<strong>${fmt(rank)}</strong>) bu bölüm için <strong style="color:var(--success);">yeterli görünüyor ✅</strong>`
@@ -2682,7 +2732,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       rows = (okList.length > 0 ? okList : noList).slice(0, 8).map(p => rowHtml(p, rank <= p.rank));
     } else if (!uni && deptMatches.length > 0) {
       // Sadece bölüm: üniversitelere göre gereken sıralamalar
-      title = `🎓 <strong>${deptMatches[0].dept}</strong> (${track}) için üniversitelere göre 2025 taban sıralamaları:`;
+      title = `🎓 <strong>${deptMatches[0].deptBase || deptMatches[0].dept}</strong> (${track}) için üniversitelere göre taban sıralamaları:`;
       rows = deptMatches.sort((a, b) => a.rank - b.rank).slice(0, 8).map(p => rowHtml(p, hasRank ? rank <= p.rank : null));
     } else if (hasRank) {
       // Sadece sıralama: girebileceği üniversite + bölümler
@@ -2708,7 +2758,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       ${footer ? `<p style="margin:0 0 0.5rem; font-size:0.72rem; font-weight:700; color:var(--text-muted);">${footer}</p>` : ""}
       <div style="display:flex; flex-direction:column; gap:0.4rem;">${rows.join("")}</div>
       <p style="margin:0.75rem 0 0; font-size:0.65rem; color:var(--text-muted); line-height:1.4;">
-        📊 2025 YKS yerleştirme (ÖSYM / YÖK Atlas) yaklaşık taban başarı sıralamalarıdır. Kesin ve güncel veriler için YÖK Atlas'ı kontrol etmeyi unutma.
+        📊 ${app.osymKaynakEtiketi}. Kontenjan ve koşullar değişebilir; tercih öncesi YÖK Atlas'tan doğrula.
       </p>`;
     box.style.display = "block";
   },
