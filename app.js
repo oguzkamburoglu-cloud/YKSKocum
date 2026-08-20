@@ -140,7 +140,40 @@ if (typeof window !== 'undefined' && !window.YKS_QUESTION_BANK) {
 // Hata Defteri, Spaced Repetition, AI Coach Corner, and Focus Scores.
 
 const app = {
-  PROGRAM_DAYS: 360,
+  // ============================================================
+  // PROGRAM SÜRESİ — sınava kalan gün
+  // Eskiden sabit 360'tı; sınava 300 gün kalan öğrenciye de 360 günlük
+  // plan üretiliyordu. Artık başlangıçtan sınav gününe kadar sürer.
+  // Son SON_FAZ_GUN günü sınav provası fazıdır: %80 deneme, %20 tekrar.
+  // ============================================================
+  SON_FAZ_GUN: 30,
+  _programDaysCache: null,
+
+  get PROGRAM_DAYS() {
+    if (this._programDaysCache) return this._programDaysCache;
+    let bas = new Date();
+    try {
+      if (this.state && this.state.startDate) {
+        const d = new Date(this.state.startDate + "T00:00:00");
+        if (!isNaN(d)) bas = d;
+      }
+    } catch (e) { /* varsayılan: bugün */ }
+    const gun = Math.ceil((this.getExamDate() - bas) / 86400000);
+    this._programDaysCache = Math.max(30, Math.min(400, gun || 360));
+    return this._programDaysCache;
+  },
+
+  invalidateProgramDays: function() { this._programDaysCache = null; },
+
+  // Seviye hedeflerini programin gercek suresine olcekler
+  applyLevelTargets: function(hours, questions, mocks) {
+    const olcek = Math.max(0.2, Math.min(1.2, this.PROGRAM_DAYS / 360));
+    const yuv = (n, adim) => Math.max(adim, Math.round(n * olcek / adim) * adim);
+    this.state.totalHoursTarget = yuv(hours, 50);
+    this.state.totalQuestionsTarget = yuv(questions, 1000);
+    this.state.totalMocksTarget = yuv(mocks, 5);
+  },
+
 
   // ÜCRETLENDİRME ANAHTARI
   // ------------------------------------------------------------
@@ -2890,9 +2923,9 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     this.state.targetNetTYT = netTYT;
     this.state.targetNetAYT = netAYT;
     this.state.level = level;
-    this.state.totalHoursTarget = hours;
-    this.state.totalQuestionsTarget = questions;
-    this.state.totalMocksTarget = mocks;
+    // LEVEL_META degerleri tam hazirlik yili (360 gun) icindir; program
+    // sinava kalan sureye gore kisaysa hedefler orantili kisilir.
+    this.applyLevelTargets(hours, questions, mocks);
 
     document.getElementById("previewLevel").textContent = level;
     document.getElementById("previewLevelDesc").textContent = description;
@@ -3641,9 +3674,9 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       description = "<strong>1. Seviye - Başlangıç Seviyesi:</strong> 9-10. sınıf temellerini sıfırdan inşa etme ve TYT'de güvenli çekirdek net oluşturma. Yaklaşık hedef netler: TYT 45-60, AYT 20-32.";
     }
 
-    this.state.totalHoursTarget = hours;
-    this.state.totalQuestionsTarget = questions;
-    this.state.totalMocksTarget = mocks;
+    // LEVEL_META degerleri tam hazirlik yili (360 gun) icindir; program
+    // sinava kalan sureye gore kisaysa hedefler orantili kisilir.
+    this.applyLevelTargets(hours, questions, mocks);
 
     const expBox = document.getElementById("reportLevelExplanationBox");
     if (expBox) expBox.innerHTML = description;
@@ -4036,9 +4069,60 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       });
     };
 
+    // SINAV PROVASI FAZI — programın son SON_FAZ_GUN günü.
+    // Bu dönemde yeni konu açılmaz: günlerin %80'i tam deneme + analiz,
+    // %20'si tekrar. 5 günün 4'ü deneme, 1'i tekrar olacak şekilde dağıtılır.
+    const sonFazBaslangic = Math.max(1, this.PROGRAM_DAYS - this.SON_FAZ_GUN + 1);
+    const denemeSuresi = focus === "tyt" ? "165 dk" : focus === "ayt" ? "180 dk" : "270 dk";
+    const denemeSoru = focus === "tyt" ? 120 : focus === "ayt" ? 80 : 200;
+    const denemeTur = focus === "tyt" ? "TYT" : focus === "ayt" ? "AYT" : "Genel";
+    const anaDers = track === "Sayısal" ? "Matematik" : (track === "Dil" ? "Dil" : "Edebiyat");
+
     for (let day = 1; day <= this.PROGRAM_DAYS; day++) {
       const dailyTasks = [];
       const dayOfWeek = day % 7;
+
+      if (day >= sonFazBaslangic) {
+        const tekrarGunu = (day - sonFazBaslangic) % 5 === 4;   // 5 günde 1 → %20
+        if (tekrarGunu) {
+          dailyTasks.push({
+            id: `task_${day}_final_review`, type: "reading", subject: "Rehberlik",
+            topic: "Sınav Öncesi Genel Tekrar",
+            label: "🔁 Genel Tekrar Günü",
+            desc: "Bugün yeni soru çözme. Deneme analizlerinden çıkan eksiklerini, formül kartlarını ve hata defterindeki konuları gözden geçir.",
+            duration: "150 dk", completed: false, examType: "Genel", noSource: true
+          });
+          dailyTasks.push({
+            id: `task_${day}_final_review_vault`, type: "retest", subject: "Rehberlik",
+            topic: "Hata Defteri Taraması",
+            label: "📕 Hata Defteri Taraması",
+            desc: "Hata defterindeki en sık tekrar eden 20 soruyu yeniden çöz; hâlâ yanlışsa konu özetine dön.",
+            duration: "60 dk", qCount: 20, completed: false, logged: false,
+            correct: 0, incorrect: 0, timeSpent: 0, errorTopics: [], examType: "Genel", noSource: true
+          });
+        } else {
+          dailyTasks.push({
+            id: `task_${day}_final_mock`, type: "quiz", subject: anaDers,
+            topic: "Tam Deneme Sınavı",
+            label: `🏆 [${denemeTur}] Tam Deneme Sınavı`,
+            desc: "Gerçek sınav saatinde, tek oturumda ve süre tutarak çöz. Optik forma işaretle.",
+            duration: denemeSuresi, qCount: denemeSoru, completed: false, logged: false,
+            correct: 0, incorrect: 0, timeSpent: 0, errorTopics: [], examType: denemeTur,
+            sourceSubject: "Genel", sourceKind: "deneme"
+          });
+          dailyTasks.push({
+            id: `task_${day}_final_mock_review`, type: "reading", subject: "Rehberlik",
+            topic: "Deneme Analizi",
+            label: "📝 Deneme Analizi & Hata Defteri",
+            desc: "Yanlış ve boşları tek tek incele, hata defterine işle. Analiz denemenin kendisinden önemlidir.",
+            duration: "75 dk", completed: false, examType: "Genel", noSource: true
+          });
+        }
+        this.sourceBooks.attachAll(dailyTasks);
+        this.state.daysData[day] = { completed: false, isMockDay: !tekrarGunu, isFinalPhase: true,
+                                     tasks: dailyTasks, schedule: this.buildDaySchedule(dailyTasks, dayOfWeek) };
+        continue;
+      }
 
       // 1. Mock Exam Day (Sunday)
       if (dayOfWeek === 0) {
@@ -12511,6 +12595,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
   },
 
   updateProgramStartDate: function(dateStr) {
+    this.invalidateProgramDays();
     if (!dateStr) return;
     this.state.startDate = dateStr;
 
