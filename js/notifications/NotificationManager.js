@@ -154,7 +154,7 @@ class NotificationManager {
         break;
       case "test":
         defaultTitle = "✅ Bildirim Testi";
-        defaultBody = "AI Rota Rehberi bildirimleri başarıyla çalışıyor. Senin için buradayım!";
+        defaultBody = "DEFNE bildirimleri başarıyla çalışıyor. Senin için buradayım!";
         targetView = "dashboardView";
         break;
     }
@@ -162,13 +162,14 @@ class NotificationManager {
     let aiMessage = defaultBody;
 
     // Call Gemini API if available and it's not a test
-    if (type !== "test" && this.app.state.geminiApiKey) {
+    const apiKey = typeof this.app.getLlmApiKey === "function" ? this.app.getLlmApiKey() : "";
+    if (type !== "test" && apiKey) {
       try {
         const payload = {
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: { maxOutputTokens: 100, temperature: 0.7 }
         };
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.app.state.geminiApiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent?key=${apiKey}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
@@ -185,8 +186,8 @@ class NotificationManager {
     const registration = await navigator.serviceWorker.ready;
     registration.showNotification(defaultTitle, {
       body: aiMessage,
-      icon: "./icon-192.jpg",
-      badge: "./icon-192.jpg",
+      icon: "./icon-192.png",
+      badge: "./icon-192.png",
       vibrate: [200, 100, 200],
       data: {
         url: "./",

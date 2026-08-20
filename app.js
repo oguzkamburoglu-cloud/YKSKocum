@@ -63,20 +63,23 @@ window.addEventListener('unhandledrejection', function(e) {
 // SafeStorage localStorage wrapper (H-003)
 const SafeStorage = {
   memoryStore: {},
+  storageAvailable: null,
   isSupported: function() {
+    if (this.storageAvailable !== null) return this.storageAvailable;
     try {
       const key = "__storage_test__";
-      window.SafeStorage.setItem(key, key);
-      window.SafeStorage.removeItem(key);
-      return true;
+      window.localStorage.setItem(key, key);
+      window.localStorage.removeItem(key);
+      this.storageAvailable = true;
     } catch (e) {
-      return false;
+      this.storageAvailable = false;
     }
+    return this.storageAvailable;
   },
   getItem: function(key) {
     if (this.isSupported()) {
       try {
-        return window.SafeStorage.getItem(key);
+        return window.localStorage.getItem(key);
       } catch (e) {
         return this.memoryStore[key] || null;
       }
@@ -86,7 +89,7 @@ const SafeStorage = {
   setItem: function(key, value) {
     if (this.isSupported()) {
       try {
-        window.SafeStorage.setItem(key, value);
+        window.localStorage.setItem(key, value);
         return;
       } catch (e) {
         console.warn("LocalStorage Quota Exceeded or disabled, falling back to memory store.", e);
@@ -97,7 +100,7 @@ const SafeStorage = {
   removeItem: function(key) {
     if (this.isSupported()) {
       try {
-        window.SafeStorage.removeItem(key);
+        window.localStorage.removeItem(key);
         return;
       } catch (e) {}
     }
@@ -113,6 +116,10 @@ const SafeStorage = {
     this.memoryStore = {};
   }
 };
+
+// NotificationManager is loaded before this file and uses the same storage
+// layer when it persists a notification preference change.
+window.SafeStorage = SafeStorage;
 
 // DEFNE - Akıllı YKS Ders Çalışma Koçu
 // Fallback YKS Question Bank initialization
@@ -133,7 +140,40 @@ if (typeof window !== 'undefined' && !window.YKS_QUESTION_BANK) {
 // Hata Defteri, Spaced Repetition, AI Coach Corner, and Focus Scores.
 
 const app = {
-  PROGRAM_DAYS: 360,
+  // ============================================================
+  // PROGRAM SÜRESİ — sınava kalan gün
+  // Eskiden sabit 360'tı; sınava 300 gün kalan öğrenciye de 360 günlük
+  // plan üretiliyordu. Artık başlangıçtan sınav gününe kadar sürer.
+  // Son SON_FAZ_GUN günü sınav provası fazıdır: %80 deneme, %20 tekrar.
+  // ============================================================
+  SON_FAZ_GUN: 30,
+  _programDaysCache: null,
+
+  get PROGRAM_DAYS() {
+    if (this._programDaysCache) return this._programDaysCache;
+    let bas = new Date();
+    try {
+      if (this.state && this.state.startDate) {
+        const d = new Date(this.state.startDate + "T00:00:00");
+        if (!isNaN(d)) bas = d;
+      }
+    } catch (e) { /* varsayılan: bugün */ }
+    const gun = Math.ceil((this.getExamDate() - bas) / 86400000);
+    this._programDaysCache = Math.max(30, Math.min(400, gun || 360));
+    return this._programDaysCache;
+  },
+
+  invalidateProgramDays: function() { this._programDaysCache = null; },
+
+  // Seviye hedeflerini programin gercek suresine olcekler
+  applyLevelTargets: function(hours, questions, mocks) {
+    const olcek = Math.max(0.2, Math.min(1.2, this.PROGRAM_DAYS / 360));
+    const yuv = (n, adim) => Math.max(adim, Math.round(n * olcek / adim) * adim);
+    this.state.totalHoursTarget = yuv(hours, 50);
+    this.state.totalQuestionsTarget = yuv(questions, 1000);
+    this.state.totalMocksTarget = yuv(mocks, 5);
+  },
+
 
   // ÜCRETLENDİRME ANAHTARI
   // ------------------------------------------------------------
@@ -170,6 +210,10 @@ const app = {
     weekendHours: 8,
     wakeTime: "07:00",
     sleepTime: "23:00",
+    role: "ogrenci",     // "ogrenci" | "koc" — karsilama ekraninda secilir
+    programAccepted: false,  // program ancak ogrenci kabul edince olusturulur
+    coachStudents: [],
+    selectedCoachStudentId: null,
     parentContact: "",   // gonderim hedefi: e-posta varsa o, yoksa telefon
     parentEmail: "",
     parentPhone: "",
@@ -178,6 +222,7 @@ const app = {
     // Notifications & summaries
     notifications: [],
     notifyChannels: { push: true, email: true, whatsapp: true },
+    notificationSettings: null,
     lastQuoteIndex: null,
     overdueAlerted: {},
     overdueAlertedDate: null,
@@ -187,6 +232,7 @@ const app = {
     // Subscription & Marketing
     subscriptionTier: "pending", // 'pending', 'free', 'trial', 'pro_monthly', 'pro_yearly'
     trialStartDate: null,
+    theme: "classic",
     
     // Diagnostics Test State
     testSubjects: [],
@@ -819,8 +865,8 @@ const app = {
   // ==========================================
 
   geminiConfig: {
-    endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
-    model: "gemini-2.5-flash", // Default model
+    endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent",
+    model: "gemini-3.7-flash", // Default model
     max_tokens: 1024
   },
 
@@ -1818,6 +1864,9 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
   showView: function(viewId) {
     // Ücretli sürüm kapalıyken paket yüzeyleri her ekran geçişinde gizli kalır.
     this.applyMonetizationVisibility();
+    if (typeof this.renderProgramSuggestion === "function") this.renderProgramSuggestion();
+    // Rol'e göre sadeleştirme (koç modunda öğrenciye özel sekmeler gizli)
+    this.applyRoleUI();
     document.querySelectorAll(".app-view").forEach(view => {
       view.classList.remove("active");
       view.hidden = true;
@@ -1836,11 +1885,15 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     }
 
     const onDashboard = viewId === "dashboardView";
+    const onWorkspace = onDashboard || viewId === "coachDashboardView";
     const logoutBtn = document.getElementById("headerLogoutBtn");
-    if (logoutBtn) logoutBtn.style.display = onDashboard ? "flex" : "none";
+    if (logoutBtn) logoutBtn.style.display = onWorkspace ? "flex" : "none";
 
     const notifBtn = document.getElementById("headerNotifBtn");
-    if (notifBtn) notifBtn.style.display = onDashboard ? "flex" : "none";
+    if (notifBtn) notifBtn.style.display = onWorkspace ? "flex" : "none";
+
+    const navStats = document.getElementById("navStats");
+    if (navStats && viewId === "coachDashboardView") navStats.style.display = "none";
 
     const aiChatbotWrapper = document.getElementById("aiChatbotWrapper");
     if (aiChatbotWrapper) {
@@ -1880,6 +1933,11 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     }
   },
 
+  goHome: function() {
+    if (this.state.role === "koc" && !this.state.isLoggedOut) this.showCoachDashboard();
+    else this.showView("dashboardView");
+  },
+
   logoutUser: function() {
     if (confirm("Sistemden çıkış yapmak istediğinize emin misiniz? (Çalışmalarınız ve verileriniz bu cihazda güvenle saklanmaya devam edecektir.)")) {
       // Clear active timers
@@ -1903,6 +1961,11 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     this.state.isLoggedOut = false;
     this.saveState();
 
+    if (this.state.role === "koc") {
+      this.showCoachDashboard();
+      return;
+    }
+
     this.updateHeaderStats();
     
     var _el_trophyTargetDept = document.getElementById("trophyTargetDept"); if (_el_trophyTargetDept) _el_trophyTargetDept.textContent = this.state.targetDept;
@@ -1923,6 +1986,198 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
 
     if (this.state.parentReportDueTime) {
       this.startParentNotificationTimer();
+    }
+  },
+
+  // ROL GIRIS NOKTALARI
+  // Ogrenci: hedef sihirbazi -> gunluk program takibi.
+  // Koc: sihirbaza girmez; dogrudan program hazirlama ekranina gider ve
+  // hazirladigi programi METIN olarak paylasir (sunucu olmadigi icin
+  // canli koc-ogrenci baglantisi yok; bkz. exportProgramAsText).
+  startAsStudent: function() {
+    this.state.role = "ogrenci";
+    this.saveState();
+    this.startWizard();
+  },
+
+  startAsCoach: function() {
+    this.state.role = "koc";
+    this.state.isLoggedOut = false;
+    // Koc icin hedef/seviye tespiti anlamsiz; program uretimi calissin diye
+    // makul varsayilanlar kurulur ve dogrudan panele gecilir.
+    if (!this.state.name) this.state.name = "Koç";
+    if (!this.state.targetRank) this.state.targetRank = 50000;
+    if (!this.state.daysData || Object.keys(this.state.daysData).length === 0) {
+      this.generateWeeklyCalendarData();
+      this.state.standardDaysData = JSON.parse(JSON.stringify(this.state.daysData));
+    }
+    this.saveState();
+    this.showCoachDashboard();
+    this.showToast("Koç çalışma alanın hazır. Öğrenci davet ederek başlayabilirsin.", "success");
+  },
+
+  coachDemoStudents: function() {
+    return [
+      { id: "demo-elif", name: "Elif Y.", track: "Sayısal", source: "coach", progress: 82, lastActive: "Bugün, 09:20", risk: "good", pending: false, note: "Bu hafta deneme analizi yapılacak.", next: "Cuma · 18:00" },
+      { id: "demo-berk", name: "Berk A.", track: "Eşit Ağırlık", source: "ai", progress: 61, lastActive: "Dün, 21:10", risk: "watch", pending: false, note: "Paragraf rutini iki gündür aksıyor.", next: "Perşembe · 17:30" },
+      { id: "demo-deniz", name: "Deniz K.", track: "Sayısal", source: "proposal", progress: 0, lastActive: "2 gün önce", risk: "pending", pending: true, note: "Yeni 2. hafta programı onay bekliyor.", next: "Program yanıtı bekleniyor" },
+      { id: "demo-selin", name: "Selin T.", track: "Dil", source: "ai", progress: 38, lastActive: "4 gün önce", risk: "risk", pending: false, note: "Çalışma kaydı yok; kısa kontrol mesajı öneriliyor.", next: "Bugün · Takip gerekli" }
+    ];
+  },
+
+  getCoachStudents: function() {
+    const students = Array.isArray(this.state.coachStudents) ? this.state.coachStudents : [];
+    return students.length ? students : this.coachDemoStudents();
+  },
+
+  showCoachDashboard: function() {
+    this.state.role = "koc";
+    this.state.isLoggedOut = false;
+    this.saveState();
+    this.applyRoleUI();
+    this.showView("coachDashboardView");
+    this.renderCoachDashboard();
+  },
+
+  renderCoachDashboard: function() {
+    const students = this.getCoachStudents();
+    const selectedId = this.state.selectedCoachStudentId || students[0]?.id;
+    const selected = students.find(s => s.id === selectedId) || students[0];
+    this.state.selectedCoachStudentId = selected?.id || null;
+
+    const active = students.filter(s => s.lastActive.startsWith("Bugün") || s.lastActive.startsWith("Dün")).length;
+    const attention = students.filter(s => s.risk === "risk" || s.risk === "watch").length;
+    const pending = students.filter(s => s.pending).length;
+    const average = students.length ? Math.round(students.reduce((sum, s) => sum + (s.progress || 0), 0) / students.length) : 0;
+    [["coachMetricActive", active], ["coachMetricAttention", attention], ["coachMetricPending", pending], ["coachMetricCompletion", `%${average}`]].forEach(([id, value]) => {
+      const el = document.getElementById(id); if (el) el.textContent = value;
+    });
+
+    const roster = document.getElementById("coachStudentRoster");
+    if (roster) roster.innerHTML = students.map(s => {
+      const source = s.source === "coach" ? "Koç programı" : s.source === "proposal" ? "Onay bekliyor" : "DEFNE AI programı";
+      const risk = s.risk === "good" ? "Rayında" : s.risk === "pending" ? "Onay bekliyor" : s.risk === "watch" ? "İzle" : "Takip et";
+      return `<button class="coach-student-row ${s.id === selected?.id ? "is-selected" : ""}" onclick="app.selectCoachStudent('${s.id}')">
+        <span class="coach-avatar">${this.escapeHtml(s.name.charAt(0))}</span>
+        <span class="coach-student-main"><strong>${this.escapeHtml(s.name)}</strong><small>${this.escapeHtml(s.track)} · ${source}</small></span>
+        <span class="coach-status coach-status-${s.risk}">${risk}</span>
+      </button>`;
+    }).join("");
+
+    const detail = document.getElementById("coachStudentDetail");
+    if (!detail || !selected) return;
+    const sourceName = selected.source === "coach" ? "Koç programı aktif" : selected.source === "proposal" ? "Koç programı önerisi" : "DEFNE AI programı aktif";
+    const sourceCopy = selected.source === "coach" ? "Bu planı sen oluşturdun. Yeni değişiklikler öğrenciye sürüm olarak gönderilir." : selected.source === "proposal" ? "Öğrencinin kabulü bekleniyor. Onaylanmadan aktif program değişmez." : "Öğrenci kendi AI planıyla ilerliyor. Planı izleyebilir, not ve öneri gönderebilirsin.";
+    detail.innerHTML = `<div class="coach-detail-head">
+      <div><span class="coach-detail-eyebrow">ÖĞRENCİ GÖRÜNÜMÜ</span><h2>${this.escapeHtml(selected.name)}</h2><p>${this.escapeHtml(selected.track)} · Son etkinlik: ${this.escapeHtml(selected.lastActive)}</p></div>
+      <span class="coach-source-label ${selected.source}">${sourceName}</span>
+    </div>
+    <div class="coach-progress-box"><div><strong>Bu haftaki program uyumu</strong><span>%${selected.progress}</span></div><div class="coach-progress-track"><i style="width:${selected.progress}%"></i></div></div>
+    <div class="coach-insight"><i class="fa-solid fa-lightbulb"></i><p>${this.escapeHtml(selected.note)}</p></div>
+    <div class="coach-detail-grid">
+      <div><span>Sonraki adım</span><strong>${this.escapeHtml(selected.next)}</strong></div>
+      <div><span>Plan kaynağı</span><strong>${sourceName}</strong></div>
+    </div>
+    <p class="coach-source-copy">${sourceCopy}</p>
+    <div class="coach-actions">
+      <button class="btn btn-primary" onclick="app.createCoachPlanFor('${selected.id}')"><i class="fa-solid fa-wand-magic-sparkles"></i> ${selected.source === "coach" ? "Yeni sürüm hazırla" : "Koç programı öner"}</button>
+      <button class="btn btn-secondary" onclick="app.addCoachNote('${selected.id}')"><i class="fa-solid fa-note-sticky"></i> Not bırak</button>
+    </div>
+    <div class="coach-permission-note"><i class="fa-solid fa-lock"></i> Koç, öğrencinin görevlerini tamamlayamaz veya kişisel AI planını doğrudan değiştiremez.</div>`;
+  },
+
+  selectCoachStudent: function(id) {
+    this.state.selectedCoachStudentId = id;
+    this.saveState();
+    this.renderCoachDashboard();
+  },
+
+  openCoachInvite: function() {
+    const email = prompt("Öğrencinin e-posta adresini gir:");
+    if (!email) return;
+    const local = Array.isArray(this.state.coachStudents) ? this.state.coachStudents : [];
+    local.push({ id: `local-${Date.now()}`, name: email.split("@")[0], track: "Bekliyor", source: "proposal", progress: 0, lastActive: "Davet gönderildi", risk: "pending", pending: true, note: "Öğrencinin daveti kabul etmesi bekleniyor.", next: "Davet kabulü bekleniyor" });
+    this.state.coachStudents = local;
+    this.saveState();
+    this.renderCoachDashboard();
+    this.showToast("Davet taslağı eklendi. Canlı e-posta daveti sunucu bağlantısı ile gönderilecek.", "info");
+  },
+
+  createCoachPlanFor: function(id) {
+    this.state.coachDraftFor = id;
+    this.saveState();
+    this.showView("dashboardView");
+    this.switchTab("programCreator");
+    this.showToast("Programı hazırla; yayınlandığında öğrenciye onay bekleyen öneri olarak gider.", "info");
+  },
+
+  addCoachNote: function(id) {
+    const note = prompt("Öğrenciye veya kendi takip kaydına not ekle:");
+    if (!note) return;
+    this.showToast("Koç notu kaydedildi. Canlı öğrenci hesabı bağlandığında öğrenciye iletilecek.", "success");
+  },
+
+  // Rol'e gore arayuzu sadelestirir. Kocun gunluk gorev/ODT/geri sayim
+  // ekranlarina ihtiyaci yok; program hazirlama yuzeyleri kalir.
+  applyRoleUI: function() {
+    const koc = this.state.role === "koc";
+    const rozet = document.getElementById("roleBadge");
+    if (rozet) {
+      rozet.style.display = koc ? "inline-flex" : "none";
+      rozet.textContent = "🧭 Koç alanı";
+    }
+    ["tabBtn-vault", "tabBtn-habitMap", "tabBtn-charts"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = koc ? "none" : "";
+    });
+    const exportBtn = document.getElementById("coachExportWrap");
+    if (exportBtn) exportBtn.style.display = koc ? "block" : "none";
+  },
+
+  // Aktif programi, ice aktarma ayristiricisinin okudugu bicimde metne cevirir.
+  // Koc bu metni ogrenciye gonderir, ogrenci "Metinden aktar" ile yukler.
+  exportProgramAsText: function(gunSayisi) {
+    const limit = Math.min(gunSayisi || 7, this.PROGRAM_DAYS);
+    const kaynak = (this.state.selectedProgramType === "custom" && this.state.customDaysData &&
+                    Object.keys(this.state.customDaysData).length)
+      ? this.state.customDaysData : this.state.daysData;
+    const satirlar = [];
+    for (let g = 1; g <= limit; g++) {
+      const gun = kaynak[g];
+      if (!gun || !Array.isArray(gun.tasks) || !gun.tasks.length) continue;
+      satirlar.push(`Gün ${g}:`);
+      gun.tasks.forEach(t => {
+        const parcalar = [];
+        if (t.topic) parcalar.push(t.topic);
+        if (t.qCount) parcalar.push(`${t.qCount} soru`);
+        if (t.duration) parcalar.push(t.duration);
+        if (t.source && t.source.publisher) {
+          parcalar.push(`(${t.source.publisher} — ${t.source.book}${t.source.testNo ? " · " + t.source.testNo : ""})`);
+        }
+        const ders = t.subject && t.subject !== "Rehberlik" ? `${t.subject}: ` : "";
+        satirlar.push(`- ${ders}${parcalar.join(" ")}`.trim());
+      });
+      satirlar.push("");
+    }
+    return satirlar.join("\n").trim();
+  },
+
+  copyProgramAsText: function() {
+    const sayiEl = document.getElementById("coachExportDays");
+    const gun = sayiEl ? parseInt(sayiEl.value, 10) || 7 : 7;
+    const metin = this.exportProgramAsText(gun);
+    const alan = document.getElementById("coachExportText");
+    if (!metin) {
+      this.showToast("Aktarılacak görev bulunamadı — önce program oluştur.", "error");
+      return;
+    }
+    if (alan) { alan.value = metin; alan.style.display = "block"; alan.select(); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(metin)
+        .then(() => this.showToast(`${gun} günlük program panoya kopyalandı.`, "success"))
+        .catch(() => this.showToast("Panoya kopyalanamadı — metni aşağıdan elle kopyala.", "warning"));
+    } else {
+      this.showToast("Metin aşağıda — elle kopyalayabilirsin.", "info");
     }
   },
 
@@ -1997,6 +2252,9 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     const previewBox = document.getElementById("goalPlanPreviewBox");
     if (previewBox) previewBox.style.display = "none";
 
+    // Akis her zaman 1. adimdan baslar
+    this.wizardGo(1);
+
     // Go to wizard view
     this.populateUniversitySelect();
     this.populateDeptSelect();
@@ -2013,17 +2271,17 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     document.querySelectorAll(".wizard-page").forEach(page => {
       page.style.display = "none";
     });
-    document.getElementById(`wizardPage${pageNum}`).style.display = "block";
-    
-    document.getElementById("wStep1").className = "wizard-step" + (pageNum >= 1 ? " completed" : "");
-    document.getElementById("wStep2").className = "wizard-step" + (pageNum === 2 ? " active" : pageNum > 2 ? " completed" : "");
-    
+    const hedef = document.getElementById(`wizardPage${pageNum}`);
+    if (hedef) hedef.style.display = "block";
+
+    // Eski iki noktali ilerleme gostergesi yerini adim akisina birakti;
+    // elemanlar yoksa cakilmasin diye null korumali.
+    const s1 = document.getElementById("wStep1");
+    const s2 = document.getElementById("wStep2");
+    if (s1) s1.className = "wizard-step" + (pageNum >= 1 ? " completed" : "");
+    if (s2) s2.className = "wizard-step" + (pageNum === 2 ? " active" : pageNum > 2 ? " completed" : "");
     const wizardBar = document.getElementById("wizardBar");
-    if (pageNum === 1) {
-      wizardBar.style.width = "0%";
-    } else {
-      wizardBar.style.width = "100%";
-    }
+    if (wizardBar) wizardBar.style.width = pageNum === 1 ? "0%" : "100%";
   },
 
   nextWizardPage: function() {
@@ -2332,25 +2590,76 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
   ],
 
   _programCache: null,
+
+  // ============================================================
+  // PROGRAM VERISI — GERCEK OSYM KAYITLARI
+  // ------------------------------------------------------------
+  // Kaynak: osym-data.js (ÖSYM 2026-YKS Tercih Kılavuzu, Tablo-4'ten
+  // ayrıştırılmıştır). Sıralamalar kılavuzdaki "2025-YKS BAŞARI SIRASI"
+  // sütunudur — tercih döneminde yayımlanan en güncel yerleştirme verisi.
+  //
+  // ÖNEMLİ: Eskiden bu liste `bölüm tabanı × üniversite katman çarpanı`
+  // formülüyle ÜRETİLİYORDU; gerçek veri değildi ama ekranda ÖSYM verisi
+  // gibi sunuluyordu. Artık gerçek kayıtlar kullanılıyor.
+  //
+  // Veri dosyası yüklenemezse (çevrimdışı ilk açılış) eski türetilmiş
+  // liste yedek olarak devreye girer ve kaynak etiketi bunu söyler.
+  // ============================================================
+  get osymVeri() {
+    return (typeof window !== "undefined" && window.OSYM_TABLO4) ? window.OSYM_TABLO4 : null;
+  },
+
+  get osymKaynakEtiketi() {
+    const v = this.osymVeri;
+    return v ? `${v.kaynak} · ${v.yil} taban başarı sıralamaları`
+             : "Tahmini değerler (resmî veri yüklenemedi)";
+  },
+
+  get osymGercekVeriMi() { return !!this.osymVeri; },
+
   get OSYM_2025_PROGRAMS() {
-    if (!this._programCache) {
-      const list = [];
-      this.OSYM_2025_UNIS.forEach(entry => {
-        const name = entry[0], tier = entry[1], depts = entry[2], overrides = entry[3] || {};
-        depts.forEach(d => {
-          const base = this.OSYM_2025_DEPT_BASE[d];
-          if (!base) return;
-          const t = overrides[d] || tier;
-          const total = this.OSYM_2025_RANKED[base[0]] || 2310579;
-          let rank = base[1] * (this.OSYM_2025_TIER_MULT[t] || 1);
-          rank = Math.min(rank, total * 0.85);
-          rank = rank < 10000 ? Math.round(rank / 50) * 50 : rank < 100000 ? Math.round(rank / 500) * 500 : Math.round(rank / 1000) * 1000;
-          list.push({ uni: name, dept: d, track: base[0], rank: rank });
-        });
-      });
-      this._programCache = list;
+    if (this._programCache) return this._programCache;
+    const v = this.osymVeri;
+
+    if (v && Array.isArray(v.kayitlar)) {
+      this._programCache = v.kayitlar.map(k => ({
+        uni: v.uniler[k[0]],
+        dept: k[2],                 // tam program adı: "Tıp (İngilizce) (Burslu)"
+        deptBase: v.bolumler[k[1]], // niteleyicisiz taban ad: "Tıp"
+        track: k[3],
+        rank: k[4]
+      }));
+      return this._programCache;
     }
+
+    // ---- YEDEK: veri dosyası yoksa eski türetilmiş liste ----
+    const list = [];
+    this.OSYM_2025_UNIS.forEach(entry => {
+      const name = entry[0], tier = entry[1], depts = entry[2], overrides = entry[3] || {};
+      depts.forEach(d => {
+        const base = this.OSYM_2025_DEPT_BASE[d];
+        if (!base) return;
+        const t = overrides[d] || tier;
+        const total = this.OSYM_2025_RANKED[base[0]] || 2310579;
+        let rank = base[1] * (this.OSYM_2025_TIER_MULT[t] || 1);
+        rank = Math.min(rank, total * 0.85);
+        rank = rank < 10000 ? Math.round(rank / 50) * 50 : rank < 100000 ? Math.round(rank / 500) * 500 : Math.round(rank / 1000) * 1000;
+        list.push({ uni: name, dept: d, deptBase: d, track: base[0], rank: rank });
+      });
+    });
+    this._programCache = list;
     return this._programCache;
+  },
+
+  // Alana göre taban bölüm adları (açılır liste için)
+  osymBolumleri: function(track) {
+    const seen = {};
+    this.OSYM_2025_PROGRAMS.forEach(p => {
+      if (track && p.track !== track) return;
+      const ad = p.deptBase || p.dept;
+      if (ad) seen[ad] = true;
+    });
+    return Object.keys(seen).sort((a, b) => a.localeCompare(b, "tr"));
   },
 
   populateDeptSelect: function() {
@@ -2360,9 +2669,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     const track = trackEl ? trackEl.value : this.state.track;
     const current = sel.value;
     while (sel.options.length > 1) sel.remove(1);
-    Object.keys(this.OSYM_2025_DEPT_BASE)
-      .filter(d => this.OSYM_2025_DEPT_BASE[d][0] === track)
-      .sort((a, b) => a.localeCompare(b, "tr"))
+    this.osymBolumleri(track)
       .forEach(d => {
         const o = document.createElement("option");
         o.value = d;
@@ -2403,8 +2710,9 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     const lower = txt.toLowerCase();
     return this.OSYM_2025_PROGRAMS.filter(p => {
       if (track && p.track !== track) return false;
-      const d = p.dept.toLowerCase();
-      return d === lower || d.startsWith(lower + " (") || d.includes(lower);
+      const d = (p.dept || "").toLowerCase();
+      const b = (p.deptBase || "").toLowerCase();
+      return b === lower || d === lower || d.startsWith(lower + " (") || b.includes(lower) || d.includes(lower);
     });
   },
 
@@ -2435,7 +2743,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       if (atUni.length > 0) {
         const p = atUni[0];
         const ok = hasRank ? rank <= p.rank : null;
-        title = `🎓 <strong>${p.uni} — ${p.dept}</strong> için 2025 YKS'de yaklaşık <strong>ilk ${fmt(p.rank)}</strong> sıralama gerekiyordu.`;
+        title = `🎓 <strong>${p.uni} — ${p.dept}</strong> için <strong>ilk ${fmt(p.rank)}</strong> taban başarı sıralaması gerekiyordu.`;
         if (hasRank) {
           title += ok
             ? ` Hedef sıralaman (<strong>${fmt(rank)}</strong>) bu bölüm için <strong style="color:var(--success);">yeterli görünüyor ✅</strong>`
@@ -2459,7 +2767,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       rows = (okList.length > 0 ? okList : noList).slice(0, 8).map(p => rowHtml(p, rank <= p.rank));
     } else if (!uni && deptMatches.length > 0) {
       // Sadece bölüm: üniversitelere göre gereken sıralamalar
-      title = `🎓 <strong>${deptMatches[0].dept}</strong> (${track}) için üniversitelere göre 2025 taban sıralamaları:`;
+      title = `🎓 <strong>${deptMatches[0].deptBase || deptMatches[0].dept}</strong> (${track}) için üniversitelere göre taban sıralamaları:`;
       rows = deptMatches.sort((a, b) => a.rank - b.rank).slice(0, 8).map(p => rowHtml(p, hasRank ? rank <= p.rank : null));
     } else if (hasRank) {
       // Sadece sıralama: girebileceği üniversite + bölümler
@@ -2485,7 +2793,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       ${footer ? `<p style="margin:0 0 0.5rem; font-size:0.72rem; font-weight:700; color:var(--text-muted);">${footer}</p>` : ""}
       <div style="display:flex; flex-direction:column; gap:0.4rem;">${rows.join("")}</div>
       <p style="margin:0.75rem 0 0; font-size:0.65rem; color:var(--text-muted); line-height:1.4;">
-        📊 2025 YKS yerleştirme (ÖSYM / YÖK Atlas) yaklaşık taban başarı sıralamalarıdır. Kesin ve güncel veriler için YÖK Atlas'ı kontrol etmeyi unutma.
+        📊 ${app.osymKaynakEtiketi}. Kontenjan ve koşullar değişebilir; tercih öncesi YÖK Atlas'tan doğrula.
       </p>`;
     box.style.display = "block";
   },
@@ -2615,9 +2923,9 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     this.state.targetNetTYT = netTYT;
     this.state.targetNetAYT = netAYT;
     this.state.level = level;
-    this.state.totalHoursTarget = hours;
-    this.state.totalQuestionsTarget = questions;
-    this.state.totalMocksTarget = mocks;
+    // LEVEL_META degerleri tam hazirlik yili (360 gun) icindir; program
+    // sinava kalan sureye gore kisaysa hedefler orantili kisilir.
+    this.applyLevelTargets(hours, questions, mocks);
 
     document.getElementById("previewLevel").textContent = level;
     document.getElementById("previewLevelDesc").textContent = description;
@@ -2641,10 +2949,127 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     this.toggleWizardNextButton();
   },
 
+  // Onay kutusu yalnizca hedef adiminda (3) ilerlemeyi kilitler; diger
+  // adimlarda dugme her zaman aciktir.
   toggleWizardNextButton: function() {
-    const isChecked = document.getElementById("acceptPlanCheck").checked;
-    document.getElementById("wizardNextBtn").disabled = !isChecked;
+    const btn = document.getElementById("wizardNextBtn");
+    const chk = document.getElementById("acceptPlanCheck");
+    if (!btn) return;
+    if (this.wizardStep !== 3) { btn.disabled = false; return; }
+    const kutu = document.getElementById("goalPlanPreviewBox");
+    const onizlemeAcik = kutu && kutu.style.display !== "none";
+    btn.disabled = onizlemeAcik ? !(chk && chk.checked) : false;
   },
+
+  // ============================================================
+  // AKIS TABANLI KURULUM — her adimda tek soru
+  // Alanlar .wz-step bloklarinda gruplanir; bu denetleyici yalnizca
+  // birini gosterir. Tum alan id'leri ve dogrulayicilar korunmustur.
+  // ============================================================
+  wizardStep: 1,
+  WIZARD_TOPLAM: 5,
+
+  wizardGo: function(adim) {
+    adim = Math.max(1, Math.min(this.WIZARD_TOPLAM, adim));
+    this.wizardStep = adim;
+
+    // 1-3 birinci sayfada, 4-5 ikinci sayfada duruyor
+    this.showWizardPage(adim <= 3 ? 1 : 2);
+
+    document.querySelectorAll(".wz-step").forEach(el => {
+      el.classList.toggle("active", parseInt(el.dataset.step, 10) === adim);
+    });
+
+    const segmentler = document.querySelectorAll("#wzProgress .wz-seg");
+    segmentler.forEach((seg, i) => seg.classList.toggle("done", i < adim));
+
+    const geri = document.getElementById("wzBackBtn");
+    if (geri) geri.style.visibility = adim === 1 ? "hidden" : "visible";
+
+    const ileri = document.getElementById("wizardNextBtn");
+    if (ileri) {
+      ileri.innerHTML = adim === this.WIZARD_TOPLAM
+        ? '<i class="fa-solid fa-wand-magic-sparkles"></i> Programımı Oluştur'
+        : 'Devam <i class="fa-solid fa-arrow-right"></i>';
+    }
+    this.toggleWizardNextButton();
+
+    if (adim === 3) this.updateGoalPlanPreview();
+    if (adim === 4) this.checkHabitsFeedback(false);
+    if (adim === 5) this.applyParentContactLock();
+
+    const ilk = document.querySelector(`.wz-step[data-step="${adim}"] input, .wz-step[data-step="${adim}"] select`);
+    if (ilk && ilk.type !== "hidden" && ilk.offsetParent !== null) setTimeout(() => ilk.focus(), 60);
+  },
+
+  wizardBack: function() {
+    if (this.wizardStep > 1) this.wizardGo(this.wizardStep - 1);
+  },
+
+  wizardNext: function() {
+    const adim = this.wizardStep;
+
+    if (adim === 1) {
+      const ad = (document.getElementById("studentName").value || "").trim();
+      const epostaEl = document.getElementById("studentEmail");
+      const eposta = (epostaEl.value || "").trim();
+      const hataEl = document.getElementById("studentEmailError");
+      const hata = (msg, el) => {
+        if (hataEl) { hataEl.textContent = msg; hataEl.style.display = "block"; }
+        if (el) el.focus();
+      };
+      if (hataEl) hataEl.style.display = "none";
+      if (!ad) { hata("Adını ve soyadını gir.", document.getElementById("studentName")); return; }
+      if (!eposta) { hata("E-posta adresi zorunludur.", epostaEl); return; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(eposta)) {
+        hata("Geçerli bir e-posta adresi gir (örn: ornek@eposta.com).", epostaEl); return;
+      }
+      this.state.name = ad;
+      this.state.email = eposta;
+      this.wizardGo(2);
+      return;
+    }
+
+    if (adim === 2) { this.wizardGo(3); return; }
+
+    if (adim === 3) {
+      // Onizleme aciksa onay kutusu isaretlenmeden ilerlenemez.
+      // Dugmenin disabled olmasi tek basina yeterli degil: klavye veya
+      // programatik cagrilar bu korumayi asabiliyordu.
+      const kutu = document.getElementById("goalPlanPreviewBox");
+      const chk = document.getElementById("acceptPlanCheck");
+      if (kutu && kutu.style.display !== "none" && chk && !chk.checked) {
+        this.showToast("Devam etmek için hedefleri kabul etmen gerekiyor.", "warning");
+        chk.focus();
+        return;
+      }
+
+      // Mevcut dogrulayici: ad, e-posta ve hedef siralama kontrolu +
+      // sayfa gecisi. Basarili olursa 4. adima geciyoruz.
+      const oncekiSayfa = document.getElementById("wizardPage2").style.display;
+      this.nextWizardPage();
+      const gecti = document.getElementById("wizardPage2").style.display !== "none" || oncekiSayfa === "block";
+      if (gecti) this.wizardGo(4);
+      return;
+    }
+
+    if (adim === 4) { this.wizardGo(5); return; }
+
+    // Son adim: veli alanlarini dogrular ve seviye tespitine gecer
+    this.goToSeviyeTespit();
+  },
+
+  // Alan secimi kartlari gizli <select>'i suruyor; boylece
+  // updateGoalPlanPreview gibi mevcut kod aynen calisiyor.
+  wizardPickTrack: function(track) {
+    const sel = document.getElementById("trackSelect");
+    if (sel) { sel.value = track; sel.dispatchEvent(new Event("change")); }
+    document.querySelectorAll("#trackPicker .wz-opt").forEach(b => {
+      b.classList.toggle("sel", b.dataset.track === track);
+    });
+    this.state.track = track;
+  },
+
 
   // Step 2: Habits (Scientifically Mapped sleep checks)
   checkHabitsFeedback: function(showImmediately = true) {
@@ -2671,9 +3096,14 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
 
     const [wakeH, wakeM] = (wakeStr || "07:00").split(":").map(Number);
     const [sleepH, sleepM] = (sleepStr || "23:00").split(":").map(Number);
-    
-    let sleepDuration = (sleepH > wakeH) ? (24 - sleepH + wakeH) : (wakeH - sleepH);
-    if (sleepDuration < 0) sleepDuration += 24;
+
+    // Saatin yanı sıra dakikayı da hesaba kat. Önceki hesap 23:30–07:00
+    // aralığını 8 saat kabul ediyor, aynı saat seçildiğinde ise 0 saat
+    // sonucunu veriyordu.
+    const wakeMinutes = wakeH * 60 + wakeM;
+    const sleepMinutes = sleepH * 60 + sleepM;
+    let sleepDuration = (wakeMinutes - sleepMinutes) / 60;
+    if (sleepDuration <= 0) sleepDuration += 24;
 
     const isLateSleep = (sleepH >= 1 && sleepH < 5); // 01:00 AM to 05:00 AM
 
@@ -3244,9 +3674,9 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       description = "<strong>1. Seviye - Başlangıç Seviyesi:</strong> 9-10. sınıf temellerini sıfırdan inşa etme ve TYT'de güvenli çekirdek net oluşturma. Yaklaşık hedef netler: TYT 45-60, AYT 20-32.";
     }
 
-    this.state.totalHoursTarget = hours;
-    this.state.totalQuestionsTarget = questions;
-    this.state.totalMocksTarget = mocks;
+    // LEVEL_META degerleri tam hazirlik yili (360 gun) icindir; program
+    // sinava kalan sureye gore kisaysa hedefler orantili kisilir.
+    this.applyLevelTargets(hours, questions, mocks);
 
     const expBox = document.getElementById("reportLevelExplanationBox");
     if (expBox) expBox.innerHTML = description;
@@ -3256,6 +3686,97 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
   },
 
   // Custom 7-Day & 30-Day Calendar Generator (Okul vs. Mezun)
+  // ============================================================
+  // PROGRAM ONERISI
+  // Kurulum bittiginde program otomatik uretilmez. Ogrencinin girdigi
+  // hedef siralama ve seviye tespiti sonucuna dayali bir oneri sunulur;
+  // kabul ederse program o anda olusturulur, istemezse uygulamayi bos
+  // gezip kendi programini kurabilir.
+  // ============================================================
+  programSuggestionData: function() {
+    const seviye = this.state.level || 3;
+    const hedef = this.state.targetRank;
+    const dogruluk = this.state.diagnosticAccuracy;
+    const li = (this.LEVEL_META && this.LEVEL_META[seviye]) || null;
+    return {
+      seviye: seviye,
+      hedef: hedef,
+      dogruluk: dogruluk,
+      saat: li ? li.hours : null,
+      soru: li ? li.questions : null,
+      alan: this.state.track || "Sayısal",
+      seviyeAdi: li ? li.name : ""
+    };
+  },
+
+  renderProgramSuggestion: function() {
+    const kart = document.getElementById("programSuggestionCard");
+    if (!kart) return;
+
+    // Program kabul edildiyse ya da zaten doluysa kart gosterilmez
+    const doluMu = this.state.daysData && Object.keys(this.state.daysData).length > 0;
+    if (this.state.programAccepted || doluMu || this.state.role === "koc") {
+      kart.style.display = "none";
+      return;
+    }
+
+    const d = this.programSuggestionData();
+    const fmt = n => (typeof n === "number" ? n.toLocaleString("tr-TR") : "—");
+    const gerekce = [];
+    if (typeof d.dogruluk === "number") gerekce.push(`seviye tespitinde <strong>%${d.dogruluk}</strong> doğruluk`);
+    if (d.hedef) gerekce.push(`hedefin <strong>ilk ${fmt(d.hedef)}</strong>`);
+    gerekce.push(`<strong>${d.alan}</strong> alanı`);
+
+    kart.style.display = "block";
+    kart.innerHTML = `
+      <div class="glass-card" style="padding:1.5rem; border:1.5px solid var(--primary); background:var(--ai-tint); border-radius:12px;">
+        <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.6rem;">
+          <span class="ai-helper-icon" style="width:32px; height:32px; border-radius:9px; font-size:0.85rem;"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+          <h3 style="margin:0; font-family:var(--font-header); font-weight:800; font-size:1.02rem; color:var(--text-main);">Sana bir program önerim var</h3>
+        </div>
+        <p style="font-size:0.88rem; color:var(--text-main); line-height:1.6; margin:0 0 0.9rem;">
+          ${gerekce.join(", ")} bilgilerine göre <strong>${d.seviye}. Seviye${d.seviyeAdi ? " · " + d.seviyeAdi : ""}</strong> bir çalışma programı hazırlayabilirim${d.saat ? ` — toplam <strong>${fmt(d.saat)} saat</strong> ve <strong>${fmt(d.soru)}</strong> soru hedefiyle` : ""}.
+        </p>
+        <p style="font-size:0.78rem; color:var(--text-muted); line-height:1.5; margin:0 0 1.1rem;">
+          Kabul edersen program hemen oluşturulur ve günlük listene düşer. İstemezsen boş başlarsın, programı kendin kurarsın — sonradan da bu öneriye dönebilirsin.
+        </p>
+        <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+          <button class="btn btn-primary" style="flex:1; min-width:190px; font-weight:800;" onclick="app.acceptProgramSuggestion()">
+            <i class="fa-solid fa-check"></i> Programı Oluştur
+          </button>
+          <button class="btn btn-secondary" style="flex:1; min-width:170px; font-weight:800;" onclick="app.declineProgramSuggestion()">
+            <i class="fa-solid fa-pen-ruler"></i> Kendim Kurayım
+          </button>
+        </div>
+      </div>`;
+  },
+
+  acceptProgramSuggestion: function() {
+    this.state.daysData = {};
+    this.generateWeeklyCalendarData();
+    this.state.standardDaysData = JSON.parse(JSON.stringify(this.state.daysData));
+    this.state.customDaysData = JSON.parse(JSON.stringify(this.state.daysData));
+    this.state.selectedProgramType = "standard";
+    this.state.programAccepted = true;
+    this.saveState();
+
+    this.renderProgramSuggestion();
+    this.updateHeaderStats();
+    this.renderDashboard();
+    this.renderMonthlyCalendarGrid();
+    this.switchTab("today");
+    this.showToast(`${this.state.level}. Seviye programın oluşturuldu ve günlük listene eklendi.`, "success");
+  },
+
+  declineProgramSuggestion: function() {
+    // Oneri kapatilir ama program "kabul edilmis" sayilmaz; ogrenci
+    // Program Sihirbazi'ndan istedigi zaman geri donebilir.
+    const kart = document.getElementById("programSuggestionCard");
+    if (kart) kart.style.display = "none";
+    this.switchTab("programCreator");
+    this.showToast("Programı kendin kurabilirsin. Önerimi istediğinde Program Sihirbazı'ndan alabilirsin.", "info");
+  },
+
   startMainDashboard: function() {
     try {
       if (this.state.subscriptionTier === "pending") {
@@ -3279,7 +3800,13 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     const hasMathRoutine = day2 && day2.tasks && day2.tasks.some(t => t && t.id && t.id.includes("math_routine"));
 
     let freshlyGenerated = false;
-    if (!this.state.standardDaysData || Object.keys(this.state.standardDaysData).length === 0 || !hasMathRoutine) {
+    // Program ARTIK OTOMATIK OLUSTURULMAZ. Ogrenci hedefini ve seviye
+    // tespitini tamamladiktan sonra uygulamanin icine girer; bu verilere
+    // dayali bir oneri gosterilir ve ancak kabul ederse program uretilir.
+    if (!this.state.programAccepted) {
+      this.state.selectedProgramType = this.state.selectedProgramType || "standard";
+      this.saveState();
+    } else if (!this.state.standardDaysData || Object.keys(this.state.standardDaysData).length === 0 || !hasMathRoutine) {
       this.state.daysData = {};
       this.generateWeeklyCalendarData(); // populates this.state.daysData with YKS template
       this.state.standardDaysData = JSON.parse(JSON.stringify(this.state.daysData));
@@ -3542,9 +4069,60 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       });
     };
 
+    // SINAV PROVASI FAZI — programın son SON_FAZ_GUN günü.
+    // Bu dönemde yeni konu açılmaz: günlerin %80'i tam deneme + analiz,
+    // %20'si tekrar. 5 günün 4'ü deneme, 1'i tekrar olacak şekilde dağıtılır.
+    const sonFazBaslangic = Math.max(1, this.PROGRAM_DAYS - this.SON_FAZ_GUN + 1);
+    const denemeSuresi = focus === "tyt" ? "165 dk" : focus === "ayt" ? "180 dk" : "270 dk";
+    const denemeSoru = focus === "tyt" ? 120 : focus === "ayt" ? 80 : 200;
+    const denemeTur = focus === "tyt" ? "TYT" : focus === "ayt" ? "AYT" : "Genel";
+    const anaDers = track === "Sayısal" ? "Matematik" : (track === "Dil" ? "Dil" : "Edebiyat");
+
     for (let day = 1; day <= this.PROGRAM_DAYS; day++) {
       const dailyTasks = [];
       const dayOfWeek = day % 7;
+
+      if (day >= sonFazBaslangic) {
+        const tekrarGunu = (day - sonFazBaslangic) % 5 === 4;   // 5 günde 1 → %20
+        if (tekrarGunu) {
+          dailyTasks.push({
+            id: `task_${day}_final_review`, type: "reading", subject: "Rehberlik",
+            topic: "Sınav Öncesi Genel Tekrar",
+            label: "🔁 Genel Tekrar Günü",
+            desc: "Bugün yeni soru çözme. Deneme analizlerinden çıkan eksiklerini, formül kartlarını ve hata defterindeki konuları gözden geçir.",
+            duration: "150 dk", completed: false, examType: "Genel", noSource: true
+          });
+          dailyTasks.push({
+            id: `task_${day}_final_review_vault`, type: "retest", subject: "Rehberlik",
+            topic: "Hata Defteri Taraması",
+            label: "📕 Hata Defteri Taraması",
+            desc: "Hata defterindeki en sık tekrar eden 20 soruyu yeniden çöz; hâlâ yanlışsa konu özetine dön.",
+            duration: "60 dk", qCount: 20, completed: false, logged: false,
+            correct: 0, incorrect: 0, timeSpent: 0, errorTopics: [], examType: "Genel", noSource: true
+          });
+        } else {
+          dailyTasks.push({
+            id: `task_${day}_final_mock`, type: "quiz", subject: anaDers,
+            topic: "Tam Deneme Sınavı",
+            label: `🏆 [${denemeTur}] Tam Deneme Sınavı`,
+            desc: "Gerçek sınav saatinde, tek oturumda ve süre tutarak çöz. Optik forma işaretle.",
+            duration: denemeSuresi, qCount: denemeSoru, completed: false, logged: false,
+            correct: 0, incorrect: 0, timeSpent: 0, errorTopics: [], examType: denemeTur,
+            sourceSubject: "Genel", sourceKind: "deneme"
+          });
+          dailyTasks.push({
+            id: `task_${day}_final_mock_review`, type: "reading", subject: "Rehberlik",
+            topic: "Deneme Analizi",
+            label: "📝 Deneme Analizi & Hata Defteri",
+            desc: "Yanlış ve boşları tek tek incele, hata defterine işle. Analiz denemenin kendisinden önemlidir.",
+            duration: "75 dk", completed: false, examType: "Genel", noSource: true
+          });
+        }
+        this.sourceBooks.attachAll(dailyTasks);
+        this.state.daysData[day] = { completed: false, isMockDay: !tekrarGunu, isFinalPhase: true,
+                                     tasks: dailyTasks, schedule: this.buildDaySchedule(dailyTasks, dayOfWeek) };
+        continue;
+      }
 
       // 1. Mock Exam Day (Sunday)
       if (dayOfWeek === 0) {
@@ -8711,6 +9289,8 @@ normalizeClause: function(clause) {
         btn.style.background = (m === mode) ? "var(--ai-tint)" : "var(--bg-card)";
       }
     });
+    // Koç modundaki paylaşım bölümü mod değişiminde de doğru görünsün
+    this.applyRoleUI();
   },
 
   toggleStudyAllocationCard: function() {
@@ -10147,7 +10727,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
           }
         };
 
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent?key=${apiKey}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
@@ -12015,6 +12595,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
   },
 
   updateProgramStartDate: function(dateStr) {
+    this.invalidateProgramDays();
     if (!dateStr) return;
     this.state.startDate = dateStr;
 
@@ -13694,16 +14275,31 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
   syncCustomProgramListSelector: function() {
     const selector = document.getElementById("activeProgramSelector");
     if (!selector) return;
-    selector.innerHTML = '<option value="standard">🤖 AI Standart Planı</option>';
 
-    this.state.savedPrograms.forEach(prog => {
+    // "AI Standart Planı" bu listeden kaldırıldı: burası "Kendim Yapayım"
+    // paneli ve yalnızca kendi programlarını listeler. AI planına dönmek
+    // için üstteki "AI Oluştursun" sekmesi kullanılır.
+    selector.innerHTML = "";
+    const programlar = this.state.savedPrograms || [];
+    programlar.forEach(prog => {
       const opt = document.createElement("option");
       opt.value = prog.id;
       opt.textContent = "📝 " + prog.name;
       selector.appendChild(opt);
     });
 
-    selector.value = this.state.selectedProgramType === "standard" ? "standard" : this.state.activeCustomProgramId;
+    const varMi = programlar.length > 0;
+    const not = document.getElementById("noCustomProgramNote");
+    const kontroller = document.getElementById("customProgramManageControls");
+    if (not) not.style.display = varMi ? "none" : "block";
+    if (kontroller) kontroller.style.display = varMi ? "flex" : "none";
+    selector.style.display = varMi ? "block" : "none";
+
+    if (varMi) {
+      const secili = programlar.some(p => p.id === this.state.activeCustomProgramId)
+        ? this.state.activeCustomProgramId : programlar[0].id;
+      selector.value = secili;
+    }
   },
 
   openAddCustomTaskModal: function() {
@@ -13980,15 +14576,33 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
           weekendHours: parsed.weekendHours !== undefined ? parsed.weekendHours : 8,
           wakeTime: parsed.wakeTime || "07:00",
           sleepTime: parsed.sleepTime || "23:00",
+          role: parsed.role === "koc" ? "koc" : "ogrenci",
+          programAccepted: !!parsed.programAccepted,
+          coachStudents: Array.isArray(parsed.coachStudents) ? parsed.coachStudents : [],
+          selectedCoachStudentId: parsed.selectedCoachStudentId || null,
+          coachDraftFor: parsed.coachDraftFor || null,
           parentContact: parsed.parentContact || "",
           parentEmail: parsed.parentEmail || "",
           parentPhone: parsed.parentPhone || "",
+          notifications: Array.isArray(parsed.notifications) ? parsed.notifications : [],
+          notifyChannels: Object.assign({ push: true, email: true, whatsapp: true }, parsed.notifyChannels || {}),
+          notificationSettings: parsed.notificationSettings && typeof parsed.notificationSettings === "object" ? parsed.notificationSettings : null,
+          lastQuoteIndex: parsed.lastQuoteIndex !== undefined ? parsed.lastQuoteIndex : null,
+          overdueAlerted: parsed.overdueAlerted && typeof parsed.overdueAlerted === "object" ? parsed.overdueAlerted : {},
+          overdueAlertedDate: parsed.overdueAlertedDate || null,
+          summaryShown: parsed.summaryShown && typeof parsed.summaryShown === "object" ? parsed.summaryShown : {},
+          subscriptionTier: parsed.subscriptionTier || "pending",
+          trialStartDate: parsed.trialStartDate || null,
+          theme: parsed.theme || "classic",
           diagnosticAccuracy: parsed.diagnosticAccuracy !== undefined ? parsed.diagnosticAccuracy : null,
           currentPositionRank: parsed.currentPositionRank !== undefined ? parsed.currentPositionRank : null,
           currentNetTYT: parsed.currentNetTYT !== undefined ? parsed.currentNetTYT : null,
           currentNetAYT: parsed.currentNetAYT !== undefined ? parsed.currentNetAYT : null,
           currentNetDil: parsed.currentNetDil !== undefined ? parsed.currentNetDil : null,
           currentPositionSource: parsed.currentPositionSource || null,
+          targetNetTYT: parsed.targetNetTYT !== undefined ? parsed.targetNetTYT : null,
+          targetNetAYT: parsed.targetNetAYT !== undefined ? parsed.targetNetAYT : null,
+          examFocus: ["tyt", "ayt", "both"].includes(parsed.examFocus) ? parsed.examFocus : "both",
           isLoggedOut: parsed.isLoggedOut !== undefined ? parsed.isLoggedOut : false,
           testSubjects: parsed.testSubjects || [],
           testQuestions: parsed.testQuestions || {},
@@ -14010,8 +14624,16 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
           mockExams: parsed.mockExams || [],
           focusScore: parsed.focusScore !== undefined ? parsed.focusScore : 100,
           burnoutAlertActive: parsed.burnoutAlertActive !== undefined ? parsed.burnoutAlertActive : false,
+          generatedForLevel: parsed.generatedForLevel !== undefined ? parsed.generatedForLevel : null,
+          manualTytAytSplit: parsed.manualTytAytSplit && typeof parsed.manualTytAytSplit === "object" ? parsed.manualTytAytSplit : null,
+          activeCurriculumSubject: parsed.activeCurriculumSubject || null,
           parentReportDueTime: parsed.parentReportDueTime || null,
           parentReportShownDate: parsed.parentReportShownDate || null,
+          userHabits: Array.isArray(parsed.userHabits) ? parsed.userHabits : [],
+          dismissedHabitSuggestions: Array.isArray(parsed.dismissedHabitSuggestions) ? parsed.dismissedHabitSuggestions : [],
+          lastHabitCoachReviewText: parsed.lastHabitCoachReviewText || null,
+          lastHabitCoachReviewDay: parsed.lastHabitCoachReviewDay !== undefined ? parsed.lastHabitCoachReviewDay : null,
+          coachCommentaries: Array.isArray(parsed.coachCommentaries) ? parsed.coachCommentaries : [],
           topicStatuses: parsed.topicStatuses || {},
           scheduledRepetitions: parsed.scheduledRepetitions || [],
           savedPrograms: parsed.savedPrograms || [],
@@ -14032,7 +14654,8 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
         const day2 = this.state.standardDaysData && (this.state.standardDaysData[2] || this.state.standardDaysData["2"]);
         const hasMathRoutine = day2 && day2.tasks && day2.tasks.some(t => t && t.id && t.id.includes("math_routine"));
 
-        if (!this.state.daysData || Object.keys(this.state.daysData).length !== this.PROGRAM_DAYS || !hasMathRoutine) {
+        if (this.state.programAccepted &&
+            (!this.state.daysData || Object.keys(this.state.daysData).length !== this.PROGRAM_DAYS || !hasMathRoutine)) {
           this.generateWeeklyCalendarData();
           this.state.standardDaysData = JSON.parse(JSON.stringify(this.state.daysData));
           this.state.customDaysData = JSON.parse(JSON.stringify(this.state.daysData));
