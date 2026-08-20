@@ -10,6 +10,11 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
+  <!-- iOS: ana ekrana eklendiginde tarayici cubugu olmadan, uygulama gibi acilir -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="DEFNE">
+  <meta name="mobile-web-app-capable" content="yes">
   <!-- CSS Stylesheet -->
   <link rel="stylesheet" href="styles.css?v=26">
   <!-- FontAwesome Icons -->
@@ -39,6 +44,16 @@
   
   <!-- Trial Banner -->
   <div id="trialBanner" style="display:none; background: linear-gradient(135deg, #f59e0b, #ea580c); color: white; text-align: center; padding: 0.5rem; font-size: 0.85rem; z-index: 1000; position: relative;">
+  </div>
+
+  <!-- UYGULAMA OLARAK KUR — tarayici menusundeki "Ana ekrana ekle"yi
+       kimse bulmuyor; kurulum istemi uygulamanin icinden sunulur. -->
+  <div id="installBar" style="display:none; align-items:center; gap:0.75rem; flex-wrap:wrap;
+       background:var(--ai-tint); border-bottom:1px solid var(--ai-border); padding:0.6rem 1rem; font-size:0.82rem;">
+    <span style="font-weight:700; color:var(--primary);">📱 DEFNE'yi uygulama olarak kur</span>
+    <span id="installHint" style="color:var(--text-muted); flex:1; min-width:180px;">Ana ekranından tek dokunuşla aç, çevrimdışı çalışsın.</span>
+    <button id="installBtn" class="btn btn-primary" style="padding:0.35rem 0.9rem; font-size:0.78rem; font-weight:800;" onclick="app.promptInstall()">Kur</button>
+    <button class="btn btn-secondary" style="padding:0.35rem 0.7rem; font-size:0.78rem;" onclick="app.dismissInstall()">Şimdi değil</button>
   </div>
 
   <!-- App Header -->
@@ -2327,6 +2342,6 @@
   <script src="curriculum.js?v=3"></script>
   <script src="questions.js"></script>
   <script src="quotes.js?v=1"></script>
-  <script src="app.js?v=103"></script>
+  <script src="app.js?v=104"></script>
 </body>
 </html>

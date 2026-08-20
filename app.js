@@ -165,6 +165,66 @@ const app = {
 
   invalidateProgramDays: function() { this._programDaysCache = null; },
 
+  // ============================================================
+  // UYGULAMA OLARAK KURULUM (PWA)
+  // Site ile uygulama ayni kod tabani. Tarayici "yukleyebilirsin"
+  // dedigi anda kullaniciya uygulama icinden teklif edilir; cunku
+  // tarayici menusundeki "Ana ekrana ekle" pratikte bulunmuyor.
+  // iOS beforeinstallprompt desteklemez — orada elle yonerge gosterilir.
+  // ============================================================
+  _installEvent: null,
+
+  setupInstallPrompt: function() {
+    const cubuk = document.getElementById("installBar");
+    if (!cubuk) return;
+
+    // Zaten uygulama olarak acilmissa teklif etme
+    const kurulu = window.matchMedia("(display-mode: standalone)").matches ||
+                   window.navigator.standalone === true;
+    if (kurulu || localStorage.getItem("defne_install_dismissed") === "1") return;
+
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      this._installEvent = e;
+      cubuk.style.display = "flex";
+    });
+
+    window.addEventListener("appinstalled", () => {
+      cubuk.style.display = "none";
+      this._installEvent = null;
+      this.showToast("DEFNE ana ekranına eklendi.", "success");
+    });
+
+    // iOS: beforeinstallprompt yok, kullaniciya adimlar soylenir
+    const iOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    if (iOS && !kurulu) {
+      const btn = document.getElementById("installBtn");
+      const ipucu = document.getElementById("installHint");
+      if (ipucu) ipucu.textContent = "Safari'de Paylaş ⬆️ → “Ana Ekrana Ekle”ye dokun.";
+      if (btn) btn.style.display = "none";
+      cubuk.style.display = "flex";
+    }
+  },
+
+  promptInstall: function() {
+    if (!this._installEvent) {
+      this.showToast("Tarayıcın kurulum istemini şu an sunmuyor. Menüden “Ana ekrana ekle”yi kullanabilirsin.", "info");
+      return;
+    }
+    this._installEvent.prompt();
+    this._installEvent.userChoice.finally(() => {
+      this._installEvent = null;
+      const c = document.getElementById("installBar");
+      if (c) c.style.display = "none";
+    });
+  },
+
+  dismissInstall: function() {
+    const c = document.getElementById("installBar");
+    if (c) c.style.display = "none";
+    try { localStorage.setItem("defne_install_dismissed", "1"); } catch (e) {}
+  },
+
   // Seviye hedeflerini programin gercek suresine olcekler
   applyLevelTargets: function(hours, questions, mocks) {
     const olcek = Math.max(0.2, Math.min(1.2, this.PROGRAM_DAYS / 360));
@@ -1692,6 +1752,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       }
 
       this.loadState();
+      this.setupInstallPrompt();
       
       if (window.NotificationManager) {
         this.notificationManager = new NotificationManager(this);
