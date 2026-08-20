@@ -63,20 +63,23 @@ window.addEventListener('unhandledrejection', function(e) {
 // SafeStorage localStorage wrapper (H-003)
 const SafeStorage = {
   memoryStore: {},
+  storageAvailable: null,
   isSupported: function() {
+    if (this.storageAvailable !== null) return this.storageAvailable;
     try {
       const key = "__storage_test__";
-      window.SafeStorage.setItem(key, key);
-      window.SafeStorage.removeItem(key);
-      return true;
+      window.localStorage.setItem(key, key);
+      window.localStorage.removeItem(key);
+      this.storageAvailable = true;
     } catch (e) {
-      return false;
+      this.storageAvailable = false;
     }
+    return this.storageAvailable;
   },
   getItem: function(key) {
     if (this.isSupported()) {
       try {
-        return window.SafeStorage.getItem(key);
+        return window.localStorage.getItem(key);
       } catch (e) {
         return this.memoryStore[key] || null;
       }
@@ -86,7 +89,7 @@ const SafeStorage = {
   setItem: function(key, value) {
     if (this.isSupported()) {
       try {
-        window.SafeStorage.setItem(key, value);
+        window.localStorage.setItem(key, value);
         return;
       } catch (e) {
         console.warn("LocalStorage Quota Exceeded or disabled, falling back to memory store.", e);
@@ -97,7 +100,7 @@ const SafeStorage = {
   removeItem: function(key) {
     if (this.isSupported()) {
       try {
-        window.SafeStorage.removeItem(key);
+        window.localStorage.removeItem(key);
         return;
       } catch (e) {}
     }
@@ -113,6 +116,10 @@ const SafeStorage = {
     this.memoryStore = {};
   }
 };
+
+// NotificationManager is loaded before this file and uses the same storage
+// layer when it persists a notification preference change.
+window.SafeStorage = SafeStorage;
 
 // DEFNE - Akıllı YKS Ders Çalışma Koçu
 // Fallback YKS Question Bank initialization
@@ -181,6 +188,7 @@ const app = {
     // Notifications & summaries
     notifications: [],
     notifyChannels: { push: true, email: true, whatsapp: true },
+    notificationSettings: null,
     lastQuoteIndex: null,
     overdueAlerted: {},
     overdueAlertedDate: null,
@@ -190,6 +198,7 @@ const app = {
     // Subscription & Marketing
     subscriptionTier: "pending", // 'pending', 'free', 'trial', 'pro_monthly', 'pro_yearly'
     trialStartDate: null,
+    theme: "classic",
     
     // Diagnostics Test State
     testSubjects: [],
@@ -822,8 +831,8 @@ const app = {
   // ==========================================
 
   geminiConfig: {
-    endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
-    model: "gemini-2.5-flash", // Default model
+    endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent",
+    model: "gemini-3.7-flash", // Default model
     max_tokens: 1024
   },
 
@@ -2208,6 +2217,9 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     const previewBox = document.getElementById("goalPlanPreviewBox");
     if (previewBox) previewBox.style.display = "none";
 
+    // Akis her zaman 1. adimdan baslar
+    this.wizardGo(1);
+
     // Go to wizard view
     this.populateUniversitySelect();
     this.populateDeptSelect();
@@ -2224,17 +2236,17 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     document.querySelectorAll(".wizard-page").forEach(page => {
       page.style.display = "none";
     });
-    document.getElementById(`wizardPage${pageNum}`).style.display = "block";
-    
-    document.getElementById("wStep1").className = "wizard-step" + (pageNum >= 1 ? " completed" : "");
-    document.getElementById("wStep2").className = "wizard-step" + (pageNum === 2 ? " active" : pageNum > 2 ? " completed" : "");
-    
+    const hedef = document.getElementById(`wizardPage${pageNum}`);
+    if (hedef) hedef.style.display = "block";
+
+    // Eski iki noktali ilerleme gostergesi yerini adim akisina birakti;
+    // elemanlar yoksa cakilmasin diye null korumali.
+    const s1 = document.getElementById("wStep1");
+    const s2 = document.getElementById("wStep2");
+    if (s1) s1.className = "wizard-step" + (pageNum >= 1 ? " completed" : "");
+    if (s2) s2.className = "wizard-step" + (pageNum === 2 ? " active" : pageNum > 2 ? " completed" : "");
     const wizardBar = document.getElementById("wizardBar");
-    if (pageNum === 1) {
-      wizardBar.style.width = "0%";
-    } else {
-      wizardBar.style.width = "100%";
-    }
+    if (wizardBar) wizardBar.style.width = pageNum === 1 ? "0%" : "100%";
   },
 
   nextWizardPage: function() {
@@ -2852,10 +2864,127 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     this.toggleWizardNextButton();
   },
 
+  // Onay kutusu yalnizca hedef adiminda (3) ilerlemeyi kilitler; diger
+  // adimlarda dugme her zaman aciktir.
   toggleWizardNextButton: function() {
-    const isChecked = document.getElementById("acceptPlanCheck").checked;
-    document.getElementById("wizardNextBtn").disabled = !isChecked;
+    const btn = document.getElementById("wizardNextBtn");
+    const chk = document.getElementById("acceptPlanCheck");
+    if (!btn) return;
+    if (this.wizardStep !== 3) { btn.disabled = false; return; }
+    const kutu = document.getElementById("goalPlanPreviewBox");
+    const onizlemeAcik = kutu && kutu.style.display !== "none";
+    btn.disabled = onizlemeAcik ? !(chk && chk.checked) : false;
   },
+
+  // ============================================================
+  // AKIS TABANLI KURULUM — her adimda tek soru
+  // Alanlar .wz-step bloklarinda gruplanir; bu denetleyici yalnizca
+  // birini gosterir. Tum alan id'leri ve dogrulayicilar korunmustur.
+  // ============================================================
+  wizardStep: 1,
+  WIZARD_TOPLAM: 5,
+
+  wizardGo: function(adim) {
+    adim = Math.max(1, Math.min(this.WIZARD_TOPLAM, adim));
+    this.wizardStep = adim;
+
+    // 1-3 birinci sayfada, 4-5 ikinci sayfada duruyor
+    this.showWizardPage(adim <= 3 ? 1 : 2);
+
+    document.querySelectorAll(".wz-step").forEach(el => {
+      el.classList.toggle("active", parseInt(el.dataset.step, 10) === adim);
+    });
+
+    const segmentler = document.querySelectorAll("#wzProgress .wz-seg");
+    segmentler.forEach((seg, i) => seg.classList.toggle("done", i < adim));
+
+    const geri = document.getElementById("wzBackBtn");
+    if (geri) geri.style.visibility = adim === 1 ? "hidden" : "visible";
+
+    const ileri = document.getElementById("wizardNextBtn");
+    if (ileri) {
+      ileri.innerHTML = adim === this.WIZARD_TOPLAM
+        ? '<i class="fa-solid fa-wand-magic-sparkles"></i> Programımı Oluştur'
+        : 'Devam <i class="fa-solid fa-arrow-right"></i>';
+    }
+    this.toggleWizardNextButton();
+
+    if (adim === 3) this.updateGoalPlanPreview();
+    if (adim === 4) this.checkHabitsFeedback(false);
+    if (adim === 5) this.applyParentContactLock();
+
+    const ilk = document.querySelector(`.wz-step[data-step="${adim}"] input, .wz-step[data-step="${adim}"] select`);
+    if (ilk && ilk.type !== "hidden" && ilk.offsetParent !== null) setTimeout(() => ilk.focus(), 60);
+  },
+
+  wizardBack: function() {
+    if (this.wizardStep > 1) this.wizardGo(this.wizardStep - 1);
+  },
+
+  wizardNext: function() {
+    const adim = this.wizardStep;
+
+    if (adim === 1) {
+      const ad = (document.getElementById("studentName").value || "").trim();
+      const epostaEl = document.getElementById("studentEmail");
+      const eposta = (epostaEl.value || "").trim();
+      const hataEl = document.getElementById("studentEmailError");
+      const hata = (msg, el) => {
+        if (hataEl) { hataEl.textContent = msg; hataEl.style.display = "block"; }
+        if (el) el.focus();
+      };
+      if (hataEl) hataEl.style.display = "none";
+      if (!ad) { hata("Adını ve soyadını gir.", document.getElementById("studentName")); return; }
+      if (!eposta) { hata("E-posta adresi zorunludur.", epostaEl); return; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(eposta)) {
+        hata("Geçerli bir e-posta adresi gir (örn: ornek@eposta.com).", epostaEl); return;
+      }
+      this.state.name = ad;
+      this.state.email = eposta;
+      this.wizardGo(2);
+      return;
+    }
+
+    if (adim === 2) { this.wizardGo(3); return; }
+
+    if (adim === 3) {
+      // Onizleme aciksa onay kutusu isaretlenmeden ilerlenemez.
+      // Dugmenin disabled olmasi tek basina yeterli degil: klavye veya
+      // programatik cagrilar bu korumayi asabiliyordu.
+      const kutu = document.getElementById("goalPlanPreviewBox");
+      const chk = document.getElementById("acceptPlanCheck");
+      if (kutu && kutu.style.display !== "none" && chk && !chk.checked) {
+        this.showToast("Devam etmek için hedefleri kabul etmen gerekiyor.", "warning");
+        chk.focus();
+        return;
+      }
+
+      // Mevcut dogrulayici: ad, e-posta ve hedef siralama kontrolu +
+      // sayfa gecisi. Basarili olursa 4. adima geciyoruz.
+      const oncekiSayfa = document.getElementById("wizardPage2").style.display;
+      this.nextWizardPage();
+      const gecti = document.getElementById("wizardPage2").style.display !== "none" || oncekiSayfa === "block";
+      if (gecti) this.wizardGo(4);
+      return;
+    }
+
+    if (adim === 4) { this.wizardGo(5); return; }
+
+    // Son adim: veli alanlarini dogrular ve seviye tespitine gecer
+    this.goToSeviyeTespit();
+  },
+
+  // Alan secimi kartlari gizli <select>'i suruyor; boylece
+  // updateGoalPlanPreview gibi mevcut kod aynen calisiyor.
+  wizardPickTrack: function(track) {
+    const sel = document.getElementById("trackSelect");
+    if (sel) { sel.value = track; sel.dispatchEvent(new Event("change")); }
+    document.querySelectorAll("#trackPicker .wz-opt").forEach(b => {
+      b.classList.toggle("sel", b.dataset.track === track);
+    });
+    this.state.track = track;
+  },
+
 
   // Step 2: Habits (Scientifically Mapped sleep checks)
   checkHabitsFeedback: function(showImmediately = true) {
@@ -2882,9 +3011,14 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
 
     const [wakeH, wakeM] = (wakeStr || "07:00").split(":").map(Number);
     const [sleepH, sleepM] = (sleepStr || "23:00").split(":").map(Number);
-    
-    let sleepDuration = (sleepH > wakeH) ? (24 - sleepH + wakeH) : (wakeH - sleepH);
-    if (sleepDuration < 0) sleepDuration += 24;
+
+    // Saatin yanı sıra dakikayı da hesaba kat. Önceki hesap 23:30–07:00
+    // aralığını 8 saat kabul ediyor, aynı saat seçildiğinde ise 0 saat
+    // sonucunu veriyordu.
+    const wakeMinutes = wakeH * 60 + wakeM;
+    const sleepMinutes = sleepH * 60 + sleepM;
+    let sleepDuration = (wakeMinutes - sleepMinutes) / 60;
+    if (sleepDuration <= 0) sleepDuration += 24;
 
     const isLateSleep = (sleepH >= 1 && sleepH < 5); // 01:00 AM to 05:00 AM
 
@@ -10360,7 +10494,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
           }
         };
 
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent?key=${apiKey}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
@@ -14215,12 +14349,25 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
           parentContact: parsed.parentContact || "",
           parentEmail: parsed.parentEmail || "",
           parentPhone: parsed.parentPhone || "",
+          notifications: Array.isArray(parsed.notifications) ? parsed.notifications : [],
+          notifyChannels: Object.assign({ push: true, email: true, whatsapp: true }, parsed.notifyChannels || {}),
+          notificationSettings: parsed.notificationSettings && typeof parsed.notificationSettings === "object" ? parsed.notificationSettings : null,
+          lastQuoteIndex: parsed.lastQuoteIndex !== undefined ? parsed.lastQuoteIndex : null,
+          overdueAlerted: parsed.overdueAlerted && typeof parsed.overdueAlerted === "object" ? parsed.overdueAlerted : {},
+          overdueAlertedDate: parsed.overdueAlertedDate || null,
+          summaryShown: parsed.summaryShown && typeof parsed.summaryShown === "object" ? parsed.summaryShown : {},
+          subscriptionTier: parsed.subscriptionTier || "pending",
+          trialStartDate: parsed.trialStartDate || null,
+          theme: parsed.theme || "classic",
           diagnosticAccuracy: parsed.diagnosticAccuracy !== undefined ? parsed.diagnosticAccuracy : null,
           currentPositionRank: parsed.currentPositionRank !== undefined ? parsed.currentPositionRank : null,
           currentNetTYT: parsed.currentNetTYT !== undefined ? parsed.currentNetTYT : null,
           currentNetAYT: parsed.currentNetAYT !== undefined ? parsed.currentNetAYT : null,
           currentNetDil: parsed.currentNetDil !== undefined ? parsed.currentNetDil : null,
           currentPositionSource: parsed.currentPositionSource || null,
+          targetNetTYT: parsed.targetNetTYT !== undefined ? parsed.targetNetTYT : null,
+          targetNetAYT: parsed.targetNetAYT !== undefined ? parsed.targetNetAYT : null,
+          examFocus: ["tyt", "ayt", "both"].includes(parsed.examFocus) ? parsed.examFocus : "both",
           isLoggedOut: parsed.isLoggedOut !== undefined ? parsed.isLoggedOut : false,
           testSubjects: parsed.testSubjects || [],
           testQuestions: parsed.testQuestions || {},
@@ -14242,8 +14389,16 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
           mockExams: parsed.mockExams || [],
           focusScore: parsed.focusScore !== undefined ? parsed.focusScore : 100,
           burnoutAlertActive: parsed.burnoutAlertActive !== undefined ? parsed.burnoutAlertActive : false,
+          generatedForLevel: parsed.generatedForLevel !== undefined ? parsed.generatedForLevel : null,
+          manualTytAytSplit: parsed.manualTytAytSplit && typeof parsed.manualTytAytSplit === "object" ? parsed.manualTytAytSplit : null,
+          activeCurriculumSubject: parsed.activeCurriculumSubject || null,
           parentReportDueTime: parsed.parentReportDueTime || null,
           parentReportShownDate: parsed.parentReportShownDate || null,
+          userHabits: Array.isArray(parsed.userHabits) ? parsed.userHabits : [],
+          dismissedHabitSuggestions: Array.isArray(parsed.dismissedHabitSuggestions) ? parsed.dismissedHabitSuggestions : [],
+          lastHabitCoachReviewText: parsed.lastHabitCoachReviewText || null,
+          lastHabitCoachReviewDay: parsed.lastHabitCoachReviewDay !== undefined ? parsed.lastHabitCoachReviewDay : null,
+          coachCommentaries: Array.isArray(parsed.coachCommentaries) ? parsed.coachCommentaries : [],
           topicStatuses: parsed.topicStatuses || {},
           scheduledRepetitions: parsed.scheduledRepetitions || [],
           savedPrograms: parsed.savedPrograms || [],

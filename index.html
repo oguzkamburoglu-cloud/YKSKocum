@@ -11,7 +11,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
   <!-- CSS Stylesheet -->
-  <link rel="stylesheet" href="styles.css?v=25">
+  <link rel="stylesheet" href="styles.css?v=26">
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
   <!-- Chart.js CDN -->
@@ -188,167 +188,153 @@
     <!-- VIEW 2: SETUP WIZARD -->
     <section id="wizardView" class="app-view" hidden>
       <div class="glass-card">
-        <!-- Wizard Progress Tracker -->
-        <div class="wizard-progress">
-          <div class="wizard-progress-bar" id="wizardBar"></div>
-          <div class="wizard-step active" id="wStep1">1</div>
-          <div class="wizard-step" id="wStep2">2</div>
-        </div>
+        <div class="wz-shell">
 
-        <!-- Wizard Page 1: Goal Setting -->
-        <div id="wizardPage1" class="wizard-page">
-          <h2 style="margin-bottom: 0.5rem;"><i class="fa-solid fa-location-crosshairs text-primary"></i> Hedefini Belirle</h2>
-          <p style="color: var(--text-muted); margin-bottom: 2rem;">Hedef sıralamanı gir; istersen üniversite ve bölüm de seç. AI Tercih Motoru sana uygun hedefleri 2025 ÖSYM verileriyle hesaplasın.</p>
-          
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="studentName">Adın Soyadın</label>
-              <input type="text" id="studentName" placeholder="Adın ve soyadın" required>
-            </div>
-            <div class="form-group">
-              <label for="studentEmail">E-posta Adresin</label>
-              <input type="email" id="studentEmail" placeholder="ornek@eposta.com" autocomplete="email" required>
-              <div id="studentEmailError" style="font-size: 0.7rem; color: var(--danger, #dc2626); font-weight: 700; margin-top: 0.25rem; display: none;"></div>
-              <div style="font-size: 0.68rem; color: var(--text-muted); line-height: 1.4; margin-top: 0.15rem;">
-                🔒 Bilgilerin yalnızca bu cihazda saklanır, hiçbir sunucuya gönderilmez. Rapor gönderiminde bu adres kullanılır.
+          <!-- Adım göstergesi: 5 parça -->
+          <div class="wz-progress" id="wzProgress" aria-hidden="true">
+            <span class="wz-seg done"></span><span class="wz-seg"></span><span class="wz-seg"></span><span class="wz-seg"></span><span class="wz-seg"></span>
+          </div>
+          <!-- Eski iki noktalı gösterge kaldırıldı; showWizardPage null korumalı -->
+
+          <!-- ADIM 1-3 -->
+          <div id="wizardPage1" class="wizard-page">
+
+            <div class="wz-step active" data-step="1">
+              <div class="wz-count">Adım 1 / 5</div>
+              <h2 class="wz-q">Merhaba! Seni nasıl çağıralım?</h2>
+              <p class="wz-sub">Programın ve raporların bu bilgilerle kişiselleşecek. Yalnızca bu cihazda saklanır.</p>
+              <div class="wz-field">
+                <label for="studentName">Adın soyadın</label>
+                <input type="text" id="studentName" placeholder="Adın ve soyadın" required>
+              </div>
+              <div class="wz-field">
+                <label for="studentEmail">E-posta adresin</label>
+                <input type="email" id="studentEmail" placeholder="ornek@eposta.com" autocomplete="email" required>
+                <div id="studentEmailError" style="font-size:.72rem; color:var(--danger,#dc2626); font-weight:700; margin-top:.3rem; display:none;"></div>
+                <div class="wz-hint">🔒 Bilgilerin hiçbir sunucuya gönderilmez.</div>
               </div>
             </div>
-            <div class="form-group">
-              <label for="trackSelect">Alan Seçimi</label>
-              <select id="trackSelect" onchange="app.updateGoalPlanPreview()">
+
+            <div class="wz-step" data-step="2">
+              <div class="wz-count">Adım 2 / 5</div>
+              <h2 class="wz-q">Hangi alanda hazırlanıyorsun?</h2>
+              <p class="wz-sub">Programındaki dersler ve müfredat buna göre belirlenir.</p>
+              <div class="wz-pick" id="trackPicker">
+                <button type="button" class="wz-opt sel" data-track="Sayısal" onclick="app.wizardPickTrack('Sayısal')">
+                  <div class="wz-opt-t">Sayısal</div><div class="wz-opt-s">Mat · Fizik · Kimya · Biyoloji</div></button>
+                <button type="button" class="wz-opt" data-track="Eşit Ağırlık" onclick="app.wizardPickTrack('Eşit Ağırlık')">
+                  <div class="wz-opt-t">Eşit Ağırlık</div><div class="wz-opt-s">Mat · Edebiyat · Tarih · Coğrafya</div></button>
+                <button type="button" class="wz-opt" data-track="Sözel" onclick="app.wizardPickTrack('Sözel')">
+                  <div class="wz-opt-t">Sözel</div><div class="wz-opt-s">Edebiyat · Tarih · Coğrafya</div></button>
+                <button type="button" class="wz-opt" data-track="Dil" onclick="app.wizardPickTrack('Dil')">
+                  <div class="wz-opt-t">Yabancı Dil</div><div class="wz-opt-s">İngilizce ağırlıklı</div></button>
+              </div>
+              <select id="trackSelect" onchange="app.updateGoalPlanPreview()" style="display:none;">
                 <option value="Sayısal">Sayısal (SAY)</option>
                 <option value="Eşit Ağırlık">Eşit Ağırlık (EA)</option>
                 <option value="Sözel">Sözel (SÖZ)</option>
                 <option value="Dil">Yabancı Dil (DİL)</option>
               </select>
             </div>
-            <div class="form-group">
-              <label for="targetUniversity">Hedef Üniversite (İsteğe Bağlı)</label>
-              <select id="targetUniversity" onchange="app.updateGoalPlanPreview()">
-                <option value="">Fark Etmez / Henüz Kararsızım</option>
-                <!-- JS: 2025 ÖSYM veri setindeki üniversitelerle doldurulur -->
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="targetDepartment">Hedeflediğin Bölüm (İsteğe Bağlı)</label>
-              <select id="targetDepartment" onchange="app.updateGoalPlanPreview()">
-                <option value="">Fark Etmez / Henüz Kararsızım</option>
-                <!-- JS: seçilen alana (SAY/EA/SÖZ/DİL) uygun bölümlerle doldurulur -->
-              </select>
-              <div id="targetDeptPercentileNotice" style="font-size: 0.72rem; color: var(--primary); font-weight: 700; margin-top: 0.25rem; display: none;"></div>
-            </div>
-            <div class="form-group">
-              <label for="targetRank">Hedef Sıralama (Türkiye Geneli)</label>
-              <input type="number" id="targetRank" step="1" min="1" max="3000000" placeholder="Örn: 50000" oninput="app.updateGoalPlanPreview()" required>
-              <div id="targetRankNote" style="font-size: 0.68rem; color: var(--text-muted); line-height: 1.4; margin-top: 0.15rem;">
-                📊 Hesaplamalarda 2025 YKS yerleştirme (ÖSYM) taban başarı sıralamaları esas alınır. Boş bırakırsan seçtiğin üniversite/bölümden otomatik hedef belirlenir.
+
+            <div class="wz-step" data-step="3">
+              <div class="wz-count">Adım 3 / 5</div>
+              <h2 class="wz-q">Hedefin ne?</h2>
+              <p class="wz-sub">Sıralamanı gir, ya da üniversite ve bölüm seç; hedef sıralamayı senin için hesaplayalım.</p>
+              <div class="wz-field">
+                <label for="targetRank">Hedef sıralama (Türkiye geneli)</label>
+                <input type="number" id="targetRank" step="1" min="1" max="3000000" placeholder="Örn: 50000" oninput="app.updateGoalPlanPreview()">
+                <div id="targetRankNote" class="wz-hint">📊 Boş bırakırsan seçtiğin üniversite/bölümden otomatik hedef belirlenir.</div>
+              </div>
+              <div class="wz-field">
+                <label for="targetUniversity">Hedef üniversite <span style="font-weight:600;color:var(--text-muted)">(isteğe bağlı)</span></label>
+                <select id="targetUniversity" onchange="app.updateGoalPlanPreview()">
+                  <option value="">Fark etmez / henüz kararsızım</option>
+                </select>
+              </div>
+              <div class="wz-field">
+                <label for="targetDepartment">Hedef bölüm <span style="font-weight:600;color:var(--text-muted)">(isteğe bağlı)</span></label>
+                <select id="targetDepartment" onchange="app.updateGoalPlanPreview()">
+                  <option value="">Fark etmez / henüz kararsızım</option>
+                </select>
+                <div id="targetDeptPercentileNotice" style="font-size:.72rem; color:var(--primary); font-weight:700; margin-top:.3rem; display:none;"></div>
+              </div>
+
+              <div id="tercihMotoruBox" class="glass-card" style="background:var(--bg-card); border:1px solid var(--ai-border, rgba(139,92,246,.25)); margin:0 0 1.25rem; display:none; padding:1.1rem;"></div>
+
+              <div id="goalPlanPreviewBox" class="glass-card" style="background:var(--bg-card); border:1.5px dashed var(--primary); margin:1.25rem 0; display:none;">
+                <h4 style="color:var(--primary); margin-bottom:1rem; font-size:.95rem;">AI Çalışma Öngörüsü (Seviye <span id="previewLevel">3</span>)</h4>
+                <p id="previewLevelDesc" style="font-size:.92rem; margin-bottom:.5rem;"></p>
+                <p id="previewRankEquiv" style="font-size:.8rem; color:var(--primary); font-weight:700; margin-bottom:.4rem;"></p>
+                <p id="previewNetTargets" style="font-size:.8rem; font-weight:700; margin-bottom:1.25rem;"></p>
+                <div class="level-info-box">
+                  <div class="level-stat"><div class="num" id="previewHours">1500</div><div class="label">Toplam Çalışma Saati</div></div>
+                  <div class="level-stat"><div class="num" id="previewQuestions">20,000</div><div class="label">Minimum Soru Adedi</div></div>
+                  <div class="level-stat"><div class="num" id="previewMocks">60</div><div class="label">Genel Deneme Sınavı</div></div>
+                </div>
+                <div style="margin-top:1.25rem; border-top:1px solid rgba(0,0,0,.05); padding-top:1rem;">
+                  <label style="display:flex; align-items:center; gap:.7rem; cursor:pointer;">
+                    <input type="checkbox" id="acceptPlanCheck" style="width:20px; height:20px; accent-color:var(--primary);" onchange="app.toggleWizardNextButton()">
+                    <span style="font-size:.9rem;">Bu hedefleri kabul ediyor ve düzenli çalışmaya söz veriyorum!</span>
+                  </label>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- AI Tercih Motoru: sıralama / üniversite / bölüm kombinasyonlarına göre öneriler -->
-          <div id="tercihMotoruBox" class="glass-card" style="background: var(--bg-card); border: 1px solid var(--ai-border, rgba(139,92,246,0.25)); margin: 0 0 1.5rem; display: none; padding: 1.25rem;"></div>
+          <!-- ADIM 4-5 -->
+          <div id="wizardPage2" class="wizard-page" style="display:none;">
 
-          <!-- Goal Plan Preview Box -->
-          <div id="goalPlanPreviewBox" class="glass-card" style="background: var(--bg-card); border: 1.5px dashed var(--primary); margin: 2rem 0; display: none;">
-            <h4 style="color: var(--primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem;">
-              <svg viewBox="0 0 120 140" style="width: 20px; height: 23px; flex-shrink: 0;"><g transform="rotate(-10 60 70)"><path d="M46 72 Q34 76 31 86" fill="none" stroke="#1E2A4A" stroke-width="3" stroke-linecap="round"></path><circle cx="31" cy="87" r="4" fill="#FFD93B" stroke="#1E2A4A" stroke-width="2.5"></circle><path d="M74 68 Q86 62 89 52" fill="none" stroke="#1E2A4A" stroke-width="3" stroke-linecap="round"></path><circle cx="89" cy="51" r="4" fill="#FFD93B" stroke="#1E2A4A" stroke-width="2.5"></circle><path d="M89 47 Q95 40 91 34" fill="none" stroke="#1E2A4A" stroke-width="2" stroke-dasharray="1 4" stroke-linecap="round"></path><circle cx="91" cy="31" r="5.5" fill="#E45C7F" stroke="#1E2A4A" stroke-width="2.5"></circle><rect x="94" y="27" width="6" height="4.5" rx="1.5" fill="#E45C7F" stroke="#1E2A4A" stroke-width="2"></rect><rect x="46" y="8" width="28" height="15" rx="7" fill="#FFB3C7" stroke="#1E2A4A" stroke-width="2.5"></rect><rect x="46" y="22" width="28" height="8" fill="#D9DCE5" stroke="#1E2A4A" stroke-width="2.5"></rect><path d="M50 24v4M56 24v4M62 24v4M68 24v4" stroke="#1E2A4A" stroke-width="1.4" opacity="0.5"></path><rect x="46" y="30" width="28" height="60" fill="#FFD93B" stroke="#1E2A4A" stroke-width="2.5"></rect><path d="M55 30v60M65 30v60" stroke="#1E2A4A" stroke-width="1.4" opacity="0.22"></path><rect x="45" y="38" width="30" height="7" fill="#E45C7F" stroke="#1E2A4A" stroke-width="2.5"></rect><circle cx="55" cy="55" r="2.4" fill="#1E2A4A"></circle><circle cx="66" cy="55" r="2.4" fill="#1E2A4A"></circle><path d="M55.5 64 Q60.5 69 65.5 64" fill="none" stroke="#1E2A4A" stroke-width="2.5" stroke-linecap="round"></path><circle cx="50.5" cy="61" r="2.6" fill="#FFB3C7" opacity="0.85"></circle><circle cx="70.5" cy="61" r="2.6" fill="#FFB3C7" opacity="0.85"></circle><path d="M46 90 L74 90 L60 116 Z" fill="#F2D6A8" stroke="#1E2A4A" stroke-width="2.5" stroke-linejoin="round"></path><path d="M55 106 L65 106 L60 116 Z" fill="#1E2A4A"></path></g></svg>
-              AI Çalışma Öngörüsü (Seviye <span id="previewLevel">3</span>)
-            </h4>
-            <p id="previewLevelDesc" style="font-size: 0.95rem; margin-bottom: 0.5rem;"></p>
-            <p id="previewRankEquiv" style="font-size: 0.8rem; color: var(--primary); font-weight: 700; margin-bottom: 0.4rem;"></p>
-            <p id="previewNetTargets" style="font-size: 0.8rem; color: var(--text-main); font-weight: 700; margin-bottom: 1.5rem;"></p>
-            <div class="level-info-box">
-              <div class="level-stat">
-                <div class="num" id="previewHours">1500</div>
-                <div class="label">Toplam Çalışma Saati</div>
+            <div class="wz-step" data-step="4">
+              <div class="wz-count">Adım 4 / 5</div>
+              <h2 class="wz-q">Günün nasıl geçiyor?</h2>
+              <p class="wz-sub">Programı gerçekten yapabileceğin saatlere göre kuralım.</p>
+              <div class="wz-field">
+                <label for="schoolStatus">Okul durumun</label>
+                <select id="schoolStatus" onchange="app.checkHabitsFeedback()">
+                  <option value="school">Okula gidiyorum</option>
+                  <option value="graduate">Mezunum / evden hazırlanıyorum</option>
+                </select>
               </div>
-              <div class="level-stat">
-                <div class="num" id="previewQuestions">20,000</div>
-                <div class="label">Minimum Soru Adedi</div>
+              <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:.8rem;">
+                <div class="wz-field"><label for="weekdayCapacity">Hafta içi (saat/gün)</label>
+                  <input type="number" id="weekdayCapacity" value="4" min="0" max="16" oninput="app.checkHabitsFeedback()"></div>
+                <div class="wz-field"><label for="weekendCapacity">Hafta sonu (saat/gün)</label>
+                  <input type="number" id="weekendCapacity" value="8" min="0" max="16" oninput="app.checkHabitsFeedback()"></div>
+                <div class="wz-field"><label for="wakeTime">Kalkış</label>
+                  <input type="time" id="wakeTime" value="07:00" onchange="app.checkHabitsFeedback()"></div>
+                <div class="wz-field"><label for="sleepTime">Yatış</label>
+                  <input type="time" id="sleepTime" value="23:00" onchange="app.checkHabitsFeedback()"></div>
               </div>
-              <div class="level-stat">
-                <div class="num" id="previewMocks">60</div>
-                <div class="label">Genel Deneme Sınavı</div>
-              </div>
+              <div id="coachHabitFeedback" style="display:none; margin-top:.5rem;"></div>
             </div>
-            
-            <div style="margin-top: 1.5rem; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 1rem;">
-              <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; color: var(--text-main);">
-                <input type="checkbox" id="acceptPlanCheck" style="width: 20px; height: 20px; accent-color: var(--primary);" onchange="app.toggleWizardNextButton()">
-                <span>Koçun belirlediği bu genel program hedeflerini kabul ediyor ve düzenli çalışmaya söz veriyorum!</span>
-              </label>
+
+            <div class="wz-step" data-step="5">
+              <div class="wz-count">Adım 5 / 5</div>
+              <h2 class="wz-q">Veline haber verelim mi?</h2>
+              <p class="wz-sub">Doldurursan çalışma raporun veline iletilir. Bu adımı atlayabilirsin.</p>
+              <div class="wz-field">
+                <label for="parentEmail">Veli e-postası <span style="font-weight:600;color:var(--text-muted)">(isteğe bağlı)</span></label>
+                <input type="email" id="parentEmail" placeholder="veli@mail.com" autocomplete="email">
+              </div>
+              <div class="wz-field">
+                <label for="parentPhone">Veli telefonu <span style="font-weight:600;color:var(--text-muted)">(isteğe bağlı)</span></label>
+                <input type="tel" id="parentPhone" placeholder="05xxxxxxxxx" autocomplete="tel">
+                <div id="parentContactError" style="display:none; font-size:.72rem; color:var(--danger); margin-top:.3rem; font-weight:700;"></div>
+                <div id="parentContactLockNote" style="display:none; font-size:.72rem; color:var(--primary); margin-top:.4rem; font-weight:700;">
+                  <i class="fa-solid fa-lock"></i> Veli bilgileri kayıtlı ve değiştirilemez.
+                </div>
+                <div class="wz-hint">Bir kez kaydedildikten sonra bu bilgiler kaldırılamaz.</div>
+              </div>
             </div>
           </div>
 
-          <div style="display: flex; justify-content: flex-end; gap: 1rem;">
-            <button class="btn btn-secondary" onclick="app.showLandingView()">İptal</button>
-            <button class="btn btn-primary" id="wizardNextBtn" disabled onclick="app.nextWizardPage()">
-              Sonraki Adım <i class="fa-solid fa-arrow-right"></i>
+          <div class="wz-nav">
+            <button class="btn btn-secondary" id="wzBackBtn" onclick="app.wizardBack()">
+              <i class="fa-solid fa-arrow-left"></i> Geri
             </button>
-          </div>
-        </div>
-
-        <!-- Wizard Page 2: Habits Profiling -->
-        <div id="wizardPage2" class="wizard-page" style="display: none;">
-          <h2 style="margin-bottom: 0.5rem;"><i class="fa-solid fa-user-clock text-primary"></i> Alışkanlık Profilini Çıkar</h2>
-          <p style="color: var(--text-muted); margin-bottom: 2rem;">Günlük hayatındaki çalışma sınırlarını ve düzenini belirle. Koçun sana özel uyarılarda bulunacak.</p>
-
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="schoolStatus">Okul / Mezuniyet Durumu</label>
-              <select id="schoolStatus" onchange="app.checkHabitsFeedback()">
-                <option value="school">Okula Gidiyorum (Hafta içi okul, Hafta sonu boş)</option>
-                <option value="graduate">Mezunum / Evden Hazırlanıyorum (Tüm günler esnek)</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="weekdayCapacity">Hafta İçi Kaç Saat Çalışabilirsin? (Günlük)</label>
-              <input type="number" id="weekdayCapacity" min="1" max="15" value="4" oninput="app.checkHabitsFeedback()">
-            </div>
-            <div class="form-group">
-              <label for="weekendCapacity">Hafta Sonu Kaç Saat Çalışabilirsin? (Günlük)</label>
-              <input type="number" id="weekendCapacity" min="1" max="15" value="8" oninput="app.checkHabitsFeedback()">
-            </div>
-          </div>
-
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="wakeTime">Sabah Kalkış Saati</label>
-              <input type="time" id="wakeTime" value="07:00" onchange="app.checkHabitsFeedback()">
-            </div>
-            <div class="form-group">
-              <label for="sleepTime">Gece Yatış Saati</label>
-              <input type="time" id="sleepTime" value="23:00" onchange="app.checkHabitsFeedback()">
-            </div>
-            <div class="form-group">
-              <label for="parentEmail">Veli E-postası <span style="font-weight:600; color:var(--text-muted);">(isteğe bağlı)</span></label>
-              <input type="email" id="parentEmail" placeholder="veli@mail.com" autocomplete="email" style="border: 1.5px solid var(--border-color);">
-            </div>
-            <div class="form-group">
-              <label for="parentPhone">Veli Telefonu <span style="font-weight:600; color:var(--text-muted);">(isteğe bağlı)</span></label>
-              <input type="tel" id="parentPhone" placeholder="05xxxxxxxxx" autocomplete="tel" style="border: 1.5px solid var(--border-color);">
-              <div id="parentContactError" style="display:none; font-size:0.72rem; color:var(--danger); margin-top:0.25rem; font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> Geçerli bir e-posta veya telefon numarası giriniz.</div>
-              <div id="parentContactLockNote" style="display:none; font-size:0.72rem; color:var(--primary); margin-top:0.4rem; font-weight:700;">
-                <i class="fa-solid fa-lock"></i> Veli bilgileri kayıtlı ve değiştirilemez. Raporlar bu adrese gider.
-              </div>
-              <div style="font-size:0.68rem; color:var(--text-muted); line-height:1.4; margin-top:0.35rem;">
-                Doldurursan çalışma raporun veline iletilir. Bir kez kaydedildikten sonra bu bilgiler kaldırılamaz.
-              </div>
-            </div>
-          </div>
-
-          <!-- Coach Live Feedback Alert -->
-          <div id="coachHabitFeedback" style="display: none;">
-            <!-- Rendered via JS dynamically -->
-          </div>
-
-          <div style="display: flex; justify-content: space-between; gap: 1rem; margin-top: 2rem;">
-            <button class="btn btn-secondary" onclick="app.prevWizardPage()">
-              <i class="fa-solid fa-arrow-left"></i> Geri Dön
-            </button>
-            <button class="btn btn-primary" onclick="app.goToSeviyeTespit()">
-              Seviye Tespit Sınavına Geç <i class="fa-solid fa-circle-check"></i>
+            <button class="btn btn-primary" id="wizardNextBtn" onclick="app.wizardNext()">
+              Devam <i class="fa-solid fa-arrow-right"></i>
             </button>
           </div>
         </div>
@@ -2336,6 +2322,6 @@
   <script src="curriculum.js?v=3"></script>
   <script src="questions.js"></script>
   <script src="quotes.js?v=1"></script>
-  <script src="app.js?v=98"></script>
+  <script src="app.js?v=99"></script>
 </body>
 </html>
