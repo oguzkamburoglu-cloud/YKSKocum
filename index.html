@@ -486,42 +486,6 @@
           </div>
         </div>
 
-        <!-- Level Customization & Explanations Card -->
-        <div class="glass-card" style="text-align: left; margin-bottom: 2.5rem; background: rgba(245, 158, 11, 0.02); border: 1px solid rgba(245, 158, 11, 0.15); padding: 1.5rem; border-radius: 12px;">
-          <h4 style="color: #f59e0b; margin-bottom: 1rem; font-family:var(--font-header); font-weight:800;"><i class="fa-solid fa-sliders"></i> Seviye Seçimi ve Tanımları</h4>
-          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.45;">
-            Yapay zekanın yaptığı tespit aşağıda seçili olarak işaretlenmiştir. İstersen bu seviyeyi kendi durumuna göre manuel olarak değiştirebilirsin:
-          </p>
-
-          <div class="form-group" style="margin-bottom: 1.5rem;">
-            <label style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem; display: block; color: var(--text-main);">Sınav Odak Alanı</label>
-            <select id="wizardExamFocusSelect" style="padding: 0.45rem; font-size: 0.85rem; font-weight: 700; width: 100%; border-radius: 6px; border: 1px solid var(--border-color); height:38px;">
-              <option value="both" selected>TYT + AYT (Genel Hazırlık)</option>
-              <option value="tyt">Sadece TYT (Temel Yeterlilik)</option>
-              <option value="ayt">Sadece AYT (Alan Yeterlilik)</option>
-            </select>
-          </div>
-
-          <div class="form-group" style="margin-bottom: 1.5rem;">
-            <label style="font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem; display: block; color: var(--text-main);">Çalışma Seviyeniz</label>
-            <select id="reportManualLevelSelect" onchange="app.changeReportLevelManual(this.value)" style="padding: 0.45rem; font-size: 0.85rem; font-weight: 700; width: 100%; border-radius: 6px; border: 1px solid var(--border-color); height:38px;">
-              <option value="1">1. Seviye - Başlangıç (Temel İnşa | 900 Saat / 22K Soru)</option>
-              <option value="2">2. Seviye - Gelişmekte Olan (İlk 516.612 Bandı | 1100 Saat / 30K Soru)</option>
-              <option value="3">3. Seviye - Orta (İlk 258.306 Bandı, Müh./Mimarlık Barajı | 1300 Saat / 40K Soru)</option>
-              <option value="4">4. Seviye - Orta-Üstü (İlk 103.322 Bandı, Diş/Ecz/Hukuk Barajı | 1450 Saat / 48K Soru)</option>
-              <option value="5">5. Seviye - İyi (İlk 51.661 Bandı, Tıp Barajı | 1600 Saat / 58K Soru)</option>
-              <option value="6">6. Seviye - İleri (İlk 12.915 Bandı | 1800 Saat / 70K Soru)</option>
-              <option value="7">7. Seviye - Zirve (Elit Programlar Hedefi | 2000 Saat / 85K Soru)</option>
-              <option value="8">8. Seviye - Şampiyonluk (Türkiye Derecesi Hedefi, İlk 100 | Tüm Sorular Doğru | 2200 Saat / 100K Soru)</option>
-            </select>
-          </div>
-
-          <!-- Description Box -->
-          <div style="background: var(--bg-card); padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.8rem; line-height: 1.45; color: var(--text-main);" id="reportLevelExplanationBox">
-            <!-- Populated via JS -->
-          </div>
-        </div>
-
         <button class="btn btn-primary" onclick="app.startMainDashboard()">
           Uygulamaya Gir <i class="fa-solid fa-arrow-right"></i>
         </button>
@@ -2365,6 +2329,6 @@
   <script src="curriculum.js?v=3"></script>
   <script src="questions.js"></script>
   <script src="quotes.js?v=1"></script>
-  <script src="app.js?v=122"></script>
+  <script src="app.js?v=123"></script>
 </body>
 </html>

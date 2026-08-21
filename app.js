@@ -3452,11 +3452,11 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       : `TYT ${tytNet} net · AYT ${aytNet} net`;
     let coachAnalysis;
     if (overallAccuracy >= 75) {
-      coachAnalysis = `🤖 <strong>Sağlam bir mevcut konumdasın!</strong> Girdiğin sonuçlara göre (${netLine}, sıralama İlk ${rank.toLocaleString("tr-TR")}) güçlü bir seviyedesin. <strong>Senin için ${assessedLevel}. Seviye planını öneriyorum</strong>, ancak aşağıdaki menüden kendi seviyeni dilediğin gibi seçebilirsin.`;
+      coachAnalysis = `🤖 <strong>Sağlam bir mevcut konumdasın!</strong> Girdiğin sonuçlara göre (${netLine}, sıralama İlk ${rank.toLocaleString("tr-TR")}) güçlü bir seviyedesin. Tespit edilen seviyen: <strong>${assessedLevel}. Seviye</strong>. Program önerisi uygulamanın içinde seni bekliyor.`;
     } else if (overallAccuracy >= 50) {
-      coachAnalysis = `🤖 <strong>Gelişime açık bir konumdasın.</strong> Girdiğin sonuçlara göre (${netLine}, sıralama İlk ${rank.toLocaleString("tr-TR")}) iyi bir temelin var ama toparlanması gereken alanlar mevcut. <strong>Senin için ${assessedLevel}. Seviye planını öneriyorum</strong>, ancak aşağıdaki menüden kendi seviyeni dilediğin gibi seçebilirsin.`;
+      coachAnalysis = `🤖 <strong>Gelişime açık bir konumdasın.</strong> Girdiğin sonuçlara göre (${netLine}, sıralama İlk ${rank.toLocaleString("tr-TR")}) iyi bir temelin var ama toparlanması gereken alanlar mevcut. Tespit edilen seviyen: <strong>${assessedLevel}. Seviye</strong>. Program önerisi uygulamanın içinde seni bekliyor.`;
     } else {
-      coachAnalysis = `🚨 <strong>Temel kondisyon hazırlığına ihtiyacımız var!</strong> Girdiğin sonuçlara göre (${netLine}, sıralama İlk ${rank.toLocaleString("tr-TR")}) baştan sağlam bir temel kuracağız. <strong>Senin için ${assessedLevel}. Seviye programını öneriyorum</strong>, ancak aşağıdaki menüden kendi seviyeni dilediğin gibi seçebilirsin.`;
+      coachAnalysis = `🚨 <strong>Temel kondisyon hazırlığına ihtiyacımız var!</strong> Girdiğin sonuçlara göre (${netLine}, sıralama İlk ${rank.toLocaleString("tr-TR")}) baştan sağlam bir temel kuracağız. Tespit edilen seviyen: <strong>${assessedLevel}. Seviye</strong>. Program önerisi uygulamanın içinde seni bekliyor.`;
     }
     const analysisEl = document.getElementById("reportCoachAnalysis");
     if (analysisEl) analysisEl.innerHTML = coachAnalysis;
@@ -3800,11 +3800,11 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
 
     let coachAnalysis = "";
     if (overallAccuracy >= 75) {
-      coachAnalysis = `🤖 <strong>Harika zihinsel kondisyon!</strong> Seviye tespit sınavında %${overallAccuracy} başarı göstererek sağlam bir temel sergiledin. Koçun olarak hedefimiz bu formu korumak ve denemelerle hız kazanmak. <strong>Senin için ${assessedLevel}. Seviye planını öneriyorum</strong>, ancak aşağıdaki menüden kendi seviyeni dilediğin gibi seçebilirsin.`;
+      coachAnalysis = `🤖 <strong>Harika zihinsel kondisyon!</strong> Seviye tespit sınavında %${overallAccuracy} başarı göstererek sağlam bir temel sergiledin. Koçun olarak hedefimiz bu formu korumak ve denemelerle hız kazanmak. Tespit edilen seviyen: <strong>${assessedLevel}. Seviye</strong>. Program önerisi uygulamanın içinde seni bekliyor.`;
     } else if (overallAccuracy >= 50) {
-      coachAnalysis = `🤖 <strong>Gelişime açık şampiyon adayı!</strong> Ortalama %${overallAccuracy} net ile iyi bir durumdasın fakat bazı savunma zayıflıkların (yanlış yapılan konular) var. Hata-tekrar taktiklerimizle bu zayıflıkları kapatacağız. <strong>Senin için ${assessedLevel}. Seviye planını öneriyorum</strong>, ancak aşağıdaki menüden kendi seviyeni dilediğin gibi seçebilirsin.`;
+      coachAnalysis = `🤖 <strong>Gelişime açık şampiyon adayı!</strong> Ortalama %${overallAccuracy} net ile iyi bir durumdasın fakat bazı savunma zayıflıkların (yanlış yapılan konular) var. Hata-tekrar taktiklerimizle bu zayıflıkları kapatacağız. Tespit edilen seviyen: <strong>${assessedLevel}. Seviye</strong>. Program önerisi uygulamanın içinde seni bekliyor.`;
     } else {
-      coachAnalysis = `🚨 <strong>Temel kondisyon hazırlığına ihtiyacımız var!</strong> Seviye tespitinde %${overallAccuracy} başarıda kaldık. Acelemiz yok, en temel konulardan başlayıp sindire sindire ilerleyeceğiz. <strong>Senin için ${assessedLevel}. Seviye programını öneriyorum</strong>, ancak aşağıdaki menüden kendi seviyeni dilediğin gibi seçebilirsin.`;
+      coachAnalysis = `🚨 <strong>Temel kondisyon hazırlığına ihtiyacımız var!</strong> Seviye tespitinde %${overallAccuracy} başarıda kaldık. Acelemiz yok, en temel konulardan başlayıp sindire sindire ilerleyeceğiz. Tespit edilen seviyen: <strong>${assessedLevel}. Seviye</strong>. Program önerisi uygulamanın içinde seni bekliyor.`;
     }
 
     document.getElementById("reportCoachAnalysis").innerHTML = coachAnalysis;
@@ -3967,8 +3967,12 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
         return;
       }
 
+    // Rapor ekranindaki sinav odagi secici kaldirildi. Odak artik yalnizca
+    // uygulama icindeki "AI Program Olusturucu" panelinden secilir; burada
+    // kosulsuz "both" yazmak kullanicinin secimini her girisde siliyordu.
     const wizardFocus = document.getElementById("wizardExamFocusSelect");
-    this.state.examFocus = wizardFocus ? wizardFocus.value : "both";
+    if (wizardFocus) this.state.examFocus = wizardFocus.value;
+    if (!["tyt", "ayt", "both"].includes(this.state.examFocus)) this.state.examFocus = "both";
 
     // Tercih motoru entegrasyonu: hedef/seviye değiştiyse standart programı yeni seviyeye göre baştan üret
     if (this.state.generatedForLevel && this.state.generatedForLevel !== this.state.level) {
