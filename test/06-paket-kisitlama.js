@@ -148,6 +148,31 @@ T.grup("6.3  Deneme bitince TAM KILIT");
          app.state.daysData[1].tasks[0].completed, true);
 })();
 
+
+(function () {
+  // Deneme suresi oturum ACIKKEN dolarsa diger yazma yollari da kilitli
+  // olmali (giris kapisi bu durumda devreye girmez).
+  paket("free");
+  elemanEkle("coachModalTitle"); elemanEkle("coachModalBody"); elemanEkle("coachModalQuote");
+  elemanEkle("customTaskTopic").value = "Limit";
+  elemanEkle("plannerProgName").value = "Deneme Programi";
+  app.state.savedPrograms = [];
+  app.state.daysData = { 1: { completed: false, tasks: [{ id: "t1", completed: false }] } };
+  app.isPlanning = false;
+
+  app.submitCustomTask();
+  T.esit("kilitliyken ozel gorev eklenemiyor", app.state.daysData[1].tasks.length, 1);
+
+  app.plannerSaveProgram();
+  T.esit("kilitliyken program kaydedilemiyor", app.state.savedPrograms.length, 0);
+
+  app.deleteOutlookTask(1, "t1");
+  T.esit("kilitliyken gorev silinemiyor", app.state.daysData[1].tasks.length, 1);
+
+  app.generateAIProgramFromCreator();
+  T.esit("kilitliyken AI programi uretilemiyor", app.state.savedPrograms.length, 0);
+})();
+
 T.grup("6.4  Kilitli sekmeye gecilemiyor");
 
 (function () {

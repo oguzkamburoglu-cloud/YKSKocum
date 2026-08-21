@@ -8896,6 +8896,10 @@ normalizeClause: function(clause) {
   },
 
   submitTestScore: function() {
+    // Deneme suresi uygulama ACIKKEN dolabilir (denemeBittiMi canli
+    // hesaplanir); giris kapisi bu durumda yetmez, yazma yollari da
+    // kendini korur.
+    if (this.saltOkunurMu()) { this.ozellikKilidiUyar("programOlustur"); return; }
     const scoreCorrect = document.getElementById("testScoreCorrect");
     const scoreWrong = document.getElementById("testScoreWrong");
     const scoreTime = document.getElementById("testScoreTime");
@@ -12216,6 +12220,10 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
   // TAB 5: Mistakes Notebook (Hata Defteri) — Deneme sınavı gibi tek bir göreve
   // bağlanamayan hatalar için manuel giriş formu.
   uploadVaultQuestion: function() {
+    // Deneme suresi uygulama ACIKKEN dolabilir (denemeBittiMi canli
+    // hesaplanir); giris kapisi bu durumda yetmez, yazma yollari da
+    // kendini korur.
+    if (this.saltOkunurMu()) { this.ozellikKilidiUyar("programOlustur"); return; }
     const subject = document.getElementById("vaultSubject").value;
     const topic = document.getElementById("vaultTopic").value.trim();
     const tag = document.getElementById("vaultTag").value;
@@ -13532,6 +13540,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
 
 
   deleteOutlookTask: function(dayNum, taskId) {
+    if (this.saltOkunurMu()) { this.ozellikKilidiUyar("programOlustur"); return; }
     if (this.isPlanning) {
       const dayData = this.plannerBuffer[dayNum];
       if (dayData) {
@@ -13962,6 +13971,10 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
   // OLUŞTUR modundan geldiyse (null) YENİ bir program ekler. Tek bir buton artık hem
   // "kaydet" hem "oluştur" davranışını duruma göre doğru şekilde uyguluyor.
   plannerSaveProgram: function() {
+    // Deneme suresi uygulama ACIKKEN dolabilir (denemeBittiMi canli
+    // hesaplanir); giris kapisi bu durumda yetmez, yazma yollari da
+    // kendini korur.
+    if (this.saltOkunurMu()) { this.ozellikKilidiUyar("programOlustur"); return; }
     const name = document.getElementById("plannerProgName").value.trim();
     const startDate = document.getElementById("plannerProgStartDate").value;
     const rep = document.getElementById("plannerProgRep").value;
@@ -16170,6 +16183,10 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
   },
 
   submitCustomTask: function() {
+    // Deneme suresi uygulama ACIKKEN dolabilir (denemeBittiMi canli
+    // hesaplanir); giris kapisi bu durumda yetmez, yazma yollari da
+    // kendini korur.
+    if (this.saltOkunurMu()) { this.ozellikKilidiUyar("programOlustur"); return; }
     const topicInput = document.getElementById("customTaskTopic");
     if (topicInput && !topicInput.value.trim()) {
       app.showToast("Lütfen konu / yapılacak çalışma alanını doldurun.", "error");
@@ -16695,6 +16712,10 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
   },
 
   generateAIProgramFromCreator: function() {
+    // Deneme suresi uygulama ACIKKEN dolabilir (denemeBittiMi canli
+    // hesaplanir); giris kapisi bu durumda yetmez, yazma yollari da
+    // kendini korur.
+    if (this.saltOkunurMu()) { this.ozellikKilidiUyar("programOlustur"); return; }
     try {
       const select = document.getElementById("creatorLevelSelect");
       const focusSelect = document.getElementById("creatorExamFocusSelect");

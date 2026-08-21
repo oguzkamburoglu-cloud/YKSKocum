@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ykskocum-v97-olu-kod';
+const CACHE_NAME = 'ykskocum-v98-oturum-kilidi';
 const urlsToCache = [
   './',
   './index.html',
