@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ykskocum-v87-paket';
+const CACHE_NAME = 'ykskocum-v88-yillik';
 const urlsToCache = [
   './',
   './index.html',

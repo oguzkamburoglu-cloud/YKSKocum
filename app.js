@@ -265,6 +265,8 @@ const app = {
   PAKETLER: [
     {
       id: "baslangic", ad: "Başlangıç", fiyat: 299, birim: "₺/ay",
+      // Yillik: 12 ay yerine 10 ay odenir (2 ay hediye, ~%17 indirim)
+      yillikFiyat: 2990,
       ozet: "Sadece program oluşturma.",
       ozellikler: [
         "Sınava kalan güne göre kişisel program",
@@ -274,6 +276,7 @@ const app = {
     },
     {
       id: "standart", ad: "Standart", fiyat: 499, birim: "₺/ay", vurgu: "En çok tercih edilen",
+      yillikFiyat: 4990,
       ozet: "Takip et, hatalarını kapat.",
       ozellikler: [
         "Başlangıç'taki her şey",
@@ -286,6 +289,7 @@ const app = {
     },
     {
       id: "pro", ad: "Pro", fiyat: 799, birim: "₺/ay",
+      yillikFiyat: 7990,
       ozet: "Yapay zekâ desteğiyle tam donanım.",
       ozellikler: [
         "Standart'taki her şey",
@@ -372,9 +376,52 @@ const app = {
     if (serit) serit.style.display = this.saltOkunurMu() ? "flex" : "none";
   },
 
+  // ============================================================
+  // FATURA DONEMI — aylik / yillik
+  // Yillik planda 12 ay yerine 10 ay odenir: 2 ay hediye (~%17).
+  // Paket KIMLIGI degismez (baslangic/standart/pro), yalnizca odeme
+  // donemi degisir; kisitlama haritasi aynen calisir.
+  // ============================================================
+  HEDIYE_AY: 2,
+
+  faturaDonemi: function() {
+    return this.state && this.state.faturaDonemi === "yillik" ? "yillik" : "aylik";
+  },
+
+  // Bir paketin secili doneme gore fiyat bilgisi
+  paketFiyati: function(p) {
+    const aylikToplam = p.fiyat * 12;
+    const yillik = p.yillikFiyat || Math.round(p.fiyat * (12 - this.HEDIYE_AY));
+    const indirim = aylikToplam > 0 ? Math.round((1 - yillik / aylikToplam) * 100) : 0;
+    if (this.faturaDonemi() === "yillik") {
+      return {
+        donem: "yillik",
+        tutar: yillik,
+        birim: "₺/yıl",
+        aylikKarsilik: Math.round(yillik / 12),
+        indirimYuzde: indirim,
+        tasarruf: aylikToplam - yillik,
+        aylikToplam: aylikToplam
+      };
+    }
+    return { donem: "aylik", tutar: p.fiyat, birim: p.birim, indirimYuzde: indirim };
+  },
+
+  // "standart_yillik" -> "standart". Kisitlama haritasi paket
+  // KIMLIGINE bakar; fatura donemi ayri tutulur.
+  paketKimligi: function(plan) {
+    return String(plan || "").replace(/_(yillik|aylik)$/, "");
+  },
+
+  faturaDonemiSec: function(donem) {
+    this.state.faturaDonemi = donem === "yillik" ? "yillik" : "aylik";
+    this.saveState();
+    this.showPaketler();
+  },
+
   aktifPaketSeviyesi: function() {
     if (!this.MONETIZATION_ENABLED) return 99;         // paket sistemi kapaliysa her sey acik
-    const tier = (this.state && this.state.subscriptionTier) || "pending";
+    const tier = this.paketKimligi((this.state && this.state.subscriptionTier) || "pending");
     const sv = this.PAKET_SEVIYE[tier];
     return typeof sv === "number" ? sv : 0;
   },
@@ -481,6 +528,7 @@ const app = {
     // Subscription & Marketing
     subscriptionTier: "pending", // 'pending', 'free', 'trial', 'pro_monthly', 'pro_yearly'
     trialStartDate: null,
+    faturaDonemi: "aylik",   // "aylik" | "yillik"
     theme: "classic",
     
     // Diagnostics Test State
@@ -1089,20 +1137,72 @@ const app = {
   showPaketler: function() {
     const kutu = document.getElementById("paketIcerik");
     if (!kutu) return;
-    kutu.innerHTML = this.PAKETLER.map(p => `
-      <div class="glass-card" role="button" tabindex="0" onclick="app.upgradeToPro('${p.id}')"
+
+    const yillik = this.faturaDonemi() === "yillik";
+    // Ornek indirim orani (paketler arasi ayni): kullaniciya bir kez soylenir.
+    const ornek = this.paketFiyati(this.PAKETLER[0]);
+
+    const secici = `
+      <div style="flex:1 1 100%; display:flex; justify-content:center; margin-bottom:0.35rem;">
+        <div role="tablist" aria-label="Fatura dönemi"
+             style="display:inline-flex; background:var(--bg-sub); border:1px solid var(--border-color);
+                    border-radius:999px; padding:0.25rem; gap:0.25rem;">
+          <button role="tab" aria-selected="${!yillik}" onclick="app.faturaDonemiSec('aylik')"
+                  style="border:none; cursor:pointer; border-radius:999px; padding:0.4rem 1rem;
+                         font-family:var(--font-header); font-weight:800; font-size:0.8rem;
+                         background:${!yillik ? "var(--primary)" : "transparent"};
+                         color:${!yillik ? "#fff" : "var(--text-muted)"};">Aylık</button>
+          <button role="tab" aria-selected="${yillik}" onclick="app.faturaDonemiSec('yillik')"
+                  style="border:none; cursor:pointer; border-radius:999px; padding:0.4rem 1rem;
+                         font-family:var(--font-header); font-weight:800; font-size:0.8rem;
+                         display:inline-flex; align-items:center; gap:0.4rem;
+                         background:${yillik ? "var(--primary)" : "transparent"};
+                         color:${yillik ? "#fff" : "var(--text-muted)"};">
+            Yıllık
+            <span style="font-size:0.66rem; font-weight:800; padding:0.1rem 0.4rem; border-radius:999px;
+                         background:${yillik ? "rgba(255,255,255,.22)" : "var(--success, #10b981)"};
+                         color:#fff;">${this.HEDIYE_AY} ay hediye</span>
+          </button>
+        </div>
+      </div>
+      <p style="flex:1 1 100%; text-align:center; font-size:0.74rem; color:var(--text-muted); margin:0 0 0.6rem;">
+        ${yillik
+          ? `Yıllık planda <strong>${this.HEDIYE_AY} ay hediye</strong> — 12 ay yerine ${12 - this.HEDIYE_AY} ay ödersin (%${ornek.indirimYuzde} indirim).`
+          : `Yıllık ödemede <strong>${this.HEDIYE_AY} ay hediye</strong> (%${ornek.indirimYuzde} indirim). Yıllık sekmesine geç.`}
+      </p>`;
+
+    const kartlar = this.PAKETLER.map(p => {
+      const f = this.paketFiyati(p);
+      const planId = yillik ? p.id + "_yillik" : p.id;
+      const fiyatBlogu = yillik
+        ? `<div style="margin-bottom:.8rem;">
+             <div style="font-size:.74rem; color:var(--text-muted); text-decoration:line-through; font-variant-numeric:tabular-nums;">
+               ${f.aylikToplam.toLocaleString("tr-TR")} ₺</div>
+             <div style="font-size:1.55rem; font-weight:900; color:var(--primary); font-variant-numeric:tabular-nums;">
+               ${f.tutar.toLocaleString("tr-TR")}<span style="font-size:.78rem; font-weight:700; color:var(--text-muted);"> ${f.birim}</span></div>
+             <div style="font-size:.72rem; color:var(--text-muted); font-variant-numeric:tabular-nums;">
+               ayda ${f.aylikKarsilik.toLocaleString("tr-TR")} ₺ ·
+               <span style="color:var(--success,#10b981); font-weight:800;">${f.tasarruf.toLocaleString("tr-TR")} ₺ tasarruf</span></div>
+           </div>`
+        : `<div style="font-size:1.55rem; font-weight:900; color:var(--primary); font-variant-numeric:tabular-nums; margin-bottom:.8rem;">
+             ${f.tutar}<span style="font-size:.78rem; font-weight:700; color:var(--text-muted);"> ${f.birim}</span></div>`;
+
+      return `
+      <div class="glass-card" role="button" tabindex="0" onclick="app.upgradeToPro('${planId}')"
            style="flex:1; min-width:210px; text-align:left; cursor:pointer; padding:1.25rem;
                   border:2px solid ${p.vurgu ? "var(--primary)" : "var(--border-color)"};
                   background:${p.vurgu ? "var(--ai-tint)" : "var(--bg-card)"};">
         ${p.vurgu ? `<div style="font-size:.66rem; font-weight:800; color:var(--primary); text-transform:uppercase; letter-spacing:.05em; margin-bottom:.4rem;">${p.vurgu}</div>` : ""}
         <div style="font-family:var(--font-header); font-weight:800; font-size:1.05rem;">${p.ad}</div>
         <div style="font-size:.78rem; color:var(--text-muted); margin:.15rem 0 .7rem;">${p.ozet}</div>
-        <div style="font-size:1.55rem; font-weight:900; color:var(--primary); font-variant-numeric:tabular-nums; margin-bottom:.8rem;">
-          ${p.fiyat}<span style="font-size:.78rem; font-weight:700; color:var(--text-muted);"> ${p.birim}</span></div>
+        ${fiyatBlogu}
         <ul style="list-style:none; padding:0; margin:0; display:grid; gap:.35rem;">
           ${p.ozellikler.map(o => `<li style="font-size:.79rem; display:flex; gap:.4rem; align-items:flex-start;"><span style="color:var(--success,#10b981); font-weight:800;">✓</span><span>${o}</span></li>`).join("")}
         </ul>
-      </div>`).join("");
+      </div>`;
+    }).join("");
+
+    kutu.innerHTML = secici + kartlar;
   },
 
   upgradeToPro: function(plan) {
@@ -1120,10 +1220,27 @@ const app = {
 
     // Odeme saglayicisi henuz bagli degil. Secimi kaydedip sahte bir
     // "PRO oldunuz" durumu yaratmak yaniltici olur; durum acikca soylenir.
-    const bilgi = this.paketBilgisi(plan);
+    const kimlik = this.paketKimligi(plan);
+    const yillikMi = /_yillik$/.test(String(plan));
+    const paket = (this.PAKETLER || []).filter(x => x.id === kimlik)[0];
+    const bilgi = this.paketBilgisi(kimlik);
+
+    let fiyatMetni = "";
+    if (paket) {
+      const eskiDonem = this.state.faturaDonemi;
+      this.state.faturaDonemi = yillikMi ? "yillik" : "aylik";
+      const f = this.paketFiyati(paket);
+      this.state.faturaDonemi = eskiDonem;
+      fiyatMetni = yillikMi
+        ? ` — <strong>${f.tutar.toLocaleString("tr-TR")} ${f.birim}</strong> ` +
+          `(ayda ${f.aylikKarsilik.toLocaleString("tr-TR")} ₺, ${this.HEDIYE_AY} ay hediye)`
+        : ` — <strong>${f.tutar} ${f.birim}</strong>`;
+    }
+
     this.showCoachAlert("💳 Ödeme altyapısı henüz bağlı değil",
-      `<strong>${bilgi.ad}</strong> paketini seçtin. Ödeme alabilmek için bir ödeme sağlayıcısının (iyzico, PayTR vb.) ` +
-      `sunucuya bağlanması gerekiyor — bu henüz yapılmadı, dolayısıyla şu an ücret tahsil edilemiyor.<br><br>` +
+      `<strong>${bilgi.ad}</strong> paketini ${yillikMi ? "yıllık" : "aylık"} olarak seçtin${fiyatMetni}. ` +
+      `Ödeme alabilmek için bir ödeme sağlayıcısının (iyzico, PayTR vb.) sunucuya bağlanması gerekiyor — ` +
+      `bu henüz yapılmadı, dolayısıyla şu an ücret tahsil edilemiyor.<br><br>` +
       `Bu arada <strong>${this.DENEME_GUN} günlük ücretsiz denemeyi</strong> başlatarak tüm özellikleri kullanabilirsin.`);
   },
 

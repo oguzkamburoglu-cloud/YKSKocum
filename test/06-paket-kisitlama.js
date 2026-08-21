@@ -146,4 +146,62 @@ T.grup("6.6  Paket tanimlari ile kisitlama tutarli");
   T.esit("adı olmayan özellik yok", adsiz.length, 0);
 })();
 
+// ────────────────────────────────────────────────────────────
+T.grup("6.7  Yillik plan ve indirim");
+
+(function () {
+  paket("pending");
+  app.state.faturaDonemi = "aylik";
+  const p = app.PAKETLER.filter(x => x.id === "standart")[0];
+
+  const a = app.paketFiyati(p);
+  T.esit("aylık tutar", a.tutar, 499);
+  T.esit("aylık birim", a.birim, "₺/ay");
+
+  app.state.faturaDonemi = "yillik";
+  const y = app.paketFiyati(p);
+  T.esit("yıllık tutar", y.tutar, 4990);
+  T.esit("yıllık birim", y.birim, "₺/yıl");
+  T.esit("12 ay peşin tutarı", y.aylikToplam, 5988);
+  T.esit("tasarruf = 2 aylık ücret", y.tasarruf, 499 * 2);
+  T.esit("aylık karşılığı", y.aylikKarsilik, Math.round(4990 / 12));
+  T.dogru("indirim oranı %15-20 arasında", y.indirimYuzde >= 15 && y.indirimYuzde <= 20, y.indirimYuzde);
+})();
+
+(function () {
+  // Her pakette yillik fiyat = 10 aylik ucret olmali
+  app.state.faturaDonemi = "yillik";
+  app.PAKETLER.forEach(p => {
+    const f = app.paketFiyati(p);
+    T.esit("'" + p.ad + "' yıllık = " + (12 - app.HEDIYE_AY) + " aylık ücret",
+           f.tutar, p.fiyat * (12 - app.HEDIYE_AY));
+    T.dogru("'" + p.ad + "' yıllık, 12 ay peşinden ucuz", f.tutar < p.fiyat * 12, f.tutar);
+  });
+})();
+
+(function () {
+  // Yillik plan kimligi kisitlamayi BOZMAMALI
+  T.esit("'standart_yillik' -> 'standart'", app.paketKimligi("standart_yillik"), "standart");
+  T.esit("'pro_yillik' -> 'pro'", app.paketKimligi("pro_yillik"), "pro");
+  T.esit("son ek yoksa aynen döner", app.paketKimligi("baslangic"), "baslangic");
+
+  paket("standart_yillik");
+  T.dogru("yıllık Standart, analiz özelliğini açıyor", app.ozellikAcikMi("analiz"), true);
+  T.dogru("yıllık Standart, sesli girişi açmıyor", !app.ozellikAcikMi("sesliGiris"), true);
+  T.dogru("yıllık Standart salt okunur değil", !app.saltOkunurMu(), true);
+
+  paket("pro_yillik");
+  T.dogru("yıllık Pro tüm özellikleri açıyor",
+          TUM_OZELLIKLER.every(o => app.ozellikAcikMi(o)), true);
+})();
+
+(function () {
+  // Varsayilan donem aylik olmali
+  paket("pending");
+  delete app.state.faturaDonemi;
+  T.esit("dönem belirtilmemişse aylık", app.faturaDonemi(), "aylik");
+  app.state.faturaDonemi = "saçma";
+  T.esit("geçersiz dönem aylığa düşer", app.faturaDonemi(), "aylik");
+})();
+
 T.ozet();
