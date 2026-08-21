@@ -1141,16 +1141,21 @@
               <button class="btn btn-secondary" onclick="app.switchTab('today')" style="margin-bottom: 1.25rem; font-family: var(--font-header); font-weight: 800; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 0.4rem; border: 1.5px solid var(--border-color); border-radius: 6px; padding: 0.35rem 0.75rem; background: var(--bg-card); color: var(--text-main); cursor: pointer;">
                 <i class="fa-solid fa-arrow-left"></i> ✏️ Ana Sayfaya Dön
               </button>
-              <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
-                <div style="display:flex; align-items:center; gap:0.5rem;">
-                  <label style="font-size:0.8rem; font-weight:600; color:var(--text-muted);"><i class="fa-solid fa-filter"></i> Grafik Filtresi:</label>
-                  <select id="chartExamTypeFilter" onchange="app.renderCharts()" style="padding:0.35rem 0.5rem; font-size:0.8rem; font-weight:700; border-radius:4px; border:1px solid var(--border-color);">
-                    <option value="all">Tümü (TYT & AYT)</option>
-                    <option value="TYT">Sadece TYT Verileri</option>
-                    <option value="AYT">Sadece AYT Verileri</option>
+              <!-- Etiket + kutu ciftleri BOLUNMEZ gruplar: dar ekranda
+                   "Grafik Filtresi:" tek basina kalip kutu alt satira
+                   dusuyor, bozuk cumle gibi gorunuyordu. -->
+              <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.6rem 1.25rem;">
+                <div style="display:flex; align-items:center; gap:0.45rem; flex-wrap:nowrap;">
+                  <label for="chartExamTypeFilter" style="font-size:0.8rem; font-weight:600; color:var(--text-muted); white-space:nowrap;"><i class="fa-solid fa-filter"></i> Sınav:</label>
+                  <select id="chartExamTypeFilter" onchange="app.renderCharts()" style="padding:0.35rem 0.5rem; font-size:0.8rem; font-weight:700; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-card); color:var(--text-main);">
+                    <option value="all">Tümü (TYT + AYT)</option>
+                    <option value="TYT">Sadece TYT</option>
+                    <option value="AYT">Sadece AYT</option>
                   </select>
-                  <label style="font-size:0.8rem; font-weight:600; color:var(--text-muted); margin-left:0.75rem;"><i class="fa-solid fa-calendar-week"></i> Dönem:</label>
-                  <select id="chartRangeFilter" onchange="app.renderCharts()" style="padding:0.35rem 0.5rem; font-size:0.8rem; font-weight:700; border-radius:4px; border:1px solid var(--border-color);">
+                </div>
+                <div style="display:flex; align-items:center; gap:0.45rem; flex-wrap:nowrap;">
+                  <label for="chartRangeFilter" style="font-size:0.8rem; font-weight:600; color:var(--text-muted); white-space:nowrap;"><i class="fa-solid fa-calendar-week"></i> Dönem:</label>
+                  <select id="chartRangeFilter" onchange="app.renderCharts()" style="padding:0.35rem 0.5rem; font-size:0.8rem; font-weight:700; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-card); color:var(--text-main);">
                     <option value="7">Son 7 Gün</option>
                     <option value="30" selected>Son 30 Gün</option>
                     <option value="all">Tüm Zamanlar</option>
@@ -1373,10 +1378,10 @@
               <!-- Question Grid -->
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:1rem; border-top:1px solid var(--border-color); padding-top:1.5rem; margin-top:1rem;">
                 <h3 style="margin: 0;"><i class="fa-solid fa-images"></i> Aktif Hata Takibi (Programa Eklenen Konular)</h3>
-                <div style="display:flex; align-items:center; gap:0.5rem;">
-                  <label style="font-size:0.8rem; font-weight:600; color:var(--text-muted);"><i class="fa-solid fa-filter"></i> Sınav Filtresi:</label>
-                  <select id="vaultExamTypeFilter" onchange="app.renderVault()" style="padding:0.35rem 0.5rem; font-size:0.8rem; font-weight:700; border-radius:4px; border:1px solid var(--border-color);">
-                    <option value="all">Tümü (TYT & AYT)</option>
+                <div style="display:flex; align-items:center; gap:0.45rem; flex-wrap:nowrap;">
+                  <label for="vaultExamTypeFilter" style="font-size:0.8rem; font-weight:600; color:var(--text-muted); white-space:nowrap;"><i class="fa-solid fa-filter"></i> Sınav:</label>
+                  <select id="vaultExamTypeFilter" onchange="app.renderVault()" style="padding:0.35rem 0.5rem; font-size:0.8rem; font-weight:700; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-card); color:var(--text-main);">
+                    <option value="all">Tümü (TYT + AYT)</option>
                     <option value="TYT">Sadece TYT</option>
                     <option value="AYT">Sadece AYT</option>
                   </select>
