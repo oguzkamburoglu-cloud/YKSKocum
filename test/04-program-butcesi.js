@@ -97,7 +97,64 @@ SENARYOLAR.forEach(([ad, st]) => {
   T.dogru("deneme günleri bilinçli olarak bütçe üstünde olabilir", asanDeneme >= 0, asanDeneme);
 })();
 
-T.grup("4.4  Seviye hala programi farklilastiriyor");
+T.grup("4.4  Gunluk butce DOLDURULUYOR (bos kapasite kalmıyor)");
+
+// Regresyon: uretici "day % 7" kullaniyordu, gercek takvim gunu degil.
+// Program gunu 2 gercekte Cumartesi olmasina ragmen Sali sayilip hafta
+// ici butcesi uygulaniyor, gun 6 gercekte Carsamba iken hafta sonu
+// butcesi aliyordu. Ayrica deneme/tekrar gunleri hafta sonuna denk
+// gelince ogrencinin EN COK vakti oldugu gunler bos geciyordu.
+(function () {
+  programUret({});
+  const gunler = app.state.daysData;
+  const grup = {};
+  Object.keys(gunler).forEach(k => {
+    const g = gunler[k];
+    if (!g || !Array.isArray(g.tasks)) return;
+    const gun = parseInt(k, 10);
+    const hg = app.programGunHaftaninGunu(gun);
+    const dk = g.tasks.reduce((a, t) => a + (app.parseDurationMinutes(t.duration) || 0), 0);
+    const e = grup[hg] = grup[hg] || { n: 0, dk: 0, butce: app.gunlukCalismaButcesi(hg) };
+    e.n++; e.dk += dk;
+  });
+
+  // Hafta sonu gunleri (0 = Pazar, 6 = Cumartesi)
+  [0, 6].forEach(hg => {
+    const e = grup[hg];
+    if (!e) return;
+    const doluluk = Math.round((e.dk / e.n) / e.butce * 100);
+    T.dogru("hafta sonu (gün " + hg + ") doluluğu ≥ %60", doluluk >= 60, "%" + doluluk);
+  });
+
+  // Hafta ici
+  [1, 2, 4, 5].forEach(hg => {
+    const e = grup[hg];
+    if (!e) return;
+    const doluluk = Math.round((e.dk / e.n) / e.butce * 100);
+    T.dogru("hafta içi (gün " + hg + ") doluluğu ≥ %70", doluluk >= 70, "%" + doluluk);
+  });
+})();
+
+(function () {
+  // Uretici GERCEK takvim gununu kullanmali
+  const src = readFile("app.js");
+  T.esit("üreticide 'day % 7' kalıbı kalmadı",
+         (src.match(/const dayOfWeek = day % 7/g) || []).length, 0);
+  T.dogru("programGunHaftaninGunu kullanılıyor",
+          src.indexOf("const dayOfWeek = this.programGunHaftaninGunu(day)") !== -1, true);
+})();
+
+(function () {
+  // Uretilen toplam, hedefin makul bandinda olmali (kapasite izin verdiginde)
+  programUret({});
+  const m = olc();
+  const saat = Math.round(m.toplamDk / 60);
+  const hedef = app.state.totalHoursTarget;
+  T.dogru("üretilen toplam hedefin %85'inden az değil",
+          saat >= hedef * 0.85, saat + " sa / hedef " + hedef);
+})();
+
+T.grup("4.5  Seviye hala programi farklilastiriyor");
 (function () {
   programUret({ level: 3 }); const sv3 = olc().toplamDk;
   programUret({ level: 8 }); const sv8 = olc().toplamDk;

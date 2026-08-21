@@ -52,6 +52,9 @@ testleri yanlışlıkla "uygulama hatası" gibi görünür.
 | 4 | Günde 24 saati aşan toplam sessizce kabul ediliyordu | `submitTestScore` uyarısı |
 | 6 | **Taslak sürükle-bırak mobilde hiç çalışmıyordu** (HTML5 `drag` olayları dokunmatikte tetiklenmez) — uygulama telefona kurulan bir PWA | `bindTaslakSurukle` → Pointer Events |
 | 7 | Gün içinde **aşağı** taşıma sessizce hiçbir şey yapmıyordu (`taslakTasi` "hedefin önüne bırak" mantığı) | `taslakGorevKaydir` → doğrudan yer değiştirme |
+| 8 | **Üretici `day % 7` kullanıyordu, gerçek takvim günü değil** — program günü 2 gerçekte Cumartesi iken Salı sayılıp hafta içi bütçesi uygulanıyordu | `programGunHaftaninGunu` |
+| 9 | Hafta sonu (en yüksek kapasiteli günler) boş geçiyordu: Cmt %36, Paz %50 doluluk | `ekPratikEkle` |
+| 10 | Ölçekleme en yakın 5'e yuvarlayıp bütçeyi birkaç dakika aşıyordu (245/240) | aşağı yuvarlama + artık düzeltmesi |
 | 5 | **Program üreticisi günlük bütçeyi hiç sormuyordu**: okula giden, "4 saat" diyen öğrenciye günde 11.1 saat üretiliyor, 302 günün 172'si taşıyor, uygulama açılır açılmaz "saatlere sığmıyor" uyarısı veriyordu | `gunlukCalismaButcesi` + `gunuButceyeSigdir` |
 
 Toplam **117 test** (jsc) + **23 test** (Jest portu). Hepsi geçiyor.

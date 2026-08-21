@@ -4236,6 +4236,54 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     paragraphPool = sortByTeachingOrder(paragraphPool);
     mathDrillPool = sortByTeachingOrder(mathDrillPool);
 
+    // ============================================================
+    // BUTCE BOSLUGUNU DOLDUR
+    // ------------------------------------------------------------
+    // Deneme ve tekrar gunleri hafta sonuna denk geliyor — yani
+    // ogrencinin EN COK vakti oldugu gunler en hafif isle geciyordu:
+    // Cumartesi 6 saatlik butcenin %36'si, Pazar %50'si. Bos kalan
+    // sureye mufredat sirasindan ek pratik bloklari eklenir.
+    // Deneme gorevinin KENDISI uzatilmaz: gercek bir TYT denemesi
+    // 165 dakikadir ve o sure sabittir.
+    // ============================================================
+    const ekPratikEkle = (gorevler, dayOfWeek, dayNum) => {
+      const butce = this.gunlukCalismaButcesi(dayOfWeek);
+      const sure = (t) => this.parseDurationMinutes(t.duration) || 0;
+      let toplam = gorevler.reduce((a, t) => a + sure(t), 0);
+
+      // Hafta sonunda kapasite daha genis oldugu icin daha cok blok
+      // eklenebilir. Ust sinir olmadan gun 8-9 goreve cikip okunmaz
+      // hale geliyor.
+      const haftaSonu = (dayOfWeek === 0 || dayOfWeek === 6);
+      const BLOK = 45, EN_AZ_BOSLUK = 50, EN_COK_EK = haftaSonu ? 5 : 3;
+      const havuzlar = [mathDrillPool, paragraphPool].filter(h => h && h.length);
+      if (!havuzlar.length) return gorevler;
+
+      let eklenen = 0;
+      while ((butce - toplam) >= EN_AZ_BOSLUK && eklenen < EN_COK_EK) {
+        const havuz = havuzlar[eklenen % havuzlar.length];
+        const konu = pickCycle(havuz, dayNum + eklenen * 3);
+        const ders = konu.subject || "Matematik";
+        gorevler.push({
+          id: `task_${dayNum}_ek_${eklenen}`,
+          type: "quiz",
+          subject: ders,
+          topic: konu.name,
+          label: `[TYT] 🎯 ${ders}: Ek Pratik`,
+          desc: `"${konu.name}" konusundan 25 soru çöz.`,
+          duration: `${BLOK} dk`,
+          qCount: 25,
+          completed: false, logged: false,
+          correct: 0, incorrect: 0, timeSpent: 0, errorTopics: [],
+          examType: "TYT",
+          sourceSubject: ders
+        });
+        toplam += BLOK;
+        eklenen++;
+      }
+      return gorevler;
+    };
+
     this.state.daysData = {};
 
     let subjects = [];
@@ -4336,7 +4384,12 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
 
     for (let day = 1; day <= this.PROGRAM_DAYS; day++) {
       const dailyTasks = [];
-      const dayOfWeek = day % 7;
+      // GERCEK takvim gunu. Eskiden "day % 7" kullaniliyordu: program
+      // gunu 2 gercekte Cumartesi olmasina ragmen uretici Sali saniyor,
+      // gun 6 gercekte Carsamba iken hafta sonu butcesi (6 saat)
+      // uygulaniyordu. Hem gunluk butce hem haftalik deneme/tekrar gunu
+      // yanlis gune dusuyordu.
+      const dayOfWeek = this.programGunHaftaninGunu(day);
 
       if (day >= sonFazBaslangic) {
         const tekrarGunu = (day - sonFazBaslangic) % 5 === 4;   // 5 günde 1 → %20
@@ -4430,6 +4483,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
           completed: false,
           examType: "Genel"
         });
+        ekPratikEkle(dailyTasks, dayOfWeek, day);
         this.gunuButceyeSigdir(dailyTasks, dayOfWeek, 2);
         this.sourceBooks.attachAll(dailyTasks);
         this.state.daysData[day] = { completed: false, isMockDay: true, tasks: dailyTasks, schedule: this.buildDaySchedule(dailyTasks, dayOfWeek) };
@@ -4474,6 +4528,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
         });
         appendDailyRoutines(dailyTasks, day);
         this.sourceBooks.attachAll(dailyTasks);
+        ekPratikEkle(dailyTasks, dayOfWeek, day);
         this.gunuButceyeSigdir(dailyTasks, dayOfWeek, 3);
         this.state.daysData[day] = { completed: false, tasks: dailyTasks, schedule: this.buildDaySchedule(dailyTasks, dayOfWeek) };
         continue;
@@ -4696,6 +4751,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       appendDailyRoutines(dailyTasks, day);
 
       // Her göreve "hangi yayınevinin hangi kitabı" bilgisini iliştir.
+      ekPratikEkle(dailyTasks, dayOfWeek, day);
       this.gunuButceyeSigdir(dailyTasks, dayOfWeek, 3);
       this.sourceBooks.attachAll(dailyTasks);
 
@@ -4809,6 +4865,16 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       toplam -= sure(cikan);
     }
 
+    // 1b) Tercih edilen taban korunmasina ragmen kucultme tek basina
+    //     yetmiyorsa SERT TABANA kadar bir gorev daha cikarilir.
+    //     Aksi halde gun beyan edilen kapasiteyi asik kalir: seviye 8'de
+    //     3 gorev 490 dk tutuyor, %60 tabanina vurunca 295 dk'da
+    //     kaliyor ve 240 dk'lik butceyi asiyordu.
+    const SERT_TABAN = 2;
+    while (gorevler.length > SERT_TABAN && (butce / topla()) < EN_AZ_OLCEK) {
+      gorevler.pop();
+    }
+
     // 2) Kalan tasmayi ORANTILI kucultmeyle kapat. Sure ile birlikte SORU
     //    SAYISI da duser; yoksa "30 soru / 12 dk" gibi uygulanamaz
     //    gorevler olusur.
@@ -4818,7 +4884,9 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       gorevler.forEach(t => {
         const eskiDk = sure(t);
         if (!eskiDk) return;
-        const yeniDk = Math.max(20, Math.round((eskiDk * olcek) / 5) * 5);
+        // ASAGI yuvarla. En yakina yuvarlamak toplami butcenin birkac
+        // dakika ustune tasiriyordu (5 gorev x yukari yuvarlama = 245/240).
+        const yeniDk = Math.max(20, Math.floor((eskiDk * olcek) / 5) * 5);
         t.duration = yeniDk + " dk";
         if (typeof t.qCount === "number" && t.qCount > 0) {
           const yeniSoru = Math.max(5, Math.round(t.qCount * (yeniDk / eskiDk)));
@@ -4826,6 +4894,19 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
           if (t.desc) t.desc = String(t.desc).replace(/\d+\s*(adet\s*)?soru/, yeniSoru + " soru");
         }
       });
+    }
+
+    // 3) Yuvarlama artigi: hala birkac dakika tasiyorsa son gorevden kis.
+    //    20 dk tabaninin altina inilmez.
+    let guvenlik = 0;
+    while (topla() > butce && guvenlik++ < 40) {
+      const son = gorevler[gorevler.length - 1];
+      const dk = sure(son);
+      if (!son || dk <= 20) break;
+      son.duration = Math.max(20, dk - 5) + " dk";
+      if (typeof son.qCount === "number" && son.qCount > 5) {
+        son.qCount = Math.max(5, Math.round(son.qCount * ((dk - 5) / dk)));
+      }
     }
     return gorevler;
   },
