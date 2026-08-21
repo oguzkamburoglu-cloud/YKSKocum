@@ -265,8 +265,7 @@ const app = {
   PAKETLER: [
     {
       id: "baslangic", ad: "Başlangıç", fiyat: 299, birim: "₺/ay",
-      // Yillik: 12 ay yerine 10 ay odenir (2 ay hediye, ~%17 indirim)
-      yillikFiyat: 2990,
+      yillikFiyat: 1999,
       ozet: "Sadece program oluşturma.",
       ozellikler: [
         "Sınava kalan güne göre kişisel program",
@@ -276,7 +275,7 @@ const app = {
     },
     {
       id: "standart", ad: "Standart", fiyat: 499, birim: "₺/ay", vurgu: "En çok tercih edilen",
-      yillikFiyat: 4990,
+      yillikFiyat: 2999,
       ozet: "Takip et, hatalarını kapat.",
       ozellikler: [
         "Başlangıç'taki her şey",
@@ -289,7 +288,7 @@ const app = {
     },
     {
       id: "pro", ad: "Pro", fiyat: 799, birim: "₺/ay",
-      yillikFiyat: 7990,
+      yillikFiyat: 3999,
       ozet: "Yapay zekâ desteğiyle tam donanım.",
       ozellikler: [
         "Standart'taki her şey",
@@ -382,39 +381,105 @@ const app = {
   // Paket KIMLIGI degismez (baslangic/standart/pro), yalnizca odeme
   // donemi degisir; kisitlama haritasi aynen calisir.
   // ============================================================
-  HEDIYE_AY: 2,
+  // ============================================================
+  // "SINAVA KADAR" PLANI
+  // ------------------------------------------------------------
+  // Urun yillik degil, SINAVA KADAR satiliyor. Sure sabit degil:
+  // Eylul'de alan ~10 ay, Mart'ta alan ~3 ay kullanir.
+  //
+  // Fiyat SABIT olsaydi gec alan zarar ederdi: 1999 ₺ sabit fiyatla
+  // Ocak'tan sonra alan herkes aylik odemeden PAHALIYA duserdi
+  // (Mart'ta 803 ₺ fazla). Bu yuzden fiyat kalan sureye gore
+  // olceklenir ve her zaman aylik toplamin altinda kalir.
+  //
+  // TAM_SEZON_AY: tam sezon referansi (Eylul -> Haziran).
+  // SINAVA_KADAR_TAM: tam sezonda odenecek tutar (musteri belirledi).
+  // ============================================================
+  TAM_SEZON_AY: 10,
+  SINAVA_KADAR_TAM: { baslangic: 1999, standart: 2999, pro: 3999 },
+
+  // Sinava kalan tam ay sayisi (en az 1).
+  sinavaKalanAy: function() {
+    try {
+      const gun = Math.ceil((this.getExamDate() - new Date()) / 86400000);
+      return Math.max(1, Math.ceil(gun / 30));
+    } catch (e) { return this.TAM_SEZON_AY; }
+  },
+
+  // Yukari yuvarlama: buyuk tutarlar x999, kucukler x99.
+  fiyatYuvarla: function(tutar) {
+    if (tutar >= 1000) {
+      let y = Math.floor(tutar / 1000) * 1000 + 999;
+      return y < tutar ? y + 1000 : y;
+    }
+    let y = Math.floor(tutar / 100) * 100 + 99;
+    return y < tutar ? y + 100 : y;
+  },
+
+  // ASAGI yuvarlama, YUZLUK izgara (…799, 899, 999, 1099, 1199…).
+  // Binlik izgara kullanildiginda 1.799 ₺ hedefi 999 ₺'ye dusuyordu —
+  // bir anda 800 ₺ birakiyorduk. Yukari yuvarlama ise tutari aylik
+  // toplamin ustune cikariyordu. Dogru cozum ince izgara + asagi.
+  fiyatYuvarlaAsagi: function(tutar) {
+    const y = Math.floor(tutar / 100) * 100 + 99;
+    return Math.max(99, y > tutar ? y - 100 : y);
+  },
+
+  // %60 indirim, sonra bir ust x999'a yuvarla.
+  yillikFiyatHesapla: function(aylikFiyat) {
+    const ham = aylikFiyat * 12 * (1 - this.YILLIK_INDIRIM);
+    let yuvarlanmis = Math.floor(ham / 1000) * 1000 + 999;
+    if (yuvarlanmis < ham) yuvarlanmis += 1000;
+    return yuvarlanmis;
+  },
 
   faturaDonemi: function() {
-    return this.state && this.state.faturaDonemi === "yillik" ? "yillik" : "aylik";
+    return this.state && this.state.faturaDonemi === "sinavaKadar" ? "sinavaKadar" : "aylik";
   },
 
   // Bir paketin secili doneme gore fiyat bilgisi
   paketFiyati: function(p) {
-    const aylikToplam = p.fiyat * 12;
-    const yillik = p.yillikFiyat || Math.round(p.fiyat * (12 - this.HEDIYE_AY));
-    const indirim = aylikToplam > 0 ? Math.round((1 - yillik / aylikToplam) * 100) : 0;
-    if (this.faturaDonemi() === "yillik") {
+    const kalanAy = this.sinavaKalanAy();
+    const aylikToplam = p.fiyat * kalanAy;          // sinava kadar aylik odenirse
+
+    const tam = (this.SINAVA_KADAR_TAM || {})[p.id] || this.fiyatYuvarla(p.fiyat * this.TAM_SEZON_AY * 0.4);
+    // Kalan sure kisaldikca fiyat da kisalir; tam sezonu asamaz.
+    const oran = Math.min(1, kalanAy / this.TAM_SEZON_AY);
+    // GUVENLIK: tek seferlik odeme HER ZAMAN aylik toplamin altinda
+    // kalmali. Aksi halde gec alan ogrenci zarar eder ve "indirim"
+    // iddiasi yalan olur. En az %25 avantaj garanti edilir.
+    const tavan = aylikToplam * 0.75;
+    const hedef = Math.min(tam * oran, tavan);
+    let tutar = this.fiyatYuvarlaAsagi(hedef);
+    // Sinava az kala tek seferlik ucret bir aylik ucretin ALTINA
+    // inebilir; satilan sey iki haftalik erisim. Taban 99 ₺.
+    if (tutar > tavan) tutar = this.fiyatYuvarlaAsagi(tavan);
+
+    const indirim = aylikToplam > 0 ? Math.round((1 - tutar / aylikToplam) * 100) : 0;
+
+    if (this.faturaDonemi() === "sinavaKadar") {
       return {
-        donem: "yillik",
-        tutar: yillik,
-        birim: "₺/yıl",
-        aylikKarsilik: Math.round(yillik / 12),
+        donem: "sinavaKadar",
+        tutar: tutar,
+        birim: "₺",
+        kalanAy: kalanAy,
+        aylikKarsilik: Math.round(tutar / kalanAy),
         indirimYuzde: indirim,
-        tasarruf: aylikToplam - yillik,
+        tasarruf: aylikToplam - tutar,
         aylikToplam: aylikToplam
       };
     }
-    return { donem: "aylik", tutar: p.fiyat, birim: p.birim, indirimYuzde: indirim };
+    return { donem: "aylik", tutar: p.fiyat, birim: p.birim, indirimYuzde: indirim, kalanAy: kalanAy };
   },
 
   // "standart_yillik" -> "standart". Kisitlama haritasi paket
   // KIMLIGINE bakar; fatura donemi ayri tutulur.
   paketKimligi: function(plan) {
-    return String(plan || "").replace(/_(yillik|aylik)$/, "");
+    return String(plan || "").replace(/_(sinavaKadar|yillik|aylik)$/, "");
   },
 
   faturaDonemiSec: function(donem) {
-    this.state.faturaDonemi = donem === "yillik" ? "yillik" : "aylik";
+    this.state.faturaDonemi = donem === "sinavaKadar" ? "sinavaKadar" : "aylik";
     this.saveState();
     this.showPaketler();
   },
@@ -1148,51 +1213,57 @@ const app = {
     const kutu = document.getElementById("paketIcerik");
     if (!kutu) return;
 
-    const yillik = this.faturaDonemi() === "yillik";
-    // Ornek indirim orani (paketler arasi ayni): kullaniciya bir kez soylenir.
-    const ornek = this.paketFiyati(this.PAKETLER[0]);
+    const sinavaKadar = this.faturaDonemi() === "sinavaKadar";
+    const kalanAy = this.sinavaKalanAy();
+
+    // Yuvarlama yuzunden her paketin indirim orani farkli cikar;
+    // ustte "en yuksek", kartlarda her paketin kendi orani gosterilir.
+    const eskiDonem = this.state.faturaDonemi;
+    this.state.faturaDonemi = "sinavaKadar";
+    const enYuksek = Math.max.apply(null, this.PAKETLER.map(p => this.paketFiyati(p).indirimYuzde));
+    this.state.faturaDonemi = eskiDonem;
 
     const secici = `
       <div style="flex:1 1 100%; display:flex; justify-content:center; margin-bottom:0.35rem;">
-        <div role="tablist" aria-label="Fatura dönemi"
+        <div role="tablist" aria-label="Ödeme planı"
              style="display:inline-flex; background:var(--bg-sub); border:1px solid var(--border-color);
                     border-radius:999px; padding:0.25rem; gap:0.25rem;">
-          <button role="tab" aria-selected="${!yillik}" onclick="app.faturaDonemiSec('aylik')"
+          <button role="tab" aria-selected="${!sinavaKadar}" onclick="app.faturaDonemiSec('aylik')"
                   style="border:none; cursor:pointer; border-radius:999px; padding:0.4rem 1rem;
                          font-family:var(--font-header); font-weight:800; font-size:0.8rem;
-                         background:${!yillik ? "var(--primary)" : "transparent"};
-                         color:${!yillik ? "#fff" : "var(--text-muted)"};">Aylık</button>
-          <button role="tab" aria-selected="${yillik}" onclick="app.faturaDonemiSec('yillik')"
+                         background:${!sinavaKadar ? "var(--primary)" : "transparent"};
+                         color:${!sinavaKadar ? "#fff" : "var(--text-muted)"};">Aylık</button>
+          <button role="tab" aria-selected="${sinavaKadar}" onclick="app.faturaDonemiSec('sinavaKadar')"
                   style="border:none; cursor:pointer; border-radius:999px; padding:0.4rem 1rem;
                          font-family:var(--font-header); font-weight:800; font-size:0.8rem;
                          display:inline-flex; align-items:center; gap:0.4rem;
-                         background:${yillik ? "var(--primary)" : "transparent"};
-                         color:${yillik ? "#fff" : "var(--text-muted)"};">
-            Yıllık
+                         background:${sinavaKadar ? "var(--primary)" : "transparent"};
+                         color:${sinavaKadar ? "#fff" : "var(--text-muted)"};">
+            Sınava Kadar
             <span style="font-size:0.66rem; font-weight:800; padding:0.1rem 0.4rem; border-radius:999px;
-                         background:${yillik ? "rgba(255,255,255,.22)" : "var(--success, #10b981)"};
-                         color:#fff;">${this.HEDIYE_AY} ay hediye</span>
+                         background:${sinavaKadar ? "rgba(255,255,255,.22)" : "var(--success, #10b981)"};
+                         color:#fff;">%${enYuksek}'e varan indirim</span>
           </button>
         </div>
       </div>
       <p style="flex:1 1 100%; text-align:center; font-size:0.74rem; color:var(--text-muted); margin:0 0 0.6rem;">
-        ${yillik
-          ? `Yıllık planda <strong>${this.HEDIYE_AY} ay hediye</strong> — 12 ay yerine ${12 - this.HEDIYE_AY} ay ödersin (%${ornek.indirimYuzde} indirim).`
-          : `Yıllık ödemede <strong>${this.HEDIYE_AY} ay hediye</strong> (%${ornek.indirimYuzde} indirim). Yıllık sekmesine geç.`}
+        ${sinavaKadar
+          ? `Tek seferde öde, <strong>sınav gününe kadar</strong> kullan — yaklaşık <strong>${kalanAy} ay</strong>. Fiyat kalan süreye göre hesaplanır.`
+          : `Sınava kadar tek seferde ödersen <strong>%${enYuksek}'e varan indirim</strong> kazanırsın.`}
       </p>`;
 
     const kartlar = this.PAKETLER.map(p => {
       const f = this.paketFiyati(p);
-      const planId = yillik ? p.id + "_yillik" : p.id;
-      const fiyatBlogu = yillik
+      const planId = sinavaKadar ? p.id + "_sinavaKadar" : p.id;
+      const fiyatBlogu = sinavaKadar
         ? `<div style="margin-bottom:.8rem;">
              <div style="font-size:.74rem; color:var(--text-muted); text-decoration:line-through; font-variant-numeric:tabular-nums;">
                ${f.aylikToplam.toLocaleString("tr-TR")} ₺</div>
              <div style="font-size:1.55rem; font-weight:900; color:var(--primary); font-variant-numeric:tabular-nums;">
-               ${f.tutar.toLocaleString("tr-TR")}<span style="font-size:.78rem; font-weight:700; color:var(--text-muted);"> ${f.birim}</span></div>
+               ${f.tutar.toLocaleString("tr-TR")}<span style="font-size:.74rem; font-weight:700; color:var(--text-muted);"> ₺ · sınava kadar</span></div>
              <div style="font-size:.72rem; color:var(--text-muted); font-variant-numeric:tabular-nums;">
                ayda ${f.aylikKarsilik.toLocaleString("tr-TR")} ₺ ·
-               <span style="color:var(--success,#10b981); font-weight:800;">${f.tasarruf.toLocaleString("tr-TR")} ₺ tasarruf</span></div>
+               <span style="color:var(--success,#10b981); font-weight:800;">%${f.indirimYuzde} indirim · ${f.tasarruf.toLocaleString("tr-TR")} ₺ tasarruf</span></div>
            </div>`
         : `<div style="font-size:1.55rem; font-weight:900; color:var(--primary); font-variant-numeric:tabular-nums; margin-bottom:.8rem;">
              ${f.tutar}<span style="font-size:.78rem; font-weight:700; color:var(--text-muted);"> ${f.birim}</span></div>`;
@@ -1231,24 +1302,24 @@ const app = {
     // Odeme saglayicisi henuz bagli degil. Secimi kaydedip sahte bir
     // "PRO oldunuz" durumu yaratmak yaniltici olur; durum acikca soylenir.
     const kimlik = this.paketKimligi(plan);
-    const yillikMi = /_yillik$/.test(String(plan));
+    const sinavaKadarMi = /_sinavaKadar$/.test(String(plan));
     const paket = (this.PAKETLER || []).filter(x => x.id === kimlik)[0];
     const bilgi = this.paketBilgisi(kimlik);
 
     let fiyatMetni = "";
     if (paket) {
       const eskiDonem = this.state.faturaDonemi;
-      this.state.faturaDonemi = yillikMi ? "yillik" : "aylik";
+      this.state.faturaDonemi = sinavaKadarMi ? "sinavaKadar" : "aylik";
       const f = this.paketFiyati(paket);
       this.state.faturaDonemi = eskiDonem;
-      fiyatMetni = yillikMi
-        ? ` — <strong>${f.tutar.toLocaleString("tr-TR")} ${f.birim}</strong> ` +
-          `(ayda ${f.aylikKarsilik.toLocaleString("tr-TR")} ₺, ${this.HEDIYE_AY} ay hediye)`
+      fiyatMetni = sinavaKadarMi
+        ? ` — <strong>${f.tutar.toLocaleString("tr-TR")} ₺ · sınava kadar</strong> ` +
+          `(~${f.kalanAy} ay, ayda ${f.aylikKarsilik.toLocaleString("tr-TR")} ₺, %${f.indirimYuzde} indirim)`
         : ` — <strong>${f.tutar} ${f.birim}</strong>`;
     }
 
     this.showCoachAlert("💳 Ödeme altyapısı henüz bağlı değil",
-      `<strong>${bilgi.ad}</strong> paketini ${yillikMi ? "yıllık" : "aylık"} olarak seçtin${fiyatMetni}. ` +
+      `<strong>${bilgi.ad}</strong> paketini ${sinavaKadarMi ? "sınava kadar" : "aylık"} olarak seçtin${fiyatMetni}. ` +
       `Ödeme alabilmek için bir ödeme sağlayıcısının (iyzico, PayTR vb.) sunucuya bağlanması gerekiyor — ` +
       `bu henüz yapılmadı, dolayısıyla şu an ücret tahsil edilemiyor.<br><br>` +
       `Bu arada <strong>${this.DENEME_GUN} günlük ücretsiz denemeyi</strong> başlatarak tüm özellikleri kullanabilirsin.`);
@@ -16718,7 +16789,11 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
 
   calculateStreak: function() {
     let streakCount = 0;
-    let currentDay = this.state.activeDay;
+    // BUGUNDEN geriye sayilir. Eskiden state.activeDay kullaniliyordu;
+    // o, ogrencinin BAKTIGI gundur. Ayni veriyle 3. gune bakinca seri 3,
+    // 1. gune bakinca 1, 50. gune bakinca 0 cikiyordu. Istikrar serisi
+    // hangi ekrana bakildigina gore degismemeli.
+    let currentDay = this.bugunkuProgramGunu();
 
     const todayCompleted = this.state.daysData && this.state.daysData[currentDay] && this.state.daysData[currentDay].completed;
     if (todayCompleted) {

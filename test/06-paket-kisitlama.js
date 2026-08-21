@@ -178,61 +178,114 @@ T.grup("6.6  Paket tanimlari ile kisitlama tutarli");
 })();
 
 // ────────────────────────────────────────────────────────────
-T.grup("6.7  Yillik plan ve indirim");
+T.grup("6.7  'Sinava kadar' plani ve indirim");
+
+function sinavaKalan(gun) {
+  app.getExamDate = function () { const d = new Date(); d.setDate(d.getDate() + gun); return d; };
+}
+const GERCEK_SINAV = app.getExamDate;
 
 (function () {
   paket("pending");
   app.state.faturaDonemi = "aylik";
   const p = app.PAKETLER.filter(x => x.id === "standart")[0];
-
-  const a = app.paketFiyati(p);
-  T.esit("aylık tutar", a.tutar, 499);
-  T.esit("aylık birim", a.birim, "₺/ay");
-
-  app.state.faturaDonemi = "yillik";
-  const y = app.paketFiyati(p);
-  T.esit("yıllık tutar", y.tutar, 4990);
-  T.esit("yıllık birim", y.birim, "₺/yıl");
-  T.esit("12 ay peşin tutarı", y.aylikToplam, 5988);
-  T.esit("tasarruf = 2 aylık ücret", y.tasarruf, 499 * 2);
-  T.esit("aylık karşılığı", y.aylikKarsilik, Math.round(4990 / 12));
-  T.dogru("indirim oranı %15-20 arasında", y.indirimYuzde >= 15 && y.indirimYuzde <= 20, y.indirimYuzde);
+  T.esit("aylık tutar", app.paketFiyati(p).tutar, 499);
+  T.esit("aylık birim", app.paketFiyati(p).birim, "₺/ay");
 })();
 
 (function () {
-  // Her pakette yillik fiyat = 10 aylik ucret olmali
-  app.state.faturaDonemi = "yillik";
-  app.PAKETLER.forEach(p => {
-    const f = app.paketFiyati(p);
-    T.esit("'" + p.ad + "' yıllık = " + (12 - app.HEDIYE_AY) + " aylık ücret",
-           f.tutar, p.fiyat * (12 - app.HEDIYE_AY));
-    T.dogru("'" + p.ad + "' yıllık, 12 ay peşinden ucuz", f.tutar < p.fiyat * 12, f.tutar);
+  // TAM SEZON: musterinin belirledigi fiyatlar
+  paket("pending");
+  app.state.faturaDonemi = "sinavaKadar";
+  sinavaKalan(300);   // ~10 ay
+  const beklenen = { baslangic: 1999, standart: 2999, pro: 3999 };
+  Object.keys(beklenen).forEach(id => {
+    const p = app.PAKETLER.filter(x => x.id === id)[0];
+    T.esit("'" + p.ad + "' tam sezon fiyatı", app.paketFiyati(p).tutar, beklenen[id]);
   });
+  app.getExamDate = GERCEK_SINAV;
 })();
 
 (function () {
-  // Yillik plan kimligi kisitlamayi BOZMAMALI
-  T.esit("'standart_yillik' -> 'standart'", app.paketKimligi("standart_yillik"), "standart");
-  T.esit("'pro_yillik' -> 'pro'", app.paketKimligi("pro_yillik"), "pro");
+  // EN KRITIK KURAL: tek seferlik odeme HICBIR ZAMAN aylik toplamdan
+  // pahali olmamali. Sabit fiyatla Ocak'tan sonra alan zarar ediyordu.
+  paket("pending");
+  app.state.faturaDonemi = "sinavaKadar";
+  const pahali = [], azIndirim = [];
+  [330, 300, 260, 230, 200, 170, 140, 110, 80, 50, 30, 14, 3, 1].forEach(gun => {
+    sinavaKalan(gun);
+    app.PAKETLER.forEach(p => {
+      const f = app.paketFiyati(p);
+      if (f.tutar >= f.aylikToplam) pahali.push(gun + "g " + p.ad + ": " + f.tutar + ">=" + f.aylikToplam);
+      if (f.indirimYuzde < 20) azIndirim.push(gun + "g " + p.ad + ": %" + f.indirimYuzde);
+    });
+  });
+  app.getExamDate = GERCEK_SINAV;
+  T.esit("hiçbir tarihte aylıktan pahalı değil", pahali.length, 0);
+  if (pahali.length) print("      " + pahali.slice(0, 3).join(" | "));
+  T.esit("her tarihte en az %20 indirim", azIndirim.length, 0);
+  if (azIndirim.length) print("      " + azIndirim.slice(0, 3).join(" | "));
+})();
+
+(function () {
+  // Fiyat kalan sureyle ORANTILI kisalmali
+  paket("pending");
+  app.state.faturaDonemi = "sinavaKadar";
+  const p = app.PAKETLER.filter(x => x.id === "pro")[0];
+  sinavaKalan(300); const uzun = app.paketFiyati(p).tutar;
+  sinavaKalan(110); const orta = app.paketFiyati(p).tutar;
+  sinavaKalan(50);  const kisa = app.paketFiyati(p).tutar;
+  app.getExamDate = GERCEK_SINAV;
+  T.dogru("süre kısaldıkça fiyat düşüyor", uzun > orta && orta > kisa, uzun + ">" + orta + ">" + kisa);
+})();
+
+(function () {
+  // Yuvarlama: tum fiyatlar x99 ile bitmeli
+  paket("pending");
+  app.state.faturaDonemi = "sinavaKadar";
+  const bozuk = [];
+  [300, 200, 110, 50, 14].forEach(gun => {
+    sinavaKalan(gun);
+    app.PAKETLER.forEach(p => {
+      const t = app.paketFiyati(p).tutar;
+      if (t % 100 !== 99) bozuk.push(gun + "g " + p.ad + ": " + t);
+    });
+  });
+  app.getExamDate = GERCEK_SINAV;
+  T.esit("tüm fiyatlar 99 ile bitiyor", bozuk.length, 0);
+  if (bozuk.length) print("      " + bozuk.slice(0, 3).join(" | "));
+})();
+
+(function () {
+  // Plan kimligi kisitlamayi BOZMAMALI
+  T.esit("'standart_sinavaKadar' -> 'standart'", app.paketKimligi("standart_sinavaKadar"), "standart");
+  T.esit("'pro_sinavaKadar' -> 'pro'", app.paketKimligi("pro_sinavaKadar"), "pro");
   T.esit("son ek yoksa aynen döner", app.paketKimligi("baslangic"), "baslangic");
 
-  paket("standart_yillik");
-  T.dogru("yıllık Standart, analiz özelliğini açıyor", app.ozellikAcikMi("analiz"), true);
-  T.dogru("yıllık Standart, sesli girişi açmıyor", !app.ozellikAcikMi("sesliGiris"), true);
-  T.dogru("yıllık Standart salt okunur değil", !app.saltOkunurMu(), true);
-
-  paket("pro_yillik");
-  T.dogru("yıllık Pro tüm özellikleri açıyor",
+  paket("standart_sinavaKadar");
+  T.dogru("sınava kadar Standart, analizi açıyor", app.ozellikAcikMi("analiz"), true);
+  T.dogru("sınava kadar Standart, sesli girişi açmıyor", !app.ozellikAcikMi("sesliGiris"), true);
+  paket("pro_sinavaKadar");
+  T.dogru("sınava kadar Pro tüm özellikleri açıyor",
           TUM_OZELLIKLER.every(o => app.ozellikAcikMi(o)), true);
 })();
 
 (function () {
-  // Varsayilan donem aylik olmali
   paket("pending");
   delete app.state.faturaDonemi;
   T.esit("dönem belirtilmemişse aylık", app.faturaDonemi(), "aylik");
   app.state.faturaDonemi = "saçma";
   T.esit("geçersiz dönem aylığa düşer", app.faturaDonemi(), "aylik");
+  app.state.faturaDonemi = "sinavaKadar";
+  T.esit("geçerli dönem korunuyor", app.faturaDonemi(), "sinavaKadar");
+})();
+
+(function () {
+  // Sinav gecmisse kalan ay 1'in altina dusmemeli
+  paket("pending");
+  sinavaKalan(-30);
+  T.dogru("sınav geçmişse kalan ay en az 1", app.sinavaKalanAy() >= 1, app.sinavaKalanAy());
+  app.getExamDate = GERCEK_SINAV;
 })();
 
 T.ozet();
