@@ -1,5 +1,5 @@
 #!/bin/bash
-# DEFNE — yerel baslatici
+# YKSKocum — yerel baslatici
 # Bu dosyaya cift tiklayinca uygulama tarayicida acilir.
 # Kapatmak icin bu Terminal penceresini kapat.
 
@@ -12,7 +12,7 @@ while lsof -i ":$PORT" >/dev/null 2>&1; do
 done
 
 echo ""
-echo "  DEFNE baslatiliyor..."
+echo "  YKSKocum baslatiliyor..."
 echo "  Adres: http://localhost:$PORT"
 echo ""
 echo "  Kapatmak icin: bu pencereyi kapat veya Control-C"
