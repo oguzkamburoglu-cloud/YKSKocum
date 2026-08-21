@@ -298,4 +298,19 @@ T.grup("1.3  Konu yetisme tahmini algoritmasi");
   T.dogru("sınav geçmişse kalan gün negatif değil", t && t.kalanGun >= 0, t && t.kalanGun);
 })();
 
+T.grup("1.X  Kapasite-hedef kiyasi yalnizca AI programinda");
+
+(function () {
+  app.state = { startDate: "2026-08-21", totalHoursTarget: 1700, level: 7,
+    weekdayHours: 4, weekendHours: 6, wakeTime: "08:00", sleepTime: "23:00",
+    isGraduate: false, schoolStatus: "none",
+    selectedProgramType: "custom", uretilenToplamSaat: 1283 };
+  app._programDaysCache = null;
+  T.esit("kendi programinda kiyas gosterilmiyor", app.kapasiteHedefKarsilastir(), null);
+
+  app.state.selectedProgramType = "standard";
+  const k = app.kapasiteHedefKarsilastir();
+  T.dogru("AI programinda kiyas calisiyor", k !== null && typeof k.yeterli === "boolean", true);
+})();
+
 T.ozet();

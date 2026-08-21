@@ -3594,19 +3594,16 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       coachAdvice += `😮 <strong>Hafta Sonu Hedefi Gerçekçi Değil:</strong> Günde ${weekendCapacity} saat çalışmak, ${wakeStr} - ${sleepStr} arasında uyanık kaldığın ${awakeHours.toFixed(1)} saatin neredeyse tamamı demek — yemeğe, dinlenmeye ve sosyal hayata hiç zaman kalmaz. Gerçekçi ve sürdürülebilir bir hedef için hafta sonu çalışmanı en fazla <strong>${Math.floor(weekendCeiling)} saat</strong> civarında tutmalısın; yoksa program otomatik olarak sıkıştırılıp geceye taşabilir.<br><br>`;
     }
 
-    // Kapasite - hedef karsilastirmasi. Ogrenci saatlerini girer girmez
-    // hedefinin bu tempoya sigip sigmadigini gorur; program uretici
-    // sessizce kapasiteye uyup hedefi ulasilmaz birakmasin.
-    const kap = this.kapasiteHedefKarsilastir();
-    if (kap && !kap.yeterli) {
-      const metin = this.kapasiteHedefMetni(kap);
-      if (metin) { isWarning = true; coachAdvice += metin + "<br><br>"; }
-    }
-
+    // NOT: kapasite-hedef karsilastirmasi buradan KALDIRILDI. Bu ekran
+    // uyku/calisma saatlerinin girildigi adim; ortada henuz kabul edilmis
+    // bir program yok. Karsilastirma eski uretimden kalan bayat toplami
+    // okuyup "hazirlanan program X saat iceriyor" diyor, ustune bir de
+    // "program tempona uyuyor" diyerek kendi icinde celisiyordu.
+    // Ayni uyari dogru anlarda zaten gosteriliyor: program onerisini
+    // kabul etmeden hemen once (renderProgramSuggestion) ve program
+    // uretildikten sonra analiz panelinde (kapasiteNotu).
     if (!isWarning) {
       coachAdvice = `💪 <strong>Disiplin Onayı:</strong> Harika uyku düzeni ve dengeli çalışma saatleri! Sahaya çıkmak için zihinsel ve fiziksel olarak hazır görünüyorsun. Bu disiplini süreç boyunca korursan başarı kaçınılmaz!`;
-      const olumlu = kap && kap.yeterli ? this.kapasiteHedefMetni(kap) : "";
-      if (olumlu) coachAdvice += "<br><br>" + olumlu;
     }
 
     const feedbackBox = document.getElementById("coachHabitFeedback");
@@ -15806,6 +15803,11 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
   // ============================================================
   kapasiteHedefKarsilastir: function() {
     try {
+      // Seviye saat hedefi AI programina aittir. Ogrenci kendi programini
+      // (sesli/foto/elle) kullaniyorsa bu kiyas anlamsizdir; ustune bir de
+      // eski AI uretiminden kalan bayat toplami okuyup yaniltici oluyordu.
+      if (this.state.selectedProgramType === "custom") return null;
+
       const gun = this.PROGRAM_DAYS;
       const hedefSaat = this.state.totalHoursTarget;
       if (!gun || !hedefSaat) return null;
