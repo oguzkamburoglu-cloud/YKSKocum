@@ -1524,6 +1524,22 @@
 
   <!-- MODAL 0.5: WEEKLY AI REPORT & REVISION -->
   <!-- MODAL: PROGRAM SAATLERE SIĞMIYOR (kalkış/yatış penceresi taşması) -->
+  <!-- Sesli/metinden aktarim sonrasi: eksik gunler ve saatler icin tek ekranda soru -->
+  <div class="modal-overlay" role="dialog" aria-modal="true" id="importFollowUpModal" style="z-index:9900;">
+    <div class="modal-content" style="max-width: 620px;">
+      <button class="modal-close" onclick="app.importFollowUpSkip()"><i class="fa-solid fa-xmark"></i></button>
+      <h2 style="margin-bottom: 0.5rem;"><i class="fa-solid fa-list-check text-primary"></i> Program Aktarıldı</h2>
+      <p class="panel-intro" id="importFollowUpSummary" style="margin-bottom: 1.25rem;"></p>
+      <div id="importFollowUpBody" style="display:flex; flex-direction:column; gap:1rem;"></div>
+      <div style="display:flex; justify-content:flex-end; gap:0.6rem; margin-top:1.5rem; flex-wrap:wrap;">
+        <button class="btn btn-secondary" onclick="app.importFollowUpSkip()">Şimdilik Böyle Kalsın</button>
+        <button class="btn btn-primary" onclick="app.importFollowUpApply()">
+          <i class="fa-solid fa-check"></i> Uygula
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-overlay" role="dialog" aria-modal="true" id="scheduleFitModal">
     <div class="modal-content" style="max-width: 600px;">
       <button class="modal-close" onclick="app.closeModal('scheduleFitModal')"><i class="fa-solid fa-xmark"></i></button>
@@ -2324,6 +2340,6 @@
   <script src="curriculum.js?v=3"></script>
   <script src="questions.js"></script>
   <script src="quotes.js?v=1"></script>
-  <script src="app.js?v=114"></script>
+  <script src="app.js?v=119"></script>
 </body>
 </html>

@@ -13842,6 +13842,21 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
       }
     }
 
+    // Sesli girişte gün numarası sözcükle söylenir: "birinci gün",
+    // "dördüncü gün". voiceTextToProgramLines bu ifadeleri olduğu gibi
+    // bırakır; burada tanınmazsa tüm görevler 1. güne yığılır ve başlık
+    // satırları da görev sanılırdı.
+    const siraAdlari = Object.keys(this.SIRA_SAYILARI);
+    for (const ad of siraAdlari) {
+      const m = norm.match(new RegExp("^\\s*[-*•]?\\s*" + ad + "(?![a-z])\\s*(?:gun|gunu|gune)\\s*[:.\\-]?\\s*"));
+      if (m) {
+        const day = this.SIRA_SAYILARI[ad];
+        if (day >= 1 && day <= this.PROGRAM_DAYS) {
+          return { day: day, rest: line.slice(m[0].length).trim() };
+        }
+      }
+    }
+
     // Elle yazılmış haftalık programlarda gün adı kullanılır.
     // Uzun adlar önce denenmese de sınır kontrolü "pazar"ın "pazartesi"
     // içinde eşleşmesini engeller.
@@ -14147,6 +14162,10 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
 
     let currentDay = 1;
     let taskCount = 0;
+    // Sure acikca soylendi mi? ("45 dk", "2 saat") — aktarim sonrasi
+    // "saatleri ben ayarlayayim mi?" sorusu bu sayaca gore sorulur.
+    let sureliGorev = 0;
+    let suresizGorev = 0;
 
     text.split("\n").forEach(rawLine => {
       let line = rawLine.trim();
@@ -14191,8 +14210,10 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
       // Satırda süre yazıyorsa ("45 dk", "2 saat") o süre kullanılır
       const hourMatch = norm.match(/(\d{1,2})\s*saat/);
       const minMatch = norm.match(/(\d{1,3})\s*(?:dk|dakika)/);
-      if (hourMatch) duration = `${parseInt(hourMatch[1], 10) * 60} dk`;
-      else if (minMatch) duration = `${parseInt(minMatch[1], 10)} dk`;
+      let sureBelirtildi = false;
+      if (hourMatch) { duration = `${parseInt(hourMatch[1], 10) * 60} dk`; sureBelirtildi = true; }
+      else if (minMatch) { duration = `${parseInt(minMatch[1], 10)} dk`; sureBelirtildi = true; }
+      if (sureBelirtildi) sureliGorev++; else suresizGorev++;
 
       // 5) Sınav türü satırda açıkça yazıyorsa kullanılır
       let examType = "Genel";
@@ -14251,7 +14272,11 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
         desc: type === "quiz" ? `"${topic}" ile ilgili ${qCount} soru çöz.` : `"${topic}" konusunu çalış.`,
         duration: duration,
         completed: false,
-        examType: examType
+        examType: examType,
+        // Sure metinde/konusmada acikca gecti mi? Aktarim sonrasi
+        // "sureleri ben ayarlayayim mi?" secenegi yalnizca varsayilanla
+        // doldurulmus gorevlere dokunur.
+        sureKaynagi: sureBelirtildi ? "metin" : "varsayilan"
       };
 
       if (type === "quiz") {
@@ -14282,13 +14307,216 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     if (daySelect) daySelect.value = String(firstDay);
     this.plannerSelectDay(firstDay);
 
-    return { taskCount: taskCount, importedDays: importedDays };
+    return {
+      taskCount: taskCount,
+      importedDays: importedDays,
+      sureliGorev: sureliGorev,
+      suresizGorev: suresizGorev
+    };
   },
 
-  // Aktarim sonrasi ortak bildirim
+  // Aktarim sonrasi tek ekran: ozet + eksik gunler + saatler.
+  // Eskiden burada ham bir alert() vardi; kullanici ne oldugunu anlamadan
+  // planlayicinin icinde kaliyordu. Artik eksik varsa aciklikca sorulur.
   announceProgramImport: function(sonuc) {
-    alert(`${sonuc.importedDays.length} güne ${sonuc.taskCount} görev aktarıldı (Gün: ${sonuc.importedDays.join(", ")}).\n\n` +
-      `Metinde geçmeyen günler mevcut programındaki hâliyle korundu. Günleri kontrol edip "Kaydet & Kapat" ile programını güncelleyebilirsin.`);
+    this._sonAktarim = sonuc;
+
+    const gunler = sonuc.importedDays || [];
+    const enBuyuk = gunler.length ? gunler[gunler.length - 1] : 0;
+    const enKucuk = gunler.length ? gunler[0] : 0;
+
+    // Araya dusen bos gunler (ornek: 1,2,4 soylendiyse -> 3)
+    const araBos = [];
+    for (let g = enKucuk; g <= enBuyuk; g++) {
+      if (!gunler.includes(g)) araBos.push(g);
+    }
+    // Programin sonuna kadar hic deginilmeyen gunler
+    const toplamGun = this.PROGRAM_DAYS;
+    const kalanGun = Math.max(0, toplamGun - enBuyuk);
+
+    const ozet = document.getElementById("importFollowUpSummary");
+    if (ozet) {
+      ozet.innerHTML = `<strong>${gunler.length} güne ${sonuc.taskCount} görev</strong> aktarıldı ` +
+        `(Gün: ${gunler.join(", ")}). Metinde geçmeyen günler mevcut hâliyle korundu.`;
+    }
+
+    const govde = document.getElementById("importFollowUpBody");
+    if (!govde) {
+      // Modal yoksa eski davranisa dus (islevsiz kalmasin)
+      this.showToast(`${gunler.length} güne ${sonuc.taskCount} görev aktarıldı.`, "success");
+      return;
+    }
+
+    const kutu = (baslik, aciklama, ic) => `
+      <div style="border:1.5px solid var(--border-color); border-radius:10px; padding:1rem;">
+        <div style="font-weight:800; font-size:0.9rem; color:var(--text-main); margin-bottom:0.35rem;">${baslik}</div>
+        <p style="font-size:0.78rem; color:var(--text-muted); margin:0 0 0.7rem; line-height:1.45;">${aciklama}</p>
+        ${ic}
+      </div>`;
+
+    // NOT: modal icindeki genel "input" stili genisligi %100 yaptigi icin
+    // radyo dugmeleri esneyip etiketten kopuyordu; olculer burada sabitlenir.
+    const secenek = (ad, deger, etiket, secili) => `
+      <label style="display:flex; align-items:flex-start; gap:0.6rem; cursor:pointer; padding:0.4rem 0; font-size:0.82rem; text-align:left; line-height:1.45;">
+        <input type="radio" name="${ad}" value="${deger}" ${secili ? "checked" : ""} style="flex:0 0 auto; width:16px; height:16px; min-width:16px; margin:0.18rem 0 0; padding:0; accent-color:var(--primary);">
+        <span style="flex:1 1 auto;">${etiket}</span>
+      </label>`;
+
+    let html = "";
+    this._aktarimAraBos = araBos;
+    this._aktarimKalanGun = kalanGun;
+
+    // "AI doldursun" secenegi yalnizca kopyalanacak gercek bir standart
+    // plan varsa gosterilir. Program henuz kabul edilmediyse boyle bir
+    // plan yoktur; olmayan seyi vaat etmemek icin secenek gizlenir.
+    const aiPlanVar = !!(this.state.standardDaysData &&
+      Object.keys(this.state.standardDaysData).length > 0);
+
+    // A) Eksik gunler
+    if (araBos.length > 0 || kalanGun > 0) {
+      let aciklama = "";
+      if (araBos.length > 0 && kalanGun > 0) {
+        aciklama = `Aralarda <strong>${araBos.length} boş gün</strong> var (${araBos.slice(0, 8).join(", ")}${araBos.length > 8 ? "…" : ""}) ` +
+          `ve programın sonuna kadar <strong>${kalanGun} gün</strong> daha var. Bu günleri ne yapayım?`;
+      } else if (araBos.length > 0) {
+        aciklama = `Söylediğin günlerin arasında <strong>${araBos.length} boş gün</strong> kaldı ` +
+          `(${araBos.slice(0, 8).join(", ")}${araBos.length > 8 ? "…" : ""}). Bu günleri ne yapayım?`;
+      } else {
+        aciklama = `Programın sonuna kadar <strong>${kalanGun} gün</strong> daha var. Bu günleri ne yapayım?`;
+      }
+      html += kutu(
+        '<i class="fa-solid fa-calendar-day"></i> Diğer günler',
+        aciklama,
+        secenek("aktarimGun", "bos", "<strong>Boş kalsın</strong> — sadece söylediğim günler dolsun.", true) +
+        secenek("aktarimGun", "tekrarla", "<strong>Söylediğim düzen tekrarlansın</strong> — aynı haftalık akış kalan günlere kopyalansın.", false) +
+        (aiPlanVar
+          ? secenek("aktarimGun", "ai", "<strong>Kalanları AI planı doldursun</strong> — o günlere seviyene göre hazırlanmış standart program kopyalansın.", false)
+          : "")
+      );
+    }
+
+    // B) Saatler
+    if (sonuc.suresizGorev > 0) {
+      html += kutu(
+        '<i class="fa-solid fa-clock"></i> Saatler',
+        `<strong>${sonuc.suresizGorev} görev</strong> için süre belirtmedin` +
+        (sonuc.sureliGorev > 0 ? ` (${sonuc.sureliGorev} görevde belirttin)` : "") +
+        `. Şu an bu görevlere varsayılan süreler atandı. Süreleri günlük çalışma kapasitene göre ben dağıtayım mı?`,
+        secenek("aktarimSaat", "ayarla", "<strong>Evet, sen ayarla</strong> — günlük kapasitemi bu görevlere paylaştır, saat akışını da kur.", true) +
+        secenek("aktarimSaat", "elle", "<strong>Hayır</strong> — varsayılan süreler kalsın, gerekirse kendim düzenlerim.", false)
+      );
+    }
+
+    if (html === "") {
+      // Sorulacak bir sey yok: sessizce bilgilendir, ekran acma.
+      this.showToast(`${gunler.length} güne ${sonuc.taskCount} görev aktarıldı.`, "success");
+      return;
+    }
+
+    govde.innerHTML = html;
+    this.openModal("importFollowUpModal");
+  },
+
+  importFollowUpSkip: function() {
+    this.closeModal("importFollowUpModal");
+    this.showToast("Aktarım olduğu gibi bırakıldı. Planlayıcıdan düzenleyebilirsin.", "info");
+  },
+
+  importFollowUpApply: function() {
+    const sec = (ad) => {
+      const el = document.querySelector(`input[name="${ad}"]:checked`);
+      return el ? el.value : null;
+    };
+    const gunKarari = sec("aktarimGun");
+    const saatKarari = sec("aktarimSaat");
+    const sonuc = this._sonAktarim || {};
+    const gunler = sonuc.importedDays || [];
+    const yapilanlar = [];
+
+    if (!this.plannerBuffer) this.plannerBuffer = {};
+
+    // A) Diger gunler
+    if (gunKarari === "tekrarla" && gunler.length > 0) {
+      const desen = gunler.map(g => (this.plannerBuffer[g] && this.plannerBuffer[g].tasks) || []);
+      const hedefler = [].concat(this._aktarimAraBos || []);
+      const sonGun = gunler[gunler.length - 1];
+      for (let g = sonGun + 1; g <= this.PROGRAM_DAYS; g++) hedefler.push(g);
+
+      let kopyalanan = 0;
+      hedefler.forEach((g, i) => {
+        const kaynak = desen[i % desen.length];
+        if (!kaynak || kaynak.length === 0) return;
+        this.plannerBuffer[g] = { completed: false, tasks: kaynak.map(t => Object.assign({}, t, {
+          id: `task_rep_${g}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+          completed: false,
+          logged: false
+        })), schedule: [] };
+        kopyalanan++;
+      });
+      yapilanlar.push(`${kopyalanan} güne düzen kopyalandı`);
+    } else if (gunKarari === "ai") {
+      const std = this.state.standardDaysData || {};
+      const hedefler = [].concat(this._aktarimAraBos || []);
+      const sonGun = gunler.length ? gunler[gunler.length - 1] : 0;
+      for (let g = sonGun + 1; g <= this.PROGRAM_DAYS; g++) hedefler.push(g);
+
+      let dolan = 0;
+      hedefler.forEach(g => {
+        const kaynak = std[g] || std[String(g)];
+        if (!kaynak || !Array.isArray(kaynak.tasks) || kaynak.tasks.length === 0) return;
+        this.plannerBuffer[g] = JSON.parse(JSON.stringify(kaynak));
+        dolan++;
+      });
+      yapilanlar.push(dolan > 0
+        ? `${dolan} gün AI planından dolduruldu`
+        : "AI planında kopyalanacak gün bulunamadı");
+    }
+
+    // B) Sureler ve saat akisi
+    if (saatKarari === "ayarla") {
+      const hedefGunler = Object.keys(this.plannerBuffer).map(Number).filter(n => !isNaN(n));
+      let saatlenen = 0;
+      let sureDegisen = 0;
+      hedefGunler.forEach(g => {
+        const gun = this.plannerBuffer[g];
+        if (!gun || !Array.isArray(gun.tasks) || gun.tasks.length === 0) return;
+
+        // Sureyi kullanici belirtmisse dokunulmaz; yalnizca varsayilanla
+        // doldurulanlar gunluk kapasitenin kalanina esit paylastirilir.
+        const kapasite = this.dailyCapacityMinutes(g % 7);
+        const sabitler = gun.tasks.filter(t => t.sureKaynagi === "metin");
+        const esnekler = gun.tasks.filter(t => t.sureKaynagi !== "metin");
+        if (esnekler.length > 0) {
+          const sabitToplam = sabitler.reduce((a, t) => a + this.parseDurationMinutes(t.duration), 0);
+          const kalan = Math.max(esnekler.length * 20, kapasite - sabitToplam);
+          // Kapasiteyi zorla doldurma. Tek gorevlik bir gunde kalan sureyi
+          // o goreve yiginca "30 soru = 4 saat" gibi anlamsiz sureler
+          // cikiyordu. Gorev basina 20-90 dk araligi disina cikilmaz;
+          // artan sure bos zaman olarak kalir.
+          const ALT = 20, UST = 90;
+          const hamPay = kalan / esnekler.length;
+          const pay = Math.min(UST, Math.max(ALT, Math.round(hamPay / 5) * 5));
+          esnekler.forEach(t => {
+            if (t.duration !== `${pay} dk`) sureDegisen++;
+            t.duration = `${pay} dk`;
+            if (t.type === "quiz" && t.desc) {
+              t.desc = `"${t.topic}" ile ilgili ${t.qCount || 30} soru çöz.`;
+            }
+          });
+        }
+
+        gun.schedule = this.buildDaySchedule(gun.tasks, g % 7);
+        saatlenen++;
+      });
+      yapilanlar.push(`${sureDegisen} görevin süresi kapasitene göre ayarlandı, ${saatlenen} günün saat akışı kuruldu`);
+    }
+
+    this.closeModal("importFollowUpModal");
+    this.plannerSelectDay(gunler[0] || 1);
+    this.showToast(
+      yapilanlar.length ? "Uygulandı: " + yapilanlar.join(", ") + "." : "Değişiklik yapılmadı.",
+      "success"
+    );
   },
 
   // Giris 1: Fotograf / PDF akisi
