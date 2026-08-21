@@ -6410,7 +6410,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     }
 
     const rate = total ? Math.round((done / total) * 100) : 0;
-    const net = Math.max(0, correct - incorrect / 4);
+    const net = this.netHesapla(correct, incorrect);
     return { label, period, from, to, total, done, rate, correct, incorrect, net: net.toFixed(2) };
   },
 
@@ -8210,7 +8210,7 @@ normalizeClause: function(clause) {
         const total = correct + wrong;
         out.push({
           subjectKey, section, correct, wrong, total,
-          net: Math.max(0, correct - wrong / 4),
+          net: app.netHesapla(correct, wrong),
           accuracy: total > 0 ? correct / total : 0,
           minutes: Number.isFinite(mins) ? mins : null,
           secPerQuestion: (Number.isFinite(mins) && total > 0) ? Math.round((mins * 60) / total) : null
@@ -9725,7 +9725,7 @@ normalizeClause: function(clause) {
       yaz("sumLastNet", "—", "henüz kayıt yok");
     } else {
       const son = kayitlar[kayitlar.length - 1];
-      const net = Math.round((((son.correct || 0) - (son.incorrect || 0) / 4)) * 10) / 10;
+      const net = this.netHesapla(son.correct, son.incorrect);
       const parca = [`${son.correct || 0}D`, `${son.incorrect || 0}Y`];
       if (son.blank !== undefined) parca.push(`${son.blank}B`);
       yaz("sumLastNet", String(net), `${this.escapeHtml(son.subject || "")} · ${parca.join(" ")}`);
@@ -9803,7 +9803,7 @@ normalizeClause: function(clause) {
     // ── B) ZAMAN / NET VERIMI ────────────────────────────────
     const verim = Object.keys(dersler).map(d => {
       const g = dersler[d];
-      const net = Math.round(((g.dogru - g.yanlis / 4)) * 10) / 10;
+      const net = this.netHesapla(g.dogru, g.yanlis);
       const saat = Math.round((g.sure / 60) * 10) / 10;
       return { ders: d, net: net, saat: saat, netSaat: saat > 0 ? Math.round((net / saat) * 10) / 10 : null };
     }).filter(x => x.saat >= 0.5).sort((a, b) => (b.netSaat || -1) - (a.netSaat || -1));
@@ -9868,7 +9868,7 @@ normalizeClause: function(clause) {
         const m = {};
         liste.forEach(r => {
           const d = r.subject || "Diğer";
-          m[d] = (m[d] || 0) + ((r.correct || 0) - (r.incorrect || 0) / 4);
+          m[d] = (m[d] || 0) + this.netHesapla(r.correct, r.incorrect);
         });
         return m;
       };
@@ -10366,10 +10366,7 @@ normalizeClause: function(clause) {
     // Dogruluk yuzdesi ile net ayni sey degildir: cok bos birakan ogrencinin
     // dogrulugu yuksek, neti dusuk olabilir. Ogrencinin asil sordugu soru
     // "netim artiyor mu?" oldugu icin net ayri bir zaman serisi olarak cizilir.
-    const netHesapla = (r) => {
-      const y = r.incorrect || 0;
-      return Math.round(((r.correct || 0) - y / 4) * 10) / 10;
-    };
+    const netHesapla = (r) => this.netHesapla(r.correct, r.incorrect);
     const netLabels = records.map(r => r.label);
     // TYT ve AYT AYRI cizilir: ikisi farkli olceklerde ilerler, tek cizgide
     // birlestirilince ogrenci hangisinde ilerledigini goremez.
@@ -10954,8 +10951,8 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     if (examCount > 0) {
       const totC = exams.reduce((a, e) => a + (e.correct || 0), 0);
       const totW = exams.reduce((a, e) => a + (e.incorrect || 0), 0);
-      const net = Math.max(0, totC - totW / 4);
-      const avgNet = Math.round((net / examCount) * 10) / 10;
+      const net = this.netHesapla(totC, totW);
+      const avgNet = Math.round((net / examCount) * 100) / 100;
       goalProgressLabel = `Kayıt başına ortalama ${avgNet} net`;
       evidence.push(`toplam ${totC} doğru / ${totW} yanlış üzerinden hesaplanan net`);
       // Sıralama YALNIZCA gerçek bir deneme neti + hedef tanımlıysa ve
@@ -15475,6 +15472,22 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
       yapilanlar.length ? "Uygulandı: " + yapilanlar.join(", ") + "." : "Değişiklik yapılmadı.",
       "success"
     );
+  },
+
+  // ============================================================
+  // TEK NET TANIMI — YKS: net = dogru - yanlis/4
+  // ------------------------------------------------------------
+  // Iki hata birden duzeltir:
+  //  1) Sifira KIRPMA yok. YKS'de bir bolumun neti negatif olabilir;
+  //     kirpmak "yanlisla net kaybediyorsun" sinyalini gizler — oysa
+  //     ogrencinin gormesi gereken tam olarak budur.
+  //  2) 2 ondalik. Netler ceyreklik adimlarla gelir; 1 ondaliga
+  //     yuvarlamak 12.25'i 12.3, 9.75'i 9.8 yapiyordu.
+  // ============================================================
+  netHesapla: function(dogru, yanlis) {
+    const d = Number(dogru) || 0;
+    const y = Number(yanlis) || 0;
+    return Math.round((d - y / 4) * 100) / 100;
   },
 
   // Bugun programin kacinci gunu? activeDay kullanicinin BAKTIGI gundur,
