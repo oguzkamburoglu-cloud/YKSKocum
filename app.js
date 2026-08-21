@@ -3272,8 +3272,19 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       coachAdvice += `😮 <strong>Hafta Sonu Hedefi Gerçekçi Değil:</strong> Günde ${weekendCapacity} saat çalışmak, ${wakeStr} - ${sleepStr} arasında uyanık kaldığın ${awakeHours.toFixed(1)} saatin neredeyse tamamı demek — yemeğe, dinlenmeye ve sosyal hayata hiç zaman kalmaz. Gerçekçi ve sürdürülebilir bir hedef için hafta sonu çalışmanı en fazla <strong>${Math.floor(weekendCeiling)} saat</strong> civarında tutmalısın; yoksa program otomatik olarak sıkıştırılıp geceye taşabilir.<br><br>`;
     }
 
+    // Kapasite - hedef karsilastirmasi. Ogrenci saatlerini girer girmez
+    // hedefinin bu tempoya sigip sigmadigini gorur; program uretici
+    // sessizce kapasiteye uyup hedefi ulasilmaz birakmasin.
+    const kap = this.kapasiteHedefKarsilastir();
+    if (kap && !kap.yeterli) {
+      const metin = this.kapasiteHedefMetni(kap);
+      if (metin) { isWarning = true; coachAdvice += metin + "<br><br>"; }
+    }
+
     if (!isWarning) {
       coachAdvice = `💪 <strong>Disiplin Onayı:</strong> Harika uyku düzeni ve dengeli çalışma saatleri! Sahaya çıkmak için zihinsel ve fiziksel olarak hazır görünüyorsun. Bu disiplini süreç boyunca korursan başarı kaçınılmaz!`;
+      const olumlu = kap && kap.yeterli ? this.kapasiteHedefMetni(kap) : "";
+      if (olumlu) coachAdvice += "<br><br>" + olumlu;
     }
 
     const feedbackBox = document.getElementById("coachHabitFeedback");
@@ -3957,6 +3968,16 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     if (d.hedef) gerekce.push(`hedefin <strong>ilk ${fmt(d.hedef)}</strong>`);
     gerekce.push(`<strong>${d.alan}</strong> alanı`);
 
+    // Hedef, beyan edilen tempoya sigmiyorsa bunu KABUL ETMEDEN ONCE soyle.
+    // Program uretici tempoya uyuyor; ogrenci hedefin ulasilmaz kaldigini
+    // bilmeden "Programi Olustur" dememeli.
+    const kap = this.kapasiteHedefKarsilastir();
+    const kapasiteBlogu = (kap && !kap.yeterli)
+      ? `<div style="background:var(--bg-card); border:1px solid var(--warning); border-left:3px solid var(--warning);
+                     border-radius:8px; padding:0.75rem 0.9rem; margin:0 0 1rem; font-size:0.8rem; line-height:1.55;
+                     color:var(--text-main);">${this.kapasiteHedefMetni(kap)}</div>`
+      : "";
+
     kart.style.display = "block";
     kart.innerHTML = `
       <div class="glass-card" style="padding:1.5rem; border:1.5px solid var(--primary); background:var(--ai-tint); border-radius:12px;">
@@ -3967,6 +3988,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
         <p style="font-size:0.88rem; color:var(--text-main); line-height:1.6; margin:0 0 0.9rem;">
           ${gerekce.join(", ")} bilgilerine göre <strong>${d.seviye}. Seviye${d.seviyeAdi ? " · " + d.seviyeAdi : ""}</strong> bir çalışma programı hazırlayabilirim${d.saat ? ` — toplam <strong>${fmt(d.saat)} saat</strong> ve <strong>${fmt(d.soru)}</strong> soru hedefiyle` : ""}.
         </p>
+        ${kapasiteBlogu}
         <p style="font-size:0.78rem; color:var(--text-muted); line-height:1.5; margin:0 0 1.1rem;">
           Kabul edersen program hemen oluşturulur ve günlük listene düşer. İstemezsen boş başlarsın, programı kendin kurarsın — sonradan da bu öneriye dönebilirsin.
         </p>
@@ -4683,6 +4705,18 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
         schedule: this.buildDaySchedule(dailyTasks, dayOfWeek)
       };
     }
+
+    // URETILEN programin GERCEK toplam suresi. Kapasite-hedef
+    // karsilastirmasi bu sayiyi kullanir: teorik kapasiteye bakip
+    // "hedefe ulasirsin" demek, program o kadarini uretmiyorsa
+    // yeni bir yanlis vaat olurdu.
+    let uretilenDk = 0;
+    Object.keys(this.state.daysData).forEach(k => {
+      const g = this.state.daysData[k];
+      if (!g || !Array.isArray(g.tasks)) return;
+      g.tasks.forEach(t => { uretilenDk += this.parseDurationMinutes(t.duration) || 0; });
+    });
+    this.state.uretilenToplamSaat = Math.round(uretilenDk / 60);
   },
 
   // ============================================================
@@ -9812,6 +9846,24 @@ normalizeClause: function(clause) {
     });
     const yuzde = toplamGorev > 0 ? Math.round((toplamBiten / toplamGorev) * 100) : 0;
     yaz("sumProgress", `%${yuzde}`, toplamGorev > 0 ? `${toplamBiten}/${toplamGorev} görev` : "program yok");
+
+    // Hedef - program yuku notu. Program uretildikten SONRA gercek
+    // sayilarla gosterilir; ogrenci hedefinin ulasilabilir olup
+    // olmadigini surekli gorur.
+    const notEl = document.getElementById("kapasiteNotu");
+    if (notEl) {
+      const kap = this.kapasiteHedefKarsilastir();
+      const metin = kap ? this.kapasiteHedefMetni(kap) : "";
+      if (metin && kap.uretimVar) {
+        const renk = kap.yeterli ? "var(--success)" : "var(--warning)";
+        notEl.innerHTML = `
+          <div class="glass-card" style="padding:0.85rem 1rem; border-left:3px solid ${renk};
+               font-size:0.8rem; line-height:1.55; color:var(--text-main);">${metin}</div>`;
+        notEl.style.display = "block";
+      } else {
+        notEl.style.display = "none";
+      }
+    }
 
     // 3) Son deneme neti — en son kaydedilen calismanin neti
     const kayitlar = this.state.chartData || [];
@@ -15603,6 +15655,102 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     const d = Number(dogru) || 0;
     const y = Number(yanlis) || 0;
     return Math.round((d - y / 4) * 100) / 100;
+  },
+
+  // ============================================================
+  // KAPASITE - HEDEF KARSILASTIRMASI
+  // ------------------------------------------------------------
+  // Seviye hedefi (or. seviye 5 = 1600 saat, sinava kalan sureye
+  // olceklenmis hali) ile ogrencinin BEYAN ETTIGI gunluk kapasite
+  // ortusmeyebilir. Program uretici artik kapasiteye uyuyor; bu da
+  // hedefin sessizce ulasilamaz kalmasi demek. Ogrenci bunu bilmeli.
+  // ============================================================
+  kapasiteHedefKarsilastir: function() {
+    try {
+      const gun = this.PROGRAM_DAYS;
+      const hedefSaat = this.state.totalHoursTarget;
+      if (!gun || !hedefSaat) return null;
+
+      const hi = Number(this.state.weekdayHours);
+      const hs = Number(this.state.weekendHours);
+      if (!(hi > 0) || !(hs > 0)) return null;
+
+      // Beyan edilen haftalik ortalama, gunun fiziksel penceresiyle sinirli
+      const hiButce = this.gunlukCalismaButcesi(1) / 60;   // hafta ici
+      const hsButce = this.gunlukCalismaButcesi(6) / 60;   // hafta sonu
+      const gerceklesenHi = Math.min(hi, hiButce);
+      const gerceklesenHs = Math.min(hs, hsButce);
+      const beyanGunluk = (gerceklesenHi * 5 + gerceklesenHs * 2) / 7;
+
+      const gerekenGunluk = hedefSaat / gun;
+
+      // Program zaten uretildiyse GERCEK toplami kullan; uretici gunluk
+      // butceyi her zaman tam doldurmaz, teorik kapasite iyimser kalir.
+      const uretilen = this.state.uretilenToplamSaat;
+      const uretimVar = typeof uretilen === "number" && uretilen > 0;
+      const ulasilabilirSaat = uretimVar ? uretilen : Math.round(beyanGunluk * gun);
+      const gercekGunluk = Math.round((ulasilabilirSaat / gun) * 10) / 10;
+      const acik = Math.round(hedefSaat - ulasilabilirSaat);
+
+      // Bu tempoyla hangi seviyenin saat hedefi tutuyor?
+      const olcek = Math.max(0.2, Math.min(1.2, gun / 360));
+      let ulasilabilirSeviye = 1;
+      for (let sv = 8; sv >= 1; sv--) {
+        const meta = this.LEVEL_META[sv];
+        if (meta && (meta.hours * olcek) <= ulasilabilirSaat) { ulasilabilirSeviye = sv; break; }
+      }
+
+      // %10'luk sapma gurultudur; uyarmaya degmez.
+      const yeterli = ulasilabilirSaat >= hedefSaat * 0.9;
+
+      return {
+        yeterli: yeterli,
+        uretimVar: uretimVar,
+        gerekenGunluk: Math.round(gerekenGunluk * 10) / 10,
+        beyanGunluk: Math.round(beyanGunluk * 10) / 10,
+        gercekGunluk: gercekGunluk,
+        hedefSaat: hedefSaat,
+        ulasilabilirSaat: ulasilabilirSaat,
+        acik: acik,
+        hedefSeviye: this.state.level,
+        ulasilabilirSeviye: ulasilabilirSeviye,
+        gunSayisi: gun
+      };
+    } catch (e) { return null; }
+  },
+
+  // Karsilastirmayi okunur bir cumleye cevirir (HTML).
+  kapasiteHedefMetni: function(k) {
+    if (!k) return "";
+    const kaynak = k.uretimVar ? "Hazırlanan program" : "Bu tempo";
+
+    if (k.yeterli) {
+      // Program HENUZ URETILMEDIYSE olumlu bir vaat verilmez. Uretici
+      // gunluk butceyi her zaman tam doldurmuyor; teorik kapasiteye
+      // bakip "hedefe ulasirsin" demek, uretimden sonra kendini
+      // yalanlayan bir vaat olur.
+      if (!k.uretimVar) return "";
+      return `✅ <strong>Tempo hedefinle uyumlu:</strong> ${k.hedefSeviye}. seviye için ` +
+             `<strong>${k.hedefSaat} saat</strong> gerekiyor; hazırlanan program ` +
+             `<strong>${k.ulasilabilirSaat} saat</strong> çalışma içeriyor. Bu tempoyu korursan hedefe ulaşırsın.`;
+    }
+
+    const sv = this.LEVEL_META[k.ulasilabilirSeviye];
+    const svAd = sv ? sv.name : "";
+    let m = `📐 <strong>Hedefin tempona sığmıyor:</strong> ${k.hedefSeviye}. seviye için sınava kalan ` +
+            `${k.gunSayisi} günde <strong>${k.hedefSaat} saat</strong> gerekiyor — günde ` +
+            `<strong>${k.gerekenGunluk} saat</strong>. `;
+    m += k.uretimVar
+      ? `Senin saatlerine göre hazırlanan program <strong>${k.ulasilabilirSaat} saat</strong> içeriyor ` +
+        `(günde ${k.gercekGunluk} saat) — <strong>${k.acik} saat</strong> açık.<br>`
+      : `Ortalama <strong>${k.beyanGunluk} saat</strong> diyorsun; bu tempoyla toplam ` +
+        `<strong>${k.ulasilabilirSaat} saat</strong> yapabilirsin — <strong>${k.acik} saat</strong> açık.<br>`;
+    if (k.ulasilabilirSeviye < k.hedefSeviye) {
+      m += `Bu tempo <strong>${k.ulasilabilirSeviye}. seviye${svAd ? " — " + svAd : ""}</strong> hedefine denk geliyor. `;
+    }
+    m += `Ya günlük saatini artır, ya da hedefini bu tempoya göre seç. ` +
+         `Program şu an tempona uyuyor; imkânsız bir plan üretip seni yarı yolda bırakmıyor.`;
+    return m;
   },
 
   // Bugun programin kacinci gunu? activeDay kullanicinin BAKTIGI gundur,
