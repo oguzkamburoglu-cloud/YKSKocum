@@ -181,15 +181,15 @@
     <p class="standfirst">
       Analiz, hesaplama, program üretimi, paket kısıtlaması ve güvenlik için yazılan test paketi
       gerçek <code>app.js</code> üzerinde koşuyor. Şablon test değil: paket her aşamada kırıldı ve
-      <strong>16 gerçek hata</strong> ortaya çıkardı.
+      <strong>17 gerçek hata</strong> ortaya çıkardı.
     </p>
   </header>
 
   <div class="stats">
     <div class="stat ok"><span class="n">437</span><span class="l">birim + entegrasyon</span></div>
     <div class="stat ok"><span class="n">46</span><span class="l">Jest portu</span></div>
-    <div class="stat ok"><span class="n">10</span><span class="l">E2E · gerçek tarayıcı</span></div>
-    <div class="stat bad"><span class="n">16</span><span class="l">bulunan hata</span></div>
+    <div class="stat ok"><span class="n">12</span><span class="l">E2E · gerçek tarayıcı</span></div>
+    <div class="stat bad"><span class="n">17</span><span class="l">bulunan hata</span></div>
     <div class="stat ok"><span class="n">0</span><span class="l">kalan test</span></div>
   </div>
   <div class="runline">
@@ -202,7 +202,7 @@
   <section>
     <div class="sec-head"><span class="sec-num">Kritik</span><h2>Önce bunlar</h2></div>
     <p class="lede">
-      Bulunan on altı hatanın en ağır beşi burada. Ortak özellikleri:
+      Bulunan on yedi hatanın en ağır beşi burada. Ortak özellikleri:
       hiçbiri ekranda hata olarak görünmüyordu — özellik sessizce yanlıştı ya da sessizce yoktu.
     </p>
 
@@ -323,6 +323,7 @@
           <tr><td class="id">14</td><td>Mini test (ODT) <strong>hiç açılamıyordu</strong></td><td>openOdtTest çağrılmıyordu + modalda satır içi <code>display:none</code>; 400 soruluk banka erişilemezdi</td></tr>
           <tr><td class="id">15</td><td>Eski onaysız program silinmiyordu</td><td>Hiçbir şey seçmeyen kullanıcı dolu programla ve bildirim yağmuruyla açılıyordu</td></tr>
           <tr><td class="id">16</td><td>Kapasite uyarısı yanlış aşamada çıkıyordu</td><td>Saat girişinde bayat üretim toplamını okuyup kendisiyle çelişiyordu</td></tr>
+          <tr><td class="id">17</td><td>Yeniden kayıt eski durumu taşıyordu</td><td>Kabul damgası ve çalışma verisi sıfırlanmıyordu; hiçbir şey seçmeyen kullanıcıya program kendiliğinden üretiliyordu</td></tr>
         </tbody>
       </table>
     </div>
@@ -347,7 +348,7 @@
           <tr><td><strong>1</strong> · İş mantığı</td><td>Net hesabı ve küsurat, gün sayacı, saat dilimi, konu yetişme algoritması</td><td class="num">60</td></tr>
           <tr><td><strong>2</strong> · Kenar durumlar</td><td>Sıfır veri, 500 deneme, 2000 pomodoro seansı, hatalı giriş, depolama</td><td class="num">41</td></tr>
           <tr><td><strong>3</strong> · Güvenlik</td><td>XSS, istemci tarafı yetki, hassas veri saklama, dışarıdan gelen içerik</td><td class="num">36</td></tr>
-          <tr><td><strong>4</strong> · Otomasyon</td><td>Playwright E2E (10) + Jest portu (46)</td><td class="num">56</td></tr>
+          <tr><td><strong>4</strong> · Otomasyon</td><td>Playwright E2E (12) + Jest portu (46)</td><td class="num">58</td></tr>
           <tr><td>Modül testleri</td><td>Analiz, program bütçesi, taslak sıralama, paket kısıtlaması, erişilebilirlik/ölü kod</td><td class="num">300</td></tr>
         </tbody>
       </table>
@@ -411,7 +412,7 @@ npx playwright test --config=test/e2e/playwright.config.js</code></pre>
         <thead><tr><th>CI işi</th><th>Kapsam</th><th>Süre</th></tr></thead>
         <tbody>
           <tr><td>Birim ve entegrasyon</td><td>437 test</td><td class="num ok">~10 sn</td></tr>
-          <tr><td>E2E — gerçek Chromium</td><td>10 akış</td><td class="num ok">~45 sn</td></tr>
+          <tr><td>E2E — gerçek Chromium</td><td>12 akış</td><td class="num ok">~45 sn</td></tr>
           <tr><td>Sözdizimi denetimi</td><td>6 dosya</td><td class="num ok">10 sn</td></tr>
         </tbody>
       </table>
@@ -438,7 +439,7 @@ npx playwright test --config=test/e2e/playwright.config.js</code></pre>
   <footer>
     Kaynak: <span class="mono">test/</span> · Senaryolar: <span class="mono">test/SENARYOLAR.md</span> ·
     CI: <span class="mono">.github/workflows/testler.yml</span> ·
-    Koşum: 22 Ağustos 2026 · 447 testin tamamı geçiyor (437 birim + 10 E2E).
+    Koşum: 22 Ağustos 2026 · 449 testin tamamı geçiyor (437 birim + 12 E2E).
   </footer>
 
 </div>
