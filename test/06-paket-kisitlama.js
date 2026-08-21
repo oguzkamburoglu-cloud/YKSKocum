@@ -76,18 +76,49 @@ T.grup("6.2  Her paket dogru ozellikleri aciyor");
   T.esit("Deneme bitmiş (free): hiçbir özellik açık değil", f.length, 0);
 })();
 
-T.grup("6.3  Salt okunur mod — deneme bitince");
+T.grup("6.3  Deneme bitince TAM KILIT");
 
 (function () {
   paket("free");
-  T.dogru("free salt okunur", app.saltOkunurMu(), true);
+  T.dogru("deneme bitmiş kullanıcı kilitli", app.denemeBittiMi(), true);
   paket("baslangic");
-  T.dogru("Başlangıç salt okunur DEĞİL", !app.saltOkunurMu(), false);
+  T.dogru("Başlangıç kilitli DEĞİL", !app.denemeBittiMi(), false);
   paket("trial");
-  T.dogru("deneme salt okunur DEĞİL", !app.saltOkunurMu(), false);
+  T.dogru("deneme sürerken kilitli DEĞİL", !app.denemeBittiMi(), false);
   paket("pending");
-  T.dogru("paket seçilmemiş kullanıcı salt okunur değil (henüz başlamadı)",
-          !app.saltOkunurMu(), true);
+  T.dogru("paket seçilmemiş kullanıcı 'deneme bitti' sayılmaz", !app.denemeBittiMi(), true);
+  T.dogru("eski ad saltOkunurMu hâlâ çalışıyor", typeof app.saltOkunurMu === "function", true);
+})();
+
+(function () {
+  // Deneme bitince uygulamaya GIRILEMEZ: dogrudan paket ekrani
+  paket("free");
+  ["subscriptionModal", "paketIcerik", "coachModalTitle", "coachModalBody", "coachModalQuote"]
+    .forEach(elemanEkle);
+  let acildi = false;
+  const eski = app.showSubscriptionModal;
+  app.showSubscriptionModal = function () { acildi = true; };
+  let patladi = null;
+  try { app.startMainDashboard(); } catch (e) { patladi = e.message; }
+  app.showSubscriptionModal = eski;
+  T.dogru("startMainDashboard çökmüyor", patladi === null, patladi);
+  T.dogru("paket ekranı açılıyor", acildi, true);
+})();
+
+(function () {
+  // Paket ekrani KAPATILAMAZ
+  paket("free");
+  elemanEkle("subscriptionModal");
+  let uyarildi = false;
+  const eskiAlert = alert;
+  try {
+    // harness'te alert no-op; kapanma girisimini modal sinifiyla olcelim
+    app.closeSubscriptionModal();
+    const m = document.getElementById("subscriptionModal");
+    T.dogru("modal kapanmadı", !m.classList.contains("kapandi"), true);
+  } catch (e) {
+    T.dogru("kapatma çökmüyor", false, e.message);
+  }
 })();
 
 (function () {

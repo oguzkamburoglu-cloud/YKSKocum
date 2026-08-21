@@ -427,12 +427,16 @@ const app = {
   },
 
   // Deneme suresi bitmis, odeme yapilmamis kullanici.
-  // Karar: program GORUNUR kalir, DUZENLEME kapalidir. Ogrencinin
-  // emegi kaybolmaz ama kullanmaya devam etmek icin odeme gerekir.
-  saltOkunurMu: function() {
+  // KARAR: 7 gun sonra HER SEY kisitlanir. Uygulama acildiginda
+  // dogrudan paket ekrani gelir, hicbir modul kullanilamaz.
+  // Veri silinmez; odeme yapildiginda oldugu yerden devam edilir.
+  denemeBittiMi: function() {
     if (!this.MONETIZATION_ENABLED) return false;
     return this.aktifPaketSeviyesi() === 0 && this.state.subscriptionTier !== "pending";
   },
+
+  // Geriye donuk ad — eski cagri noktalari kirilmasin.
+  saltOkunurMu: function() { return this.denemeBittiMi(); },
 
   ozellikAcikMi: function(anahtar) {
     if (!this.MONETIZATION_ENABLED) return true;
@@ -1116,7 +1120,8 @@ const app = {
       // Hide close button if pending
       const closeBtn = modal.querySelector(".close-btn");
       if (closeBtn) {
-        closeBtn.style.display = this.state.subscriptionTier === "pending" ? "none" : "block";
+        const kapatilamaz = this.state.subscriptionTier === "pending" || this.denemeBittiMi();
+        closeBtn.style.display = kapatilamaz ? "none" : "block";
       }
     }
   },
@@ -1124,6 +1129,11 @@ const app = {
   closeSubscriptionModal: function() {
     if (this.state.subscriptionTier === "pending") {
       alert("Lütfen devam etmek için bir plan seçin.");
+      return;
+    }
+    if (this.denemeBittiMi()) {
+      alert("Deneme süren doldu. Devam etmek için bir paket seçmen gerekiyor.\n\n" +
+            "Programın ve tüm kayıtların duruyor; paket seçtiğinde kaldığın yerden devam edersin.");
       return;
     }
     const modal = document.getElementById("subscriptionModal");
@@ -4279,7 +4289,9 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
 
   startMainDashboard: function() {
     try {
-      if (this.state.subscriptionTier === "pending") {
+      // Paket secilmemis VEYA deneme bitmis: uygulamaya girilemez,
+      // dogrudan paket ekrani acilir.
+      if (this.state.subscriptionTier === "pending" || this.denemeBittiMi()) {
         this.showSubscriptionModal();
         return;
       }
