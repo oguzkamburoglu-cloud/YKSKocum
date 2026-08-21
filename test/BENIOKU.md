@@ -20,6 +20,7 @@ Harici bağımlılık yoktur (npm/node gerekmez). Testler macOS'ta hazır gelen
 | `02-gorsellestirme-edge.js` | Grup 2 — sıfır veri, uç değerler, dönem filtreleri (42 test) |
 | `mock-veri.js` | Paylaşılan, **belirlenimci** mock öğrenci senaryosu |
 | `03-render-mock.js` | Grup 3 — mock data ile kart ve grafik render doğrulaması (44 test) |
+| `04-program-butcesi.js` | Grup 4 — program üreticisi günlük bütçeye uyuyor mu (27 test) |
 | `jest/` | Aynı testlerin Jest portu (isteğe bağlı, npm gerekir) |
 
 ## Harness neden gerekli
@@ -47,6 +48,7 @@ testleri yanlışlıkla "uygulama hatası" gibi görünür.
 | 2 | İki farklı net tanımı; 3 yer negatifi 0'a kırpıyordu | `netHesapla` ile birleştirildi |
 | 3 | YDT hiç tanınmıyordu; Dil öğrencisinin netleri "TYT" sayılıyordu | `sinavTuruBelirle` |
 | 4 | Günde 24 saati aşan toplam sessizce kabul ediliyordu | `submitTestScore` uyarısı |
+| 5 | **Program üreticisi günlük bütçeyi hiç sormuyordu**: okula giden, "4 saat" diyen öğrenciye günde 11.1 saat üretiliyor, 302 günün 172'si taşıyor, uygulama açılır açılmaz "saatlere sığmıyor" uyarısı veriyordu | `gunlukCalismaButcesi` + `gunuButceyeSigdir` |
 
 Toplam **117 test** (jsc) + **23 test** (Jest portu). Hepsi geçiyor.
 

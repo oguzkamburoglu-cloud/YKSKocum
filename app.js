@@ -4352,6 +4352,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
             duration: "75 dk", completed: false, examType: "Genel", noSource: true
           });
         }
+        this.gunuButceyeSigdir(dailyTasks, dayOfWeek, 2);
         this.sourceBooks.attachAll(dailyTasks);
         this.state.daysData[day] = { completed: false, isMockDay: !tekrarGunu, isFinalPhase: true,
                                      tasks: dailyTasks, schedule: this.buildDaySchedule(dailyTasks, dayOfWeek) };
@@ -4407,6 +4408,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
           completed: false,
           examType: "Genel"
         });
+        this.gunuButceyeSigdir(dailyTasks, dayOfWeek, 2);
         this.sourceBooks.attachAll(dailyTasks);
         this.state.daysData[day] = { completed: false, isMockDay: true, tasks: dailyTasks, schedule: this.buildDaySchedule(dailyTasks, dayOfWeek) };
         continue;
@@ -4450,6 +4452,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
         });
         appendDailyRoutines(dailyTasks, day);
         this.sourceBooks.attachAll(dailyTasks);
+        this.gunuButceyeSigdir(dailyTasks, dayOfWeek, 3);
         this.state.daysData[day] = { completed: false, tasks: dailyTasks, schedule: this.buildDaySchedule(dailyTasks, dayOfWeek) };
         continue;
       }
@@ -4671,6 +4674,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       appendDailyRoutines(dailyTasks, day);
 
       // Her göreve "hangi yayınevinin hangi kitabı" bilgisini iliştir.
+      this.gunuButceyeSigdir(dailyTasks, dayOfWeek, 3);
       this.sourceBooks.attachAll(dailyTasks);
 
       this.state.daysData[day] = {
@@ -4713,6 +4717,83 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
     const h = isWeekend ? this.state.weekendHours : this.state.weekdayHours;
     return (typeof h === "number" && h > 0) ? h * 60 : null;
+  },
+
+  // ============================================================
+  // GUNLUK CALISMA BUTCESI
+  // ------------------------------------------------------------
+  // Program ureticisi gorev sayisini yalnizca SEVIYEYE gore
+  // belirliyordu; gunun fiziksel penceresini ve ogrencinin beyan
+  // ettigi kapasiteyi hic sormuyordu. Sonuc: okula giden, "hafta ici
+  // 4 saat" diyen bir ogrenciye gunde 11 saatlik program uretiliyor,
+  // 302 gunun 172'si tasiyor ve uygulama acilir acilmaz "saatlere
+  // sigmiyor" uyarisi veriyordu. Uyari dogruydu; program yanlisti.
+  // ============================================================
+  gunlukCalismaButcesi: function(dayOfWeek) {
+    const haftaSonu = (dayOfWeek === 0 || dayOfWeek === 6);
+    let bas;
+    if (this.state.isGraduate) {
+      bas = this.timeStrToMinutes(this.state.wakeTime || "08:00") + 90;
+    } else {
+      bas = haftaSonu
+        ? this.timeStrToMinutes(this.state.wakeTime || "08:00") + 120
+        : 16 * 60;   // okul sonrasi
+    }
+    let uyku = this.timeStrToMinutes(this.state.sleepTime || "23:00");
+    if (uyku <= bas) uyku += 24 * 60;
+    const pencere = (uyku - 30) - bas;
+    // Ogun ve molalar icin pay: pencerenin ~%20'si
+    const fiziksel = Math.max(60, Math.round(pencere * 0.8));
+    const beyan = this.dailyCapacityMinutes(dayOfWeek);
+    return beyan ? Math.min(fiziksel, beyan) : fiziksel;
+  },
+
+  // Gunun gorev listesini butceye sigdirir.
+  // Sureleri kisaltmak yerine FAZLA GOREVI CIKARIR: 30 soruluk bir
+  // gorevi 12 dakikaya sikistirmak onu anlamsiz kilar, cikarmak ise
+  // programi durust tutar. En az korunacak gorev sayisi vardir ki gun
+  // tamamen bosalmasin.
+  // NOT: dizi YERINDE kirpilir (cagri noktalarinda dailyTasks `const`).
+  gunuButceyeSigdir: function(gorevler, dayOfWeek, enAzGorev) {
+    if (!Array.isArray(gorevler) || gorevler.length === 0) return gorevler;
+    const butce = this.gunlukCalismaButcesi(dayOfWeek);
+    const taban = Math.max(1, enAzGorev || 3);
+    const sure = (t) => this.parseDurationMinutes(t.duration) || 0;
+    const topla = () => gorevler.reduce((a, t) => a + sure(t), 0);
+
+    // En fazla bu kadar kucultulur; altina inince gorev anlamini yitirir.
+    const EN_AZ_OLCEK = 0.6;
+
+    let toplam = topla();
+    if (toplam <= butce) return gorevler;
+
+    // 1) Once GOREV CIKAR — ama yalnizca orantili kucultmenin tek basina
+    //    yetmeyecegi kadar tasma varsa. Once cikarip sonra kucultmek
+    //    gunu gereginden fazla bosaltiyordu (4 saatlik butceye 3.3 saat).
+    while (gorevler.length > taban && (butce / toplam) < EN_AZ_OLCEK) {
+      const cikan = gorevler.pop();
+      toplam -= sure(cikan);
+    }
+
+    // 2) Kalan tasmayi ORANTILI kucultmeyle kapat. Sure ile birlikte SORU
+    //    SAYISI da duser; yoksa "30 soru / 12 dk" gibi uygulanamaz
+    //    gorevler olusur.
+    toplam = topla();
+    if (toplam > butce && toplam > 0) {
+      const olcek = Math.max(EN_AZ_OLCEK, butce / toplam);
+      gorevler.forEach(t => {
+        const eskiDk = sure(t);
+        if (!eskiDk) return;
+        const yeniDk = Math.max(20, Math.round((eskiDk * olcek) / 5) * 5);
+        t.duration = yeniDk + " dk";
+        if (typeof t.qCount === "number" && t.qCount > 0) {
+          const yeniSoru = Math.max(5, Math.round(t.qCount * (yeniDk / eskiDk)));
+          t.qCount = yeniSoru;
+          if (t.desc) t.desc = String(t.desc).replace(/\d+\s*(adet\s*)?soru/, yeniSoru + " soru");
+        }
+      });
+    }
+    return gorevler;
   },
 
   buildDaySchedule: function(tasks, dayOfWeek) {

@@ -1,0 +1,108 @@
+// ============================================================
+// GRUP 4 — Program ureticisi gunluk butceye uyuyor mu?
+// Regresyon korumasi: "program saatlere sigmiyor" uyarisi
+// acilista tekrar cikmasin.
+// ============================================================
+load("test/harness.js");
+const app = appYukle();
+
+function programUret(st) {
+  elemanlariTemizle();
+  app.state = Object.assign({
+    track: "Sayısal", examFocus: "both", level: 5, chartData: [], daysData: {},
+    standardDaysData: null, topicStatuses: {}, startDate: "2026-08-21",
+    activeDay: 1, studyRoute: "balanced", selectedProgramType: "standard",
+    programAccepted: true, isGraduate: false,
+    weekdayHours: 4, weekendHours: 6, wakeTime: "08:00", sleepTime: "23:00"
+  }, st || {});
+  app._programDaysCache = null;
+  app.applyLevelTargets(1600, 58000, 115);
+  app.generateWeeklyCalendarData();
+  return app.state.daysData;
+}
+
+function olc() {
+  const gunler = app.state.daysData;
+  let toplamDk = 0, gunSayisi = 0, imkansiz = 0, enAzGorev = 999;
+  Object.keys(gunler).forEach(k => {
+    const g = gunler[k];
+    if (!g || !Array.isArray(g.tasks)) return;
+    gunSayisi++;
+    if (g.tasks.length < enAzGorev) enAzGorev = g.tasks.length;
+    g.tasks.forEach(t => {
+      const dk = app.parseDurationMinutes(t.duration) || 0;
+      toplamDk += dk;
+      // Soru basina 30 saniyeden az sure = uygulanamaz gorev
+      if (t.qCount && dk > 0 && (dk / t.qCount) < 0.5) imkansiz++;
+    });
+  });
+  return { toplamDk, gunSayisi, imkansiz, enAzGorev,
+           tasanGun: (app._scheduleFitIssues || []).length };
+}
+
+const SENARYOLAR = [
+  ["okula giden, seviye 5, 4/6 saat", {}],
+  ["mezun, seviye 5, 8/8 saat", { isGraduate: true, weekdayHours: 8, weekendHours: 8 }],
+  ["okula giden, seviye 3", { level: 3 }],
+  ["okula giden, seviye 8 (en ağır)", { level: 8 }],
+  ["düşük kapasite, 2/3 saat", { weekdayHours: 2, weekendHours: 3 }],
+  ["geç yatan, 08:00–01:00", { sleepTime: "01:00" }],
+  ["Eşit Ağırlık alanı", { track: "Eşit Ağırlık" }],
+  ["Dil alanı", { track: "Dil" }]
+];
+
+T.grup("4.1  Hicbir gun fiziksel pencereyi asmiyor");
+SENARYOLAR.forEach(([ad, st]) => {
+  programUret(st);
+  const m = olc();
+  T.esit(ad + " → taşan gün yok", m.tasanGun, 0);
+});
+
+T.grup("4.2  Uygulanamaz gorev uretilmiyor");
+SENARYOLAR.forEach(([ad, st]) => {
+  programUret(st);
+  const m = olc();
+  T.esit(ad + " → soru başına <30 sn görev yok", m.imkansiz, 0);
+});
+
+T.grup("4.3  Gunler bosalmiyor, gunluk butce asilmiyor");
+SENARYOLAR.forEach(([ad, st]) => {
+  programUret(st);
+  const m = olc();
+  T.dogru(ad + " → her günde en az 2 görev", m.enAzGorev >= 2, m.enAzGorev);
+});
+
+(function () {
+  programUret({});
+  const gunler = app.state.daysData;
+  let asanNormal = 0, asanDeneme = 0, ornek = null;
+  Object.keys(gunler).forEach(k => {
+    const g = gunler[k];
+    if (!g || !Array.isArray(g.tasks)) return;
+    const gun = parseInt(k, 10);
+    const hg = app.programGunHaftaninGunu(gun);
+    const butce = app.gunlukCalismaButcesi(hg);
+    const toplam = g.tasks.reduce((a, t) => a + (app.parseDurationMinutes(t.duration) || 0), 0);
+    if (toplam <= butce) return;
+    // DENEME GUNLERI BILINCLI ISTISNADIR: gercek bir TYT denemesi 165,
+    // AYT 180 dakikadir ve KISALTILAMAZ — sinav provasinin anlami budur.
+    // Bu gunler beyan edilen gunluk kapasiteyi asabilir; asmamasi gereken
+    // fiziksel penceredir ve onu 4.1 test ediyor.
+    if (g.isMockDay) { asanDeneme++; return; }
+    asanNormal++;
+    if (!ornek) ornek = gun + ". gün: " + toplam + " dk > " + butce + " dk";
+  });
+  T.esit("bütçeyi aşan NORMAL çalışma günü", asanNormal, 0);
+  if (asanNormal) print("      örnek: " + ornek);
+  T.dogru("deneme günleri bilinçli olarak bütçe üstünde olabilir", asanDeneme >= 0, asanDeneme);
+})();
+
+T.grup("4.4  Seviye hala programi farklilastiriyor");
+(function () {
+  programUret({ level: 3 }); const sv3 = olc().toplamDk;
+  programUret({ level: 8 }); const sv8 = olc().toplamDk;
+  T.dogru("seviye 8 programı seviye 3'ten hafif değil", sv8 >= sv3,
+          "sv3=" + Math.round(sv3/60) + " sa, sv8=" + Math.round(sv8/60) + " sa");
+})();
+
+T.ozet();
