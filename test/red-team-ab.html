@@ -1,0 +1,456 @@
+<title>YKSKoçum Red Team · A & B</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@600;700&display=swap">
+
+<style>
+  :root {
+    --ground:#0E1116; --surface:#161B22; --sunken:#1C222B;
+    --line:#2A313C; --line-soft:#222831;
+    --ink:#E9EEF5; --ink-2:#B9C3D0; --muted:#7E8A9A;
+    --accent:#E5484D; --accent-w:#2A1618;
+    --safe:#3FB68B; --safe-w:#14261F;
+    --warn:#D8A64B; --warn-w:#26200F;
+    --crit:#F0616B; --crit-w:#2C1519;
+    --struct:#6E9BE0; --struct-w:#141F2E;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 28px rgba(0,0,0,.35);
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --ground:#F4F6F9; --surface:#FFFFFF; --sunken:#EEF1F5;
+      --line:#DCE2EA; --line-soft:#E7ECF1;
+      --ink:#14181E; --ink-2:#3A4453; --muted:#67717F;
+      --accent:#C13840; --accent-w:#F9E7E8;
+      --safe:#1F7A5A; --safe-w:#E2F0EB;
+      --warn:#8A6414; --warn-w:#F6EEDA;
+      --crit:#B22F38; --crit-w:#F8E5E7;
+      --struct:#3A63A8; --struct-w:#E5EDF8;
+      --shadow:0 1px 2px rgba(20,24,30,.05), 0 8px 24px rgba(20,24,30,.06);
+    }
+  }
+  :root[data-theme="light"] {
+    --ground:#F4F6F9; --surface:#FFFFFF; --sunken:#EEF1F5;
+    --line:#DCE2EA; --line-soft:#E7ECF1;
+    --ink:#14181E; --ink-2:#3A4453; --muted:#67717F;
+    --accent:#C13840; --accent-w:#F9E7E8;
+    --safe:#1F7A5A; --safe-w:#E2F0EB;
+    --warn:#8A6414; --warn-w:#F6EEDA;
+    --crit:#B22F38; --crit-w:#F8E5E7;
+    --struct:#3A63A8; --struct-w:#E5EDF8;
+    --shadow:0 1px 2px rgba(20,24,30,.05), 0 8px 24px rgba(20,24,30,.06);
+  }
+
+  * { box-sizing:border-box; }
+  body {
+    background:var(--ground); color:var(--ink); margin:0;
+    font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size:16px; line-height:1.62; padding:0 1.25rem 5rem;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width:56rem; margin:0 auto; }
+
+  .top {
+    padding:3.25rem 0 1.5rem; border-bottom:1px solid var(--line);
+    display:flex; flex-direction:column; gap:.9rem;
+  }
+  .eyebrow {
+    font-family:"IBM Plex Mono", monospace; font-size:.72rem; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--accent); font-weight:600;
+  }
+  h1 {
+    font-family:"IBM Plex Serif", Georgia, serif; font-weight:700;
+    font-size:clamp(2rem,5vw,2.85rem); line-height:1.1; letter-spacing:-.02em;
+    margin:0; text-wrap:balance;
+  }
+  .sub { color:var(--ink-2); font-size:1.05rem; max-width:44rem; margin:0; }
+
+  .callout {
+    margin:2rem 0 0; border:1px solid var(--line); border-left:3px solid var(--accent);
+    background:var(--surface); padding:1.1rem 1.3rem; border-radius:0 8px 8px 0;
+    box-shadow:var(--shadow);
+  }
+  .callout h4 {
+    margin:0 0 .5rem; font-size:.8rem; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--accent); font-weight:700;
+  }
+  .callout p { margin:0 0 .6rem; color:var(--ink-2); font-size:.94rem; }
+  .callout p:last-child { margin:0; }
+
+  section { margin-top:3.25rem; }
+  .lyr-head { display:flex; align-items:baseline; gap:.75rem; margin-bottom:.4rem; flex-wrap:wrap; }
+  .lyr-tag {
+    font-family:"IBM Plex Mono", monospace; font-weight:600; font-size:.78rem;
+    color:var(--accent); border:1px solid var(--accent); border-radius:3px; padding:.08rem .45rem;
+  }
+  h2 {
+    font-family:"IBM Plex Serif", Georgia, serif; font-weight:600; font-size:1.55rem;
+    letter-spacing:-.01em; margin:0; text-wrap:balance;
+  }
+  .lyr-sub { color:var(--muted); font-size:.9rem; margin:.15rem 0 1.6rem; }
+
+  .card {
+    background:var(--surface); border:1px solid var(--line); border-radius:10px;
+    padding:1.25rem 1.4rem; margin-bottom:1.15rem; box-shadow:var(--shadow);
+    border-top:3px solid var(--tone, var(--muted));
+  }
+  .card.crit { --tone:var(--crit); }
+  .card.warn { --tone:var(--warn); }
+  .card.safe { --tone:var(--safe); }
+  .card.struct { --tone:var(--struct); }
+
+  .card-top { display:flex; flex-wrap:wrap; align-items:center; gap:.55rem; margin-bottom:.7rem; }
+  .fid {
+    font-family:"IBM Plex Mono", monospace; font-size:.78rem; font-weight:600; color:var(--muted);
+  }
+  .badge {
+    font-size:.66rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+    padding:.13rem .5rem; border-radius:3px;
+  }
+  .badge.crit { background:var(--crit-w); color:var(--crit); }
+  .badge.warn { background:var(--warn-w); color:var(--warn); }
+  .badge.low  { background:var(--sunken); color:var(--muted); }
+  .badge.safe { background:var(--safe-w); color:var(--safe); }
+  .badge.struct { background:var(--struct-w); color:var(--struct); }
+  .badge.fixed { background:var(--safe-w); color:var(--safe); }
+  .card h3 {
+    font-family:"IBM Plex Serif", Georgia, serif; font-size:1.12rem; font-weight:600;
+    margin:0; width:100%; text-wrap:balance;
+  }
+
+  .grid { display:grid; gap:.9rem; grid-template-columns:1fr; margin:.85rem 0 0; }
+  @media (min-width:620px) { .grid.two { grid-template-columns:1fr 1fr; } }
+  .field { }
+  .field .k {
+    font-family:"IBM Plex Mono", monospace; font-size:.68rem; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--muted); font-weight:600; display:block; margin-bottom:.2rem;
+  }
+  .field .v { font-size:.92rem; color:var(--ink-2); }
+  .field .v strong { color:var(--ink); }
+
+  .attack {
+    background:var(--sunken); border-left:2px solid var(--accent);
+    padding:.7rem .95rem; margin:.9rem 0 0; border-radius:0 6px 6px 0;
+  }
+  .attack .lbl {
+    font-family:"IBM Plex Mono", monospace; font-size:.68rem; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--accent); font-weight:700; display:block; margin-bottom:.3rem;
+  }
+  .attack p { margin:0; font-size:.9rem; color:var(--ink-2); }
+
+  code, .mono {
+    font-family:"IBM Plex Mono", monospace; font-size:.86em; background:var(--sunken);
+    padding:.06rem .32rem; border:1px solid var(--line-soft); border-radius:3px;
+  }
+  pre {
+    font-family:"IBM Plex Mono", monospace; background:var(--sunken); border:1px solid var(--line);
+    border-radius:8px; padding:1rem 1.15rem; overflow-x:auto; font-size:.83rem; line-height:1.6;
+    margin:.9rem 0 0;
+  }
+  pre code { background:none; border:none; padding:0; }
+  .cmt { color:var(--muted); }
+  .kw  { color:var(--struct); }
+  .str { color:var(--safe); }
+
+  .tw { overflow-x:auto; border:1px solid var(--line); border-radius:8px; margin:.5rem 0 0; }
+  table { border-collapse:collapse; width:100%; font-size:.88rem; min-width:34rem; }
+  th, td { text-align:left; padding:.6rem .85rem; border-bottom:1px solid var(--line-soft); vertical-align:top; }
+  thead th {
+    font-size:.68rem; letter-spacing:.07em; text-transform:uppercase; color:var(--muted);
+    background:var(--sunken); font-weight:600; white-space:nowrap;
+  }
+  tbody tr:last-child td { border-bottom:none; }
+  td.m { font-family:"IBM Plex Mono", monospace; white-space:nowrap; }
+
+  .risk { font-weight:700; }
+  .risk.h { color:var(--crit); }
+  .risk.m { color:var(--warn); }
+  .risk.l { color:var(--muted); }
+  .risk.s { color:var(--struct); }
+
+  h4.blk { font-size:.95rem; font-weight:700; margin:2rem 0 .5rem; color:var(--ink); }
+  p.lead { color:var(--ink-2); max-width:44rem; }
+  ul { color:var(--ink-2); padding-left:1.15rem; }
+  li { margin-bottom:.35rem; }
+
+  footer {
+    margin-top:4rem; padding-top:1.5rem; border-top:1px solid var(--line);
+    font-size:.83rem; color:var(--muted);
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="top">
+    <span class="eyebrow">Red Team · Defensive Testing &amp; Resilience</span>
+    <h1>YKSKoçum — Katman A &amp; B</h1>
+    <p class="sub">İş mantığı ve güvenlik katmanlarının saldırgan zihniyetiyle analizi. Her bulgu
+      gerçek koda dayanıyor ve suite'te koşan bir testle bağlandı — bu bir öneri listesi değil,
+      kırılan ve kayıt altına alınan davranışların dökümü.</p>
+  </header>
+
+  <div class="callout">
+    <h4>Önce mimari düzeltme — tehdit modeli değişir</h4>
+    <p>Brief, backend'li bir yığın (Supabase / Node) varsayıyor. YKSKoçum <strong>sunucusuz,
+      tarayıcıda çalışan, yalnızca <code>localStorage</code> kullanan statik bir uygulama.</strong>
+      Bu, B katmanının şeklini kökten değiştirir:</p>
+    <p><strong>IDOR yüzeysiz.</strong> Sunucu ve ortak veritabanı yok; her tarayıcı tek bir
+      <code>localStorage</code> silosu. "B kullanıcısının verisine ulaşmak" için ne bir kimlik,
+      ne bir <code>id</code> parametresi, ne de bir uç nokta var. İzolasyonu sağlayan şey uygulama
+      kodu değil, tarayıcının <strong>same-origin sandbox</strong>'ı.</p>
+    <p><strong>Gerçek saldırı yüzeyi terstir: istemcinin kendisi saldırganın kontrolünde.</strong>
+      Klasik "sunucuya kötü istek at" yerine buradaki tehdit "kendi tarayıcımdaki state'i değiştir"
+      olur. Bu yüzden B katmanı bulguları çoğunlukla <span class="risk s">YAPISAL</span> —
+      düzeltilecek kod hatası değil, backend gelene kadar kapatılamayan sınırlar. Testler bunları
+      "kabul edilmiş risk" olarak <strong>kayıt altına alır</strong> ki sunucu fazında kapansın.</p>
+  </div>
+
+  <!-- ============================ KATMAN A ============================ -->
+  <section>
+    <div class="lyr-head"><span class="lyr-tag">Katman A</span><h2>İş Mantığı &amp; Domain Validation</h2></div>
+    <p class="lyr-sub">Net hesabı · zamanlayıcı · müfredat algoritması — mutlu yol ve kâbus girdileri</p>
+
+    <!-- A0 net -->
+    <article class="card safe">
+      <div class="card-top"><span class="fid">A-0</span><span class="badge safe">Sağlam</span>
+        <span class="badge low">Risk: Düşük</span>
+        <h3>Net hesabı: 0.25 kuralı ve düşman girdiler</h3>
+      </div>
+      <div class="field"><span class="k">Beklenen davranış</span>
+        <span class="v"><code>net = doğru − yanlış/4</code>, 2 ondalık, <strong>negatif kırpılmaz</strong>
+        (0D/40Y → −10 doğrudur; öğrenci gerçekten ekside). Tek tanım, tüm çağrı noktaları aynı.</span></div>
+      <div class="attack"><span class="lbl">Saldırı denendi</span>
+        <p><code>netHesapla("20","8")</code>, <code>(null,null)</code>, <code>("abc","xyz")</code>,
+        <code>(Infinity,0)</code> — string/null/NaN/Infinity enjeksiyonu. Hepsi <code>Number(x)||0</code>
+        ile emiliyor; çökme yok, NaN sızmıyor.</p></div>
+      <div class="field" style="margin-top:.85rem"><span class="k">Kanıt</span>
+        <span class="v"><code>test/01-hesaplama.js</code> (31 test) + <code>test/11-yikici-a-b.js</code> §11.A.
+        Sonuç: motor sağlam.</span></div>
+    </article>
+
+    <!-- A1 BUG -->
+    <article class="card warn">
+      <div class="card-top"><span class="fid">A-1</span><span class="badge warn">Bulgu</span>
+        <span class="badge fixed">Düzeltildi</span><span class="badge low">Risk: Orta</span>
+        <h3>Deneme girişinde çapraz-alan sınırı yoktu</h3>
+      </div>
+      <p class="lead">HTML <code>max="200"</code> kaba üst sınırı yakalıyordu ama <strong>testin kendi
+        soru sayısına</strong> bakan denetim yoktu.</p>
+      <div class="grid two">
+        <div class="field"><span class="k">Kâbus senaryosu</span>
+          <span class="v"><strong>40 soruluk</strong> bir teste <strong>50 doğru</strong> girilir
+          (native <code>max=200</code>'ü geçer). Net soru sayısını aşar; karne, AI analizi ve gelişim
+          grafiği gerçek dışı değerle kirlenir. Kendi verisi olduğu için güvenlik değil
+          <strong>veri bütünlüğü</strong> sorunudur.</span></div>
+        <div class="field"><span class="k">Düzeltme</span>
+          <span class="v">Çapraz-alan denetimi: <code>doğru+yanlış ≤ qCount</code>; negatifler
+          <code>Math.max(0,·)</code> ile 0'a; süre en az 1 dk. Aşan giriş <strong>sessizce
+          düzeltilmez</strong> — açıkça reddedilip öğrenciden kontrol istenir (niyet tahmini yanlış
+          veri üretir).</span></div>
+      </div>
+      <pre><code><span class="cmt">// submitTestScore — çapraz-alan denetimi</span>
+<span class="kw">let</span> correct = parseInt(el(<span class="str">'testScoreCorrect'</span>).value,10) || 0;
+<span class="kw">let</span> wrong   = parseInt(el(<span class="str">'testScoreWrong'</span>).value,10) || 0;
+correct = Math.max(0, correct); wrong = Math.max(0, wrong);
+<span class="kw">const</span> hedef = parseInt(task.qCount,10) || 0;
+<span class="kw">if</span> (hedef > 0 && (correct + wrong) > hedef) {
+  alert(<span class="str">`doğru+yanlış (${correct+wrong}) ${hedef} soruyu aşıyor`</span>);
+  <span class="kw">return</span>;  <span class="cmt">// kayıt yazılmaz</span>
+}</code></pre>
+      <div class="field" style="margin-top:.85rem"><span class="k">Kanıt</span>
+        <span class="v"><code>test/e2e/deneme-girdi.spec.js</code> — 50/40 reddediliyor (uyarı çıkar,
+        <code>task.logged=false</code>); 30D 8Y kabul, net=28. Gerçek Chromium'da koşuyor.</span></div>
+    </article>
+
+    <!-- A2 pomodoro -->
+    <article class="card safe">
+      <div class="card-top"><span class="fid">A-2</span><span class="badge safe">Sağlam</span>
+        <span class="badge low">Risk: Orta</span>
+        <h3>Pomodoro: arka plan, offline, cihaz saati</h3>
+      </div>
+      <div class="field"><span class="k">Beklenen davranış</span>
+        <span class="v">Zamanlayıcı <strong>duvar saatine</strong> dayanır (<code>bitişTs = Date.now()
+        + kalan·1000</code>), tik saymaz. Sekme arka plana atılıp throttle edilse, telefon kilitlense
+        veya internet gitse bile bitiş anı sabit kalır — doğru tasarım.</span></div>
+      <div class="attack"><span class="lbl">Kâbus: cihaz saati manipülasyonu</span>
+        <p>Kullanıcı cihaz saatini <strong>geri</strong> alırsa <code>bitişTs − Date.now()</code>
+        büyür (seans uzar); <strong>ileri</strong> alırsa seans anında biter. Duvar-saati modelinin
+        kaçınılmaz sonucu. Kritik olan: davranış <strong>tanımlı</strong> — <code>pomoKalanSaniye()</code>
+        asla negatif dönmez (<code>Math.max(0,·)</code>), geçmiş bitiş → 0.</span></div>
+      <div class="field" style="margin-top:.85rem"><span class="k">Bakiye risk</span>
+        <span class="v">Yalnızca kendi çalışma dakikasını şişirir → analiz kirlenir. Backend geldiğinde
+        seans baş/bitiş sunucu saatiyle damgalanmalı (§ Sunucu notları).</span></div>
+    </article>
+
+    <!-- A3 mufredat -->
+    <article class="card safe">
+      <div class="card-top"><span class="fid">A-3</span><span class="badge safe">Sağlam</span>
+        <span class="badge low">Risk: Düşük</span>
+        <h3>Müfredat yüzdesi: sıfıra bölme &amp; tutarlılık</h3>
+      </div>
+      <div class="field"><span class="k">Beklenen davranış</span>
+        <span class="v"><code>yüzde = round(biten/toplam·100)</code>. Her ders grubunun
+        <code>toplam ≥ 1</code> olduğu için sıfıra bölme imkânsız; tek doğruluk kaynağı
+        <code>state.topicStatuses</code> (ölü <code>curriculumProgress</code> değil).</span></div>
+      <div class="attack"><span class="lbl">Saldırı denendi</span>
+        <p>Boş <code>topicStatuses</code> ile çağrı: hiçbir yüzde NaN/sınır-dışı değil, ilk günde
+        hepsi 0. <code>test/11-yikici-a-b.js</code> §11.A bunu doğruluyor.</p></div>
+    </article>
+  </section>
+
+  <!-- ============================ KATMAN B ============================ -->
+  <section>
+    <div class="lyr-head"><span class="lyr-tag">Katman B</span><h2>Güvenlik &amp; İzolasyon</h2></div>
+    <p class="lyr-sub">Red team perspektifi — sunucusuz gerçeklikte IDOR, yetki aşımı, veri sızıntısı</p>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th>Klasik tehdit</th><th>Bu mimaride karşılığı</th><th>Durum</th></tr></thead>
+        <tbody>
+          <tr><td>IDOR (başka kullanıcı verisi)</td><td>Sunucu/ortak DB yok; her tarayıcı tek silo, izolasyonu same-origin sandbox sağlar</td><td><span class="risk s">Yüzeysiz</span></td></tr>
+          <tr><td>Yetki aşımı (rol/paket)</td><td>Rol ve paket <code>localStorage</code>'da, istemci-otoriter — konsoldan değişir</td><td><span class="risk h">Yapısal açık</span></td></tr>
+          <tr><td>API yanıtında veri sızıntısı</td><td>API yanıtı yok; ama AI anahtarı düz metin, veli raporu URL'de</td><td><span class="risk m">Kısmi</span></td></tr>
+          <tr><td>XSS → veri hırsızlığı</td><td>İçe aktarılan içerik → bildirim → innerHTML</td><td><span class="risk s">Kapatıldı</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- B1 -->
+    <article class="card struct" style="margin-top:1.5rem">
+      <div class="card-top"><span class="fid">B-1</span><span class="badge struct">Yapısal</span>
+        <span class="badge crit">Risk: Yüksek</span>
+        <h3>Paket kısıtlaması istemci-otoriter (auth bypass)</h3>
+      </div>
+      <p class="lead">Tek satırlık konsol enjeksiyonu tüm ücretli özellikleri açar. Sunucu olmadan
+        <strong>kapatılamaz</strong> — bunu bir kod hatası gibi "düzeltmeye" çalışmak yanıltıcı olur.</p>
+      <pre><code><span class="cmt">// Saldırganın konsolu — tek satır</span>
+app.state.subscriptionTier = <span class="str">'pro_yearly'</span>; app.saveState();
+<span class="cmt">// ozellikAcikMi('analiz') artık true. Ödeme yapılmadı.</span></code></pre>
+      <div class="grid two" style="margin-top:.3rem">
+        <div class="field"><span class="k">Kâbus senaryosu</span>
+          <span class="v">Ödeme entegrasyonu bağlandığı gün, teknik bilgili bir öğrenci
+          <strong>ödemeden Pro</strong> kullanır ve bunu bir rehber olarak paylaşır. Gelir kaybı +
+          itibar.</span></div>
+        <div class="field"><span class="k">Tek gerçek çözüm</span>
+          <span class="v">Özellik yetkisi <strong>sunucuda</strong> doğrulanmalı: her korumalı işlem
+          için sunucu <code>tier</code>'ı imzalı token'dan okur. İstemci kilidi yalnızca UX'tir,
+          güvenlik sınırı değil.</span></div>
+      </div>
+      <div class="field" style="margin-top:.85rem"><span class="k">Kayıt</span>
+        <span class="v"><code>test/11-yikici-a-b.js</code> §11.B ve <code>test/09-asama3-guvenlik.js</code> —
+        "konsoldan pro açılıyor" testi bunu kalıcı olarak belgeler.</span></div>
+    </article>
+
+    <!-- B2 -->
+    <article class="card struct">
+      <div class="card-top"><span class="fid">B-2</span><span class="badge struct">Yapısal</span>
+        <span class="badge warn">Risk: Orta</span>
+        <h3>Rol yükseltme: öğrenci → koç</h3>
+      </div>
+      <div class="attack"><span class="lbl">Saldırı</span>
+        <p><code>app.state.role = 'koc'</code> → koç paneli açılır. "Admin endpoint" yok (sunucu yok),
+        ama koç arayüzü ve öğrenci-davet akışı istemci-otoriter rolle geliyor. Aynı yapısal sınır:
+        rol sunucuda tutulmalı.</p></div>
+      <div class="field" style="margin-top:.85rem"><span class="k">Bakiye risk</span>
+        <span class="v">Şu an koç modülü ağ tarafı kapalı (<code>KOC_AKTIF=false</code>) olduğu için
+        somut zarar yüzeyi yok; backend'de koç yetkisi sunucuda kapılanmalı.</span></div>
+    </article>
+
+    <!-- B3 -->
+    <article class="card struct">
+      <div class="card-top"><span class="fid">B-3</span><span class="badge struct">Yapısal</span>
+        <span class="badge warn">Risk: Orta</span>
+        <h3>Deneme süresi istemci saatiyle uzatılabiliyor</h3>
+      </div>
+      <div class="attack"><span class="lbl">Saldırı</span>
+        <p><code>app.state.trialStartDate</code> geleceğe alınırsa 7 günlük deneme hiç bitmez.
+        Yeniden kayıt bu tarihi <strong>bilerek korur</strong> (kayıt olarak süre sıfırlanamasın diye —
+        <code>startWizard</code> düzeltmesi), ama konsol yine değiştirebilir.</p></div>
+      <div class="field" style="margin-top:.85rem"><span class="k">Çözüm</span>
+        <span class="v">Deneme bitişi <strong>sunucu saatiyle</strong> hesaplanmalı; istemci tarihi
+        hiçbir yetki kararında güvenilir değildir.</span></div>
+    </article>
+
+    <!-- B4 -->
+    <article class="card warn">
+      <div class="card-top"><span class="fid">B-4</span><span class="badge warn">Bulgu</span>
+        <span class="badge low">Risk: Orta</span>
+        <h3>Veri sızıntısı: AI anahtarı düz metin, veli raporu URL'de</h3>
+      </div>
+      <ul style="margin-top:.4rem">
+        <li><strong>Gemini API anahtarı</strong> <code>localStorage['aikocum_llm_key']</code>'te
+          düz metin — same-origin her script okur. XSS'in ödülü buydu (B-5 ile ilişkili). Anahtarın
+          gittiği tek uç nokta <code>generativelanguage.googleapis.com</code> (kaynak taramasıyla
+          doğrulandı), başka yere sızmıyor.</li>
+        <li><strong>Veli raporu</strong> WhatsApp'a URL parametresiyle gidiyor → mesaj geçmişinde ve
+          tarayıcı history'de görünür. Kişisel veri URL'de taşınmamalı.</li>
+      </ul>
+      <div class="field" style="margin-top:.85rem"><span class="k">Çözüm yönü</span>
+        <span class="v">AI çağrıları backend proxy üzerinden yapılmalı (anahtar sunucuda kalır,
+        istemciye hiç inmez); veli raporu POST gövdesiyle ya da sunucu tarafı paylaşım linkiyle.</span></div>
+    </article>
+
+    <!-- B5 -->
+    <article class="card safe">
+      <div class="card-top"><span class="fid">B-5</span><span class="badge safe">Kapatıldı</span>
+        <span class="badge low">Risk: (eskiden Yüksek)</span>
+        <h3>XSS zinciri — içe aktarılan içerik → bildirim</h3>
+      </div>
+      <div class="attack"><span class="lbl">Kapatılan zincir</span>
+        <p>Sesli/foto/AI ile gelen görev adına <code>&lt;img src=x onerror=…&gt;</code> koyulur →
+        gecikme bildirimi → kaçışsız <code>innerHTML</code> → script çalışır → <code>localStorage</code>'daki
+        AI anahtarını okur. Üç sink kaçışa alındı; E2E gerçek tarayıcıda <code>pageerror</code>
+        dinleyerek doğruluyor.</p></div>
+      <pre><code><span class="cmt">// Savunma doğrulaması — §11.B</span>
+escapeHtml(<span class="str">'&lt;img src=x onerror="localStorage.getItem(...)"&gt;'</span>)
+<span class="cmt">// → "&amp;lt;img..." — &lt; ve &gt; nötrlenir, script çalışmaz</span></code></pre>
+    </article>
+  </section>
+
+  <!-- test kosum -->
+  <section>
+    <h4 class="blk">Bu iki katmanı koşan testler</h4>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Dosya</th><th>Kapsam</th><th>Test</th></tr></thead>
+        <tbody>
+          <tr><td class="m">01-hesaplama.js</td><td>Net 0.25 kuralı, küsurat, YDT/AYT ayrımı</td><td class="m">31</td></tr>
+          <tr><td class="m">11-yikici-a-b.js</td><td>Düşman girdiler, pomodoro/müfredat sınırları, B yapısal kayıt, XSS/anahtar doğrulaması</td><td class="m">21</td></tr>
+          <tr><td class="m">09-asama3-guvenlik.js</td><td>İstemci yetki sınırı, hassas veri, dış içerik</td><td class="m">36</td></tr>
+          <tr><td class="m">e2e/deneme-girdi.spec.js</td><td>Çapraz-alan denetimi (gerçek Chromium)</td><td class="m">2</td></tr>
+          <tr><td class="m">e2e/akis.spec.js</td><td>XSS zinciri gerçek tarayıcıda</td><td class="m">7</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <pre><code>node test/node-kosum.js   <span class="cmt"># 460/460 birim</span>
+npx playwright test --config=test/e2e/playwright.config.js   <span class="cmt"># 14/14 E2E</span></code></pre>
+  </section>
+
+  <!-- sunucu notlari -->
+  <section>
+    <div class="callout" style="border-left-color:var(--struct)">
+      <h4 style="color:var(--struct)">Backend fazında kapanacaklar (C–F için ön koşul)</h4>
+      <p>A ve B'nin yapısal bulguları tek bir eksende toplanıyor: <strong>istemciye güvenilemez.</strong>
+        Sunucu geldiğinde şu kurallar bulguları kapatır:</p>
+      <ul>
+        <li><strong>B-1/B-2:</strong> <code>tier</code> ve <code>role</code> her korumalı işlemde
+          sunucuda, imzalı oturumdan doğrulanır. İstemci kilidi yalnızca UX.</li>
+        <li><strong>B-3 / A-2:</strong> deneme bitişi ve pomodoro damgaları sunucu saatiyle.</li>
+        <li><strong>B-4:</strong> AI çağrıları backend proxy — anahtar istemciye hiç inmez.</li>
+        <li><strong>D/E/F (yük, E2E, regresyon):</strong> ancak gerçek bir sunucu ve veritabanı
+          olduğunda test edilebilir yüzeye kavuşur. 10.000 eşzamanlı öğrenci, IDOR fuzzing ve
+          50K+ kullanıcı dashboard yükü şu an <em>uygulanacak yer olmadığı için</em> kapsam dışı;
+          senaryolar <code>test/09-asama3</code> içinde "backend gelince koşulacak" olarak işaretli.</li>
+      </ul>
+      <p>Kısacası: <strong>A katmanı bugün tamamen test edilebilir ve büyük ölçüde sağlam</strong>
+        (tek bulgu A-1 kapatıldı). <strong>B katmanının istemci yarısı bugün, sunucu yarısı backend
+        fazında.</strong></p>
+    </div>
+  </section>
+
+  <footer>
+    Kaynak: <span class="mono">test/11-yikici-a-b.js</span>, <span class="mono">test/e2e/deneme-girdi.spec.js</span> ·
+    Mimari: vanilla JS · localStorage-only · statik hosting ·
+    Katman C–F: backend fazında.
+  </footer>
+
+</div>
