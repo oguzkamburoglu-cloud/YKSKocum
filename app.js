@@ -243,7 +243,61 @@ const app = {
   // penceresi. Ayrıca "pending" (paket seçilmedi) kilidi kalkar;
   // uygulama tüm özelliklerle açılır.
   // Ücretli sürüme geçildiğinde tek yapılacak: burayı true yapmak.
-  MONETIZATION_ENABLED: false,
+  MONETIZATION_ENABLED: true,
+
+  // ============================================================
+  // PAKETLER — rol bazli
+  // FIYATLAR ORNEKTIR. Gercek fiyatlarini burada degistir; ekranlar
+  // bu tek kaynaktan beslenir.
+  // ============================================================
+  DENEME_GUN: 7,
+  PAKETLER: {
+    ogrenci: {
+      etiket: "Öğrenci",
+      ikon: "🎓",
+      ozet: "Kendi programını kur, takip et, hatalarını kapat.",
+      ozellikler: [
+        "Sınava kalan güne göre kişisel program",
+        "Fotoğraf / PDF / sesle program aktarma",
+        "Hata defteri ve aralıklı tekrar",
+        "Deneme analizi ve net takibi",
+        "Kaynak kitap önerileri (ÖSYM verisiyle)"
+      ],
+      planlar: [
+        { id: "ogrenci_aylik", ad: "Aylık",  fiyat: 149, birim: "₺/ay" },
+        { id: "ogrenci_yillik", ad: "Yıllık", fiyat: 1190, birim: "₺/yıl", rozet: "2 ay hediye" }
+      ]
+    },
+    koc: {
+      etiket: "Koç",
+      ikon: "🧭",
+      ozet: "Öğrencilerini tek ekrandan izle, program ver.",
+      ozellikler: [
+        "Sınırsız öğrenci takibi",
+        "Aciliyete göre sıralı öğrenci panosu",
+        "Öğrenciye program hazırlama ve gönderme",
+        "Deneme ve devamlılık raporları",
+        "Öğrenci başına ilerleme geçmişi"
+      ],
+      planlar: [
+        { id: "koc_aylik", ad: "Aylık",  fiyat: 399, birim: "₺/ay" },
+        { id: "koc_yillik", ad: "Yıllık", fiyat: 3190, birim: "₺/yıl", rozet: "2 ay hediye" }
+      ]
+    }
+  },
+
+  paketBilgisi: function(tier) {
+    if (tier === "trial") return { ad: "Deneme", renk: "#f59e0b" };
+    if (tier === "free" || !tier || tier === "pending") return { ad: "Ücretsiz", renk: "var(--text-muted)" };
+    for (const rol of Object.keys(this.PAKETLER)) {
+      const p = this.PAKETLER[rol].planlar.find(x => x.id === tier);
+      if (p) return { ad: this.PAKETLER[rol].etiket + " · " + p.ad, renk: "#10b981" };
+    }
+    // Eski surumlerden kalan degerler
+    if (tier === "pro_monthly") return { ad: "PRO Aylık", renk: "#10b981" };
+    if (tier === "pro_yearly") return { ad: "PRO Yıllık", renk: "#10b981" };
+    return { ad: "Ücretsiz", renk: "var(--text-muted)" };
+  },
 
   chatState: {
     lastParsedCommand: null,
@@ -871,6 +925,7 @@ const app = {
 
   showSubscriptionModal: function() {
     if (!this.MONETIZATION_ENABLED) return;
+    this.showPaketler(this.state.role === "koc" ? "koc" : "ogrenci");
     const modal = document.getElementById("subscriptionModal");
     if (modal) {
       modal.style.display = "flex";
@@ -895,24 +950,62 @@ const app = {
     }
   },
 
+  // Paket kartlarini role gore render eder
+  showPaketler: function(rol) {
+    rol = this.PAKETLER[rol] ? rol : (this.state.role === "koc" ? "koc" : "ogrenci");
+    this._paketRol = rol;
+    const kutu = document.getElementById("paketIcerik");
+    if (!kutu) return;
+
+    ["ogrenci", "koc"].forEach(r => {
+      const b = document.getElementById("paketSekme-" + r);
+      if (!b) return;
+      const aktif = r === rol;
+      b.style.borderColor = aktif ? "var(--primary)" : "var(--border-color)";
+      b.style.background  = aktif ? "var(--ai-tint)" : "var(--bg-card)";
+      b.style.color       = aktif ? "var(--primary)" : "var(--text-main)";
+    });
+
+    const p = this.PAKETLER[rol];
+    const planlar = p.planlar.map(pl => `
+      <div class="glass-card" role="button" tabindex="0" onclick="app.upgradeToPro('${pl.id}')"
+           style="flex:1; min-width:200px; text-align:center; border:2px solid var(--border-color); cursor:pointer; padding:1.25rem;">
+        ${pl.rozet ? `<div style="font-size:0.68rem; font-weight:800; color:var(--success,#10b981); text-transform:uppercase; letter-spacing:.05em; margin-bottom:.35rem;">${pl.rozet}</div>` : ""}
+        <div style="font-family:var(--font-header); font-weight:800; font-size:1rem; margin-bottom:.3rem;">${pl.ad}</div>
+        <div style="font-size:1.6rem; font-weight:900; color:var(--primary); font-variant-numeric:tabular-nums;">${pl.fiyat}<span style="font-size:.8rem; font-weight:700; color:var(--text-muted);"> ${pl.birim}</span></div>
+      </div>`).join("");
+
+    kutu.innerHTML = `
+      <div style="text-align:center; margin-bottom:1rem;">
+        <div style="font-size:1.6rem; line-height:1;">${p.ikon}</div>
+        <p style="font-size:0.86rem; color:var(--text-muted); margin:.4rem 0 0;">${p.ozet}</p>
+      </div>
+      <ul style="list-style:none; padding:0; margin:0 0 1.25rem; display:grid; gap:.4rem;">
+        ${p.ozellikler.map(o => `<li style="font-size:0.84rem; display:flex; gap:.5rem; align-items:flex-start;"><span style="color:var(--success,#10b981); font-weight:800;">✓</span><span>${o}</span></li>`).join("")}
+      </ul>
+      <div style="display:flex; gap:1rem; flex-wrap:wrap;">${planlar}</div>`;
+  },
+
   upgradeToPro: function(plan) {
     if (plan === "trial") {
       this.state.subscriptionTier = "trial";
       this.state.trialStartDate = new Date().toISOString();
-    } else {
-      alert("Ödeme altyapısı entegre edilecek. (Seçilen Plan: " + plan + ")");
-      this.state.subscriptionTier = plan === "monthly" ? "pro_monthly" : "pro_yearly";
-    }
-    this.saveState();
-    
-    const modal = document.getElementById("subscriptionModal");
-    if (modal) {
+      this.saveState();
       this.closeModal("subscriptionModal");
-      setTimeout(() => { modal.style.display = "none"; }, 300);
+      const m = document.getElementById("subscriptionModal");
+      if (m) setTimeout(() => { m.style.display = "none"; }, 300);
+      this.showToast(`${this.DENEME_GUN} günlük ücretsiz denemen başladı.`, "success");
+      this.startMainDashboard();
+      return;
     }
-    
-    // Resume dashboard flow
-    this.startMainDashboard();
+
+    // Odeme saglayicisi henuz bagli degil. Secimi kaydedip sahte bir
+    // "PRO oldunuz" durumu yaratmak yaniltici olur; durum acikca soylenir.
+    const bilgi = this.paketBilgisi(plan);
+    this.showCoachAlert("💳 Ödeme altyapısı henüz bağlı değil",
+      `<strong>${bilgi.ad}</strong> paketini seçtin. Ödeme alabilmek için bir ödeme sağlayıcısının (iyzico, PayTR vb.) ` +
+      `sunucuya bağlanması gerekiyor — bu henüz yapılmadı, dolayısıyla şu an ücret tahsil edilemiyor.<br><br>` +
+      `Bu arada <strong>${this.DENEME_GUN} günlük ücretsiz denemeyi</strong> başlatarak tüm özellikleri kullanabilirsin.`);
   },
 
   // Initialize App
@@ -12425,6 +12518,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
   // Subscription Sim
   showSubscription: function() {
     if (!this.MONETIZATION_ENABLED) return;
+    this.showPaketler(this.state.role === "koc" ? "koc" : "ogrenci");
     this.openModal("subscriptionModal");
   },
 
@@ -14478,11 +14572,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     const chipEl = document.getElementById("headerTierText");
     if (!chipEl) return;
     const t = this.state.subscriptionTier;
-    if (t === "trial") chipEl.textContent = "Deneme";
-    else if (t === "pro_monthly") chipEl.textContent = "PRO Aylık";
-    else if (t === "pro_yearly") chipEl.textContent = "PRO Yıllık";
-    else if (t === "free") chipEl.textContent = "Ücretsiz";
-    else chipEl.textContent = "Paket Seç";
+    chipEl.textContent = (t && t !== "pending") ? this.paketBilgisi(t).ad : "Paket Seç";
   },
 
   updateHeaderStats: function() {
