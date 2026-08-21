@@ -2678,6 +2678,17 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     // bilerek sifirlanmiyor.
     this.state.diagnosticAccuracy = null;
     this.state.selectedProgramType = "standard";
+    // KOK NEDEN: programAccepted burada sifirlanmiyordu. Ayni cihazda
+    // daha once bir kez program kabul edildiyse (ya da eski otomatik
+    // uretim doneminden damga kaldiysa) yeni kayitta damga true kaliyor,
+    // startMainDashboard "kabul edilmis ama program bos" gorup programi
+    // KENDILIGINDEN yeniden uretiyordu: ogrenci hicbir sey secmedigi
+    // halde dolu programla, brifing bildirimiyle ve kapasite uyarisiyla
+    // karsilasiyordu.
+    this.state.programAccepted = false;
+    this.state.uretilenToplamSaat = 0;
+    this.state.notifications = [];
+    this.state.generatedForLevel = null;
     this.state.daysData = {};
     this.state.standardDaysData = {};
     this.state.customDaysData = {};
