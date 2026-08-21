@@ -16106,8 +16106,21 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     if (!this._taslak) return;
     const taslak = this._taslak;
 
-    if (!this.isPlanning) this.plannerCreateNewProgramFromScratch();
-    if (!this.plannerBuffer) this.plannerBuffer = {};
+    // Onaylanan taslak dogrudan yeni bir programa yazilir.
+    // Eskiden burada plannerCreateNewProgramFromScratch() cagriliyordu:
+    // "Onayla" dendigi anda "Kendi Programimi Olustur" ekrani aciliyordu.
+    // Ustelik o ekran tampona AI standart planini kopyaladigi icin sesle
+    // okunan gunler baska bir planin icine karisiyor, kullanici da
+    // programin kaydedildigini saniyordu - oysa "Programi Kaydet"e
+    // basilmadikca hicbir sey kaydedilmiyordu. Artik planlayici acilmaz;
+    // aktarim, sorular yanitlandiktan sonra kendi programi olarak kaydedilir.
+    this.isPlanning = false;
+    this.plannerEditingProgramId = null;
+    this._aktarimModu = true;
+    this.plannerBuffer = {};
+    for (let d = 1; d <= this.PROGRAM_DAYS; d++) {
+      this.plannerBuffer[d] = { completed: false, tasks: [], schedule: [] };
+    }
 
     const gunNolar = Object.keys(taslak.gunler).map(Number).sort((a, b) => a - b);
     let toplam = 0;
@@ -16122,17 +16135,66 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     this._taslak = null;
     this.closeModal("importDraftModal");
 
-    const ilkGun = gunNolar[0] || 1;
-    const daySelect = document.getElementById("plannerDaySelect");
-    if (daySelect) daySelect.value = String(ilkGun);
-    this.plannerSelectDay(ilkGun);
-
     this.announceProgramImport({
       taskCount: toplam,
       importedDays: gunNolar,
       sureliGorev: taslak.sureliGorev,
       suresizGorev: taslak.suresizGorev
     });
+  },
+
+  // Aktarimi kendi programi olarak kaydeder ve aktif hale getirir.
+  // Sesli/foto/metin aktariminin son adimi budur: buradan sonra
+  // kullanicidan hicbir sey beklenmez, program dogrudan yururluge girer.
+  aktarimiKaydet: function() {
+    if (!this._aktarimModu || !this.plannerBuffer) return false;
+
+    const kopya = JSON.parse(JSON.stringify(this.plannerBuffer));
+    let toplamGorev = 0;
+    Object.keys(kopya).forEach(k => {
+      const gun = kopya[k];
+      if (!gun || !Array.isArray(gun.tasks) || gun.tasks.length === 0) return;
+      toplamGorev += gun.tasks.length;
+      if (!Array.isArray(gun.schedule) || gun.schedule.length === 0) {
+        gun.schedule = this.buildDaySchedule(gun.tasks, this.programGunHaftaninGunu(parseInt(k, 10)));
+      }
+    });
+
+    const baslangic = this.state.startDate || this.yerelTarih();
+    const prog = {
+      id: `custom_prog_${Date.now()}`,
+      name: this.generateUniqueProgramName(),
+      startDate: baslangic,
+      repetition: "none",
+      daysData: kopya
+    };
+    this.state.savedPrograms.push(prog);
+    this.state.activeCustomProgramId = prog.id;
+    this.state.daysData = prog.daysData;
+    this.state.customDaysData = prog.daysData;
+    this.state.startDate = baslangic;
+    this.state.selectedProgramType = "custom";
+    this.state.activeDay = 1;
+    this.state.activeWeek = 1;
+
+    this.plannerBuffer = null;
+    this._aktarimModu = false;
+    this.isPlanning = false;
+
+    this.closeModal("customProgramPlannerModal");
+    this.syncCustomProgramListSelector();
+    this.syncProgramTypeUI("custom");
+    this.calculateFocusScore();
+    this.renderDashboard();
+    this.renderTodayPanel();
+    this.renderDetailedMonthlyCalendar("detailedMonthlyGridContainer", true);
+    this.renderCurriculumMap();
+    this.updateHeaderStats();
+    this.saveState();
+    this.switchTab("today");
+
+    this.showToast(`"${prog.name}" oluşturuldu ve aktif programın oldu — ${toplamGorev} görev.`, "success");
+    return true;
   },
 
   // Aktarim sonrasi tek ekran: ozet + eksik gunler + saatler.
@@ -16163,7 +16225,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     const govde = document.getElementById("importFollowUpBody");
     if (!govde) {
       // Modal yoksa eski davranisa dus (islevsiz kalmasin)
-      this.showToast(`${gunler.length} güne ${sonuc.taskCount} görev aktarıldı.`, "success");
+      this.aktarimiKaydet();
       return;
     }
 
@@ -16241,8 +16303,8 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     }
 
     if (html === "") {
-      // Sorulacak bir sey yok: sessizce bilgilendir, ekran acma.
-      this.showToast(`${gunler.length} güne ${sonuc.taskCount} görev aktarıldı.`, "success");
+      // Sorulacak bir sey yok: dogrudan kaydet, ekran acma.
+      this.aktarimiKaydet();
       return;
     }
 
@@ -16252,7 +16314,9 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
 
   importFollowUpSkip: function() {
     this.closeModal("importFollowUpModal");
-    this.showToast("Aktarım olduğu gibi bırakıldı. Planlayıcıdan düzenleyebilirsin.", "info");
+    // "Simdilik gec" programi askida birakmamali: okunan gunler oldugu
+    // gibi kaydedilir, kullanici sonradan planlayicidan duzenleyebilir.
+    this.aktarimiKaydet();
   },
 
   importFollowUpApply: function() {
@@ -16380,12 +16444,10 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     }
 
     this.closeModal("importFollowUpModal");
-    this.plannerSelectDay(gunler[0] || 1);
-    this.saveState();
-    this.showToast(
-      yapilanlar.length ? "Uygulandı: " + yapilanlar.join(", ") + "." : "Değişiklik yapılmadı.",
-      "success"
-    );
+    this.aktarimiKaydet();
+    if (yapilanlar.length) {
+      this.showToast("Uygulandı: " + yapilanlar.join(", ") + ".", "success");
+    }
   },
 
   // Bir gorevin hangi sinava ait oldugunu belirler.

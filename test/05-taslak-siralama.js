@@ -101,4 +101,71 @@ T.grup("5.4  Mobil destegi — kaynak denetimi");
   T.dogru("setPointerCapture ile kayıp hareket önleniyor", src.indexOf("setPointerCapture") !== -1, true);
 })();
 
+// ============================================================
+// 5.5  ONAY AKISI
+// Regresyon: "Onayla ve Programa Ekle" dendiginde uygulama
+// plannerCreateNewProgramFromScratch() cagirip "Kendi Programimi
+// Olustur" ekranini aciyordu. Kullanici programini zaten sesle
+// olusturmusken ayni is bir kez daha soruluyordu; ustelik tampona
+// AI standart plani kopyalandigi icin okunan gunler baska bir
+// planin icine karisiyor ve "Programi Kaydet"e basilmadikca
+// hicbir sey kaydedilmiyordu.
+// ============================================================
+T.grup("5.5  Onay akisi — planlayici acilmamali");
+
+(function () {
+  kur(UC_BIR);
+  elemanEkle("importFollowUpBody");
+  elemanEkle("importFollowUpSummary");
+  app.state.savedPrograms = [];
+  app.state.standardDaysData = { 1: { completed: false, tasks: [gorev("AI-1"), gorev("AI-2")] } };
+  app.state.activeCustomProgramId = null;
+  app.state.selectedProgramType = "standard";
+
+  const acilan = [];
+  app.openModal = function (id) { acilan.push(id); };
+  app.closeModal = function () {};
+  app.showToast = function () {};
+  ["renderDashboard", "renderTodayPanel", "renderDetailedMonthlyCalendar", "renderCurriculumMap",
+   "updateHeaderStats", "saveState", "switchTab", "syncCustomProgramListSelector",
+   "syncProgramTypeUI", "calculateFocusScore", "renderMonthlyCalendarGrid",
+   "plannerSelectDay", "plannerUpdateDaySelectDates", "scheduleWeeklyRenewalReminder"]
+    .forEach(ad => { app[ad] = function () {}; });
+
+  app.confirmImportDraft();
+
+  T.dogru("planlayici (customProgramPlannerModal) acilmadi",
+          acilan.indexOf("customProgramPlannerModal") === -1, true);
+  T.dogru("isPlanning acik kalmadi", app.isPlanning === false, true);
+
+  const tamponGunler = Object.keys(app.plannerBuffer || {})
+    .filter(k => app.plannerBuffer[k].tasks.length > 0).map(Number).sort((a, b) => a - b);
+  T.esit("tampona yalnizca okunan gunler yazildi", tamponGunler.join(","), "1,2");
+  T.dogru("AI standart plani tampona karismadi",
+          JSON.stringify(app.plannerBuffer).indexOf("AI-1") === -1, true);
+})();
+
+(function () {
+  // Sorular yanitlanmadan da program kaydedilmeli ("Simdilik gec").
+  kur(UC_BIR);
+  app.state.savedPrograms = [];
+  app.state.standardDaysData = {};
+  app.openModal = function () {};
+  app.closeModal = function () {};
+  app.showToast = function () {};
+  app.confirmImportDraft();
+  app._sonAktarim = { importedDays: [1, 2], taskCount: 4 };
+  app.importFollowUpSkip();
+
+  T.esit("program kaydedildi", (app.state.savedPrograms || []).length, 1);
+  T.esit("aktif program tipi", app.state.selectedProgramType, "custom");
+  T.dogru("aktif program kimligi atandi",
+          app.state.activeCustomProgramId === app.state.savedPrograms[0].id, true);
+  const kayitli = app.state.savedPrograms[0].daysData;
+  T.esit("1. gun gorev sayisi", kayitli[1].tasks.length, 3);
+  T.dogru("1. gunun saat akisi kuruldu", (kayitli[1].schedule || []).length > 0, true);
+  T.dogru("tampon serbest birakildi", app.plannerBuffer === null, true);
+  T.dogru("aktarim modu kapandi", app._aktarimModu === false, true);
+})();
+
 T.ozet();
