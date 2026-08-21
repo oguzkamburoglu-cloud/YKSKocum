@@ -5074,7 +5074,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
         const before = dayData.tasks.length;
         dayData.tasks = dayData.tasks.filter(t => !t.id.startsWith("rep_"));
         if (dayData.tasks.length !== before) {
-          dayData.schedule = this.buildDaySchedule(dayData.tasks, dayNum % 7);
+          dayData.schedule = this.buildDaySchedule(dayData.tasks, this.programGunHaftaninGunu(dayNum));
         }
       }
     }
@@ -5170,7 +5170,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
             noSource: isOdt,
             sourceTier: rep.type === "leitner_1" ? 0 : 1
           }));
-          dayData.schedule = this.buildDaySchedule(dayData.tasks, dueDay % 7);
+          dayData.schedule = this.buildDaySchedule(dayData.tasks, this.programGunHaftaninGunu(dueDay));
         }
       }
     });
@@ -5417,7 +5417,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
         .map(t => ({ task: t, score: this.computeTaskPriorityScore(t, this.state.activeDay) || 0 }))
         .sort((a, b) => b.score - a.score);
 
-      const dayOfWeek = nextDayNum % 7;
+      const dayOfWeek = this.programGunHaftaninGunu(nextDayNum);
       const capacityMinutes = this.dailyCapacityMinutes(dayOfWeek);
       const alreadyScheduled = nextDayData.tasks.reduce((sum, t) => sum + this.parseDurationMinutes(t.duration), 0);
       let remaining = capacityMinutes ? Math.max(0, capacityMinutes - alreadyScheduled) : Infinity;
@@ -6920,7 +6920,8 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     Object.entries(this.state.daysData || {}).forEach(([d, dd]) => {
       if (!dd.tasks || dd.tasks.length === 0) return;
       const c = dd.tasks.filter(t => t.completed).length;
-      if (parseInt(d) % 7 === 0) { sunCompleted += c; sunTotal += dd.tasks.length; }
+      // Gercek takvimde Pazar mi? (0 = Pazar)
+      if (this.programGunHaftaninGunu(parseInt(d)) === 0) { sunCompleted += c; sunTotal += dd.tasks.length; }
       else { wdCompleted += c; wdTotal += dd.tasks.length; }
     });
     const sunRate = sunTotal > 0 ? sunCompleted / sunTotal : null;
@@ -7039,7 +7040,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       });
       changed = true;
     });
-    if (changed) dayData.schedule = this.buildDaySchedule(dayData.tasks, dayNum % 7);
+    if (changed) dayData.schedule = this.buildDaySchedule(dayData.tasks, this.programGunHaftaninGunu(dayNum));
   },
 
   // FEATURE 2 — GitHub tarzı tamamlama ısı haritası (son ~35 gün).
@@ -7120,7 +7121,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
 
     const sunRatios = [];
     for (let d = windowStart; d <= activeDay; d++) {
-      if (d % 7 !== 0) continue;
+      if (this.programGunHaftaninGunu(d) !== 0) continue;   // yalnizca gercek Pazar
       const dd = this.state.daysData[d];
       if (dd && dd.tasks && dd.tasks.length) sunRatios.push(dd.tasks.filter(t => t.completed).length / dd.tasks.length);
     }
@@ -7271,8 +7272,10 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       if (dayData && dayData.tasks && dayData.tasks.length > 0) {
         let tasks = dayData.tasks;
         
-        // A. If it's a Sunday (dayNum % 7 === 0), reduce load (Pazar performansı)
-        if (dayNum % 7 === 0) {
+        // A. Gercek takvimde Pazar ise yuku azalt (Pazar performansi).
+        //    Eskiden "dayNum % 7" kullaniliyordu; bu takvim Pazari degil,
+        //    programin 7. katiydi ve uretici ile celisiyordu.
+        if (this.programGunHaftaninGunu(dayNum) === 0) {
           const lightTasks = tasks.filter(t => t.completed || t.subject === "Rehberlik" || t.subject === "Paragraf" || (t.label || "").includes("Tekrar"));
           if (lightTasks.length < tasks.length) {
             dayData.tasks = lightTasks;
@@ -9490,7 +9493,7 @@ normalizeClause: function(clause) {
       const total = dayData.tasks.reduce((sum, t) => sum + this.parseDurationMinutes(t.duration), 0);
       if (total > 0) return total;
     }
-    return this.dailyCapacityMinutes((dayNum || 1) % 7) || 180;
+    return this.dailyCapacityMinutes(this.programGunHaftaninGunu(dayNum || 1)) || 180;
   },
 
   // Kullanıcı "AI Tahsis Motoru" kartından TYT/AYT dengesini elle ayarlarsa
@@ -11577,12 +11580,12 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     if (pool.length === 0 && dueReps.length === 0) {
       if (existingIdx !== -1) {
         dayData.tasks.splice(existingIdx, 1);
-        dayData.schedule = this.buildDaySchedule(dayData.tasks, targetDay % 7);
+        dayData.schedule = this.buildDaySchedule(dayData.tasks, this.programGunHaftaninGunu(targetDay));
       }
       return;
     }
 
-    const dayOfWeek = targetDay % 7;
+    const dayOfWeek = this.programGunHaftaninGunu(targetDay);
     const capacityMinutes = this.dailyCapacityMinutes(dayOfWeek) || 180;
     const otherMinutes = dayData.tasks.reduce((sum, t) => t.id === sessionId ? sum : sum + this.parseDurationMinutes(t.duration), 0);
     const remaining = Math.max(0, capacityMinutes - otherMinutes);
@@ -13734,7 +13737,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
       const dayData = this.plannerBuffer[dayNum];
       if (dayData) {
         dayData.tasks = dayData.tasks.filter(t => t.id !== taskId);
-        dayData.schedule = this.buildDaySchedule(dayData.tasks, parseInt(dayNum, 10) % 7);
+        dayData.schedule = this.buildDaySchedule(dayData.tasks, this.programGunHaftaninGunu(parseInt(dayNum, 10)));
       }
       this.renderDashboard();
       this.renderMonthlyCalendarGrid();
@@ -13745,7 +13748,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     if (!dayData) return;
 
     dayData.tasks = dayData.tasks.filter(t => t.id !== taskId);
-    dayData.schedule = this.buildDaySchedule(dayData.tasks, parseInt(dayNum, 10) % 7);
+    dayData.schedule = this.buildDaySchedule(dayData.tasks, this.programGunHaftaninGunu(parseInt(dayNum, 10)));
 
     if (this.state.selectedProgramType === "custom") {
       this.state.customDaysData = JSON.parse(JSON.stringify(this.state.daysData));
@@ -13859,7 +13862,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     section.style.display = "block";
 
     // Saatlik program: mola/yemek dahil zaman çizelgesini hesapla ve tampona yaz (kaydedince kalıcı olur)
-    const schedule = this.buildDaySchedule(tasks, parsedDay % 7);
+    const schedule = this.buildDaySchedule(tasks, this.programGunHaftaninGunu(parsedDay));
     dayData.schedule = schedule;
 
     schedule.forEach(entry => {
@@ -13913,7 +13916,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
       return;
     }
     dayData.tasks.sort((a, b) => (this.computeTaskPriorityScore(b, parsedDay) || 0) - (this.computeTaskPriorityScore(a, parsedDay) || 0));
-    dayData.schedule = this.buildDaySchedule(dayData.tasks, parsedDay % 7);
+    dayData.schedule = this.buildDaySchedule(dayData.tasks, this.programGunHaftaninGunu(parsedDay));
     this.plannerSelectDay(parsedDay);
     this.showToast("Görevler AI öncelik skoruna göre yeniden sıralandı.", "success");
   },
@@ -14173,7 +14176,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     for (const dayKey in this.plannerBuffer) {
       const dData = this.plannerBuffer[dayKey];
       if (dData && dData.tasks && dData.tasks.length) {
-        dData.schedule = this.buildDaySchedule(dData.tasks, parseInt(dayKey, 10) % 7);
+        dData.schedule = this.buildDaySchedule(dData.tasks, this.programGunHaftaninGunu(parseInt(dayKey, 10)));
       }
     }
 
@@ -15850,7 +15853,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
 
         // Sureyi kullanici belirtmisse dokunulmaz; yalnizca varsayilanla
         // doldurulanlar gunluk kapasitenin kalanina esit paylastirilir.
-        const kapasite = this.dailyCapacityMinutes(g % 7);
+        const kapasite = this.dailyCapacityMinutes(this.programGunHaftaninGunu(g));
         const sabitler = gun.tasks.filter(t => t.sureKaynagi === "metin");
         const esnekler = gun.tasks.filter(t => t.sureKaynagi !== "metin");
         if (esnekler.length > 0) {
@@ -15872,7 +15875,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
           });
         }
 
-        gun.schedule = this.buildDaySchedule(gun.tasks, g % 7);
+        gun.schedule = this.buildDaySchedule(gun.tasks, this.programGunHaftaninGunu(g));
         saatlenen++;
       });
       yapilanlar.push(`${sureDegisen} görevin süresi kapasitene göre ayarlandı, ${saatlenen} günün saat akışı kuruldu`);
@@ -15900,7 +15903,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
           this.plannerBuffer[hedef] = {
             completed: false,
             tasks: kopya,
-            schedule: this.buildDaySchedule(kopya, hedef % 7)
+            schedule: this.buildDaySchedule(kopya, this.programGunHaftaninGunu(hedef))
           };
           kopyalanan++;
         });
@@ -16368,7 +16371,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     };
 
     activeDayData.tasks.push(newTask);
-    activeDayData.schedule = this.buildDaySchedule(activeDayData.tasks, this.state.activeDay % 7);
+    activeDayData.schedule = this.buildDaySchedule(activeDayData.tasks, this.programGunHaftaninGunu(this.state.activeDay));
 
     if (this.state.selectedProgramType === "custom") {
       // Keep active program savedPrograms copy up to date

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ykskocum-v82-temiz-baslangic';
+const CACHE_NAME = 'ykskocum-v83-takvim';
 const urlsToCache = [
   './',
   './index.html',

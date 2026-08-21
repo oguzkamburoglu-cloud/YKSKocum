@@ -154,7 +154,48 @@ T.grup("4.4  Gunluk butce DOLDURULUYOR (bos kapasite kalmıyor)");
           saat >= hedef * 0.85, saat + " sa / hedef " + hedef);
 })();
 
-T.grup("4.5  Seviye hala programi farklilastiriyor");
+T.grup("4.5  Haftanin gunu HER YERDE ayni hesaplaniyor");
+
+// Uretici gercek takvim gunune gecirildi ama cizelgeyi yeniden kuran
+// yollar (tekrar ekleme, gorev tasima, planlayici kaydi) "gun % 7"
+// kullanmaya devam ediyordu. Ayni gun iki farkli haftanin gunu
+// sayilinca cizelge yanlis saatte basliyordu: gercek Cumartesi'ye
+// hafta ici baslangici (16:00) uygulaniyordu.
+(function () {
+  const src = readFile("app.js");
+  // buildDaySchedule / dailyCapacityMinutes cagrilarinda "% 7" kalmamali
+  const kalan = (src.match(/(?:buildDaySchedule|dailyCapacityMinutes)\([^)]*%\s*7/g) || []);
+  T.esit("çizelge/kapasite çağrılarında '% 7' kalmadı", kalan.length, 0);
+})();
+
+(function () {
+  // Uretilen programda her gunun cizelgesi, o gunun GERCEK haftanin
+  // gunune gore kurulmus olmali: hafta sonu gunleri sabah baslar.
+  programUret({});
+  const gunler = app.state.daysData;
+  let haftaSonuSabah = 0, haftaSonuToplam = 0, yanlis = null;
+  Object.keys(gunler).forEach(k => {
+    const g = gunler[k];
+    if (!g || !Array.isArray(g.schedule) || g.schedule.length === 0) return;
+    const gun = parseInt(k, 10);
+    const hg = app.programGunHaftaninGunu(gun);
+    if (hg !== 0 && hg !== 6) return;          // yalnizca hafta sonu
+    if (g.isMockDay || g.isFinalPhase) return;
+    haftaSonuToplam++;
+    const ilkSaatli = g.schedule.filter(e => e.startTime)[0];
+    if (!ilkSaatli) { haftaSonuSabah++; return; }   // ogun/mola yoksa sayma
+    const saat = parseInt(String(ilkSaatli.startTime).split(":")[0], 10);
+    if (saat < 16) haftaSonuSabah++;
+    else if (!yanlis) yanlis = gun + ". gün (" + ilkSaatli.startTime + ")";
+  });
+  if (haftaSonuToplam > 0) {
+    T.dogru("hafta sonu günleri hafta içi saatiyle başlamıyor",
+            haftaSonuSabah === haftaSonuToplam,
+            yanlis || (haftaSonuSabah + "/" + haftaSonuToplam));
+  }
+})();
+
+T.grup("4.6  Seviye hala programi farklilastiriyor");
 (function () {
   programUret({ level: 3 }); const sv3 = olc().toplamDk;
   programUret({ level: 8 }); const sv8 = olc().toplamDk;
