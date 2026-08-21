@@ -3774,3 +3774,61 @@ a:focus-visible {
 .wz-nav .btn { min-width: 130px; }
 .wz-skip { background: none; border: none; color: var(--text-muted); font-family: inherit;
   font-size: .82rem; font-weight: 700; cursor: pointer; text-decoration: underline; }
+
+
+/* ============================================================
+   AKTARIM TASLAGI — gorev satiri
+   Satir eskiden tek satirlik yatay flex idi; 375 px'de etiket
+   dort satira bolunuyor ve liste yatay tasiyordu. Artik grid:
+   dar ekranda sure/sil alt satira iner.
+   ============================================================ */
+.taslak-gorev {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto auto;
+  grid-template-areas: "tut ok metin sure sil";
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.7rem;
+  margin: 0.35rem 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+.taslak-gorev .taslak-tut   { grid-area: tut; }
+.taslak-gorev .taslak-ok    { grid-area: ok; }
+.taslak-gorev .taslak-metin { grid-area: metin; min-width: 0; }
+.taslak-gorev .taslak-sure  { grid-area: sure; }
+.taslak-gorev .taslak-sil   { grid-area: sil; }
+
+.taslak-gorev .taslak-saat {
+  font-family: var(--font-header);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--primary);
+  white-space: nowrap;
+  display: block;
+}
+.taslak-gorev .taslak-ad {
+  font-size: 0.82rem;
+  line-height: 1.35;
+  display: block;
+  overflow-wrap: anywhere;
+}
+.taslak-gorev .taslak-konu {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 560px) {
+  .taslak-gorev {
+    grid-template-columns: auto auto 1fr auto;
+    grid-template-areas:
+      "tut ok metin sil"
+      "tut ok sure sure";
+    row-gap: 0.4rem;
+  }
+  .taslak-gorev .taslak-sure { justify-self: start; }
+}

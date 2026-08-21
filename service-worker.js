@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ykskocum-v75-kapasite';
+const CACHE_NAME = 'ykskocum-v77-mobil-taslak';
 const urlsToCache = [
   './',
   './index.html',

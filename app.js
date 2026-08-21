@@ -15219,24 +15219,43 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
       const gorevler = this._taslak.gunler[gunNo];
       const saatler = this.taslakSaatleriHesapla(gunNo, gorevler);
       const tarih = this.taslakGunTarihi(gunNo);
+      const sonGun = gunNolar[gunNolar.length - 1];
+      const ilkGun = gunNolar[0];
       const satirlar = gorevler.map((g, i) => `
-        <li class="taslak-gorev" draggable="true"
-            data-gun="${gunNo}" data-idx="${i}"
-            style="display:flex; align-items:center; gap:0.6rem; padding:0.55rem 0.7rem; margin:0.3rem 0;
-                   background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; cursor:grab;">
-          <i class="fa-solid fa-grip-vertical" style="color:var(--text-muted); font-size:0.8rem;"></i>
-          <span style="font-family:var(--font-header); font-variant-numeric:tabular-nums; font-size:0.75rem;
-                       color:var(--primary); font-weight:800; white-space:nowrap;">${saatler[i].bas}–${saatler[i].bit}</span>
-          <span style="flex:1; font-size:0.82rem; line-height:1.35;">${g.label}<br>
-            <span style="color:var(--text-muted); font-size:0.72rem;">${g.topic || ""}</span>
+        <li class="taslak-gorev" data-gun="${gunNo}" data-idx="${i}">
+          <span class="taslak-tut" title="Sürükleyerek taşı"
+                style="display:flex; align-items:center; padding:0.35rem 0.15rem; cursor:grab;
+                       touch-action:none; color:var(--text-muted); font-size:0.85rem;">
+            <i class="fa-solid fa-grip-vertical"></i>
           </span>
-          <input type="number" min="10" max="240" step="5" value="${this.parseDurationMinutes(g.duration) || 45}"
-                 onchange="app.taslakSureDegistir(${gunNo}, ${i}, this.value)"
-                 style="width:62px; flex:0 0 auto; padding:0.25rem 0.35rem; font-size:0.75rem; text-align:center;
-                        border:1px solid var(--border-color); border-radius:6px; background:var(--bg-sub); color:var(--text-main);">
-          <span style="font-size:0.7rem; color:var(--text-muted);">dk</span>
-          <button onclick="app.taslakGorevSil(${gunNo}, ${i})" title="Görevi çıkar"
-                  style="border:none; background:none; color:var(--danger); cursor:pointer; font-size:0.85rem; padding:0.2rem;">
+          <span class="taslak-ok" style="display:flex; flex-direction:column; gap:2px;">
+            <button type="button" aria-label="Yukarı taşı" title="Yukarı taşı"
+              ${(gunNo === ilkGun && i === 0) ? "disabled" : ""}
+              onclick="app.taslakGorevKaydir(${gunNo}, ${i}, -1)"
+              style="border:1px solid var(--border-color); background:var(--bg-sub); color:var(--text-main);
+                     border-radius:4px; width:24px; height:18px; line-height:1; cursor:pointer; font-size:0.6rem; padding:0;">▲</button>
+            <button type="button" aria-label="Aşağı taşı" title="Aşağı taşı"
+              ${(gunNo === sonGun && i === gorevler.length - 1) ? "disabled" : ""}
+              onclick="app.taslakGorevKaydir(${gunNo}, ${i}, 1)"
+              style="border:1px solid var(--border-color); background:var(--bg-sub); color:var(--text-main);
+                     border-radius:4px; width:24px; height:18px; line-height:1; cursor:pointer; font-size:0.6rem; padding:0;">▼</button>
+          </span>
+          <span class="taslak-metin">
+            <span class="taslak-saat">${saatler[i].bas}–${saatler[i].bit}</span>
+            <span class="taslak-ad">${g.label}</span>
+            ${g.topic ? `<span class="taslak-konu">${g.topic}</span>` : ""}
+          </span>
+          <span class="taslak-sure" style="display:inline-flex; align-items:center; gap:0.3rem;">
+            <input type="number" min="10" max="240" step="5" aria-label="Süre (dakika)"
+                   value="${this.parseDurationMinutes(g.duration) || 45}"
+                   onchange="app.taslakSureDegistir(${gunNo}, ${i}, this.value)"
+                   style="width:58px; padding:0.25rem 0.3rem; font-size:0.75rem; text-align:center;
+                          border:1px solid var(--border-color); border-radius:6px; background:var(--bg-sub); color:var(--text-main);">
+            <span style="font-size:0.7rem; color:var(--text-muted);">dk</span>
+          </span>
+          <button class="taslak-sil" type="button" onclick="app.taslakGorevSil(${gunNo}, ${i})"
+                  aria-label="Görevi çıkar" title="Görevi çıkar"
+                  style="border:none; background:none; color:var(--danger); cursor:pointer; font-size:0.9rem; padding:0.25rem;">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </li>`).join("");
@@ -15257,35 +15276,115 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     this.bindTaslakSurukle();
   },
 
-  // Surukle-birak: gun icinde siralama, gunler arasi tasima.
+  // ============================================================
+  // TASLAK SURUKLE-BIRAK — Pointer Events
+  // ------------------------------------------------------------
+  // Eskiden HTML5 drag/drop kullaniliyordu. O olaylar mobil
+  // tarayicilarda HIC tetiklenmez; uygulama telefona kurulan bir PWA
+  // oldugu icin ozellik hedef cihazda tumuyle calismiyordu.
+  // Pointer Events fare, dokunma ve kalemi TEK kod yoluyla karsilar.
+  // Ayrica her gorevde yukari/asagi dugmeleri var: klavye ile ve
+  // suruklemenin zor oldugu kucuk ekranlarda calisir.
+  // ============================================================
   bindTaslakSurukle: function() {
     const govde = document.getElementById("importDraftBody");
     if (!govde) return;
 
-    govde.querySelectorAll(".taslak-gorev").forEach(el => {
-      el.addEventListener("dragstart", (e) => {
-        this._surukleKaynak = { gun: +el.dataset.gun, idx: +el.dataset.idx };
-        el.style.opacity = "0.45";
-        try { e.dataTransfer.setData("text/plain", "gorev"); } catch (err) {}
-        if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
+    const temizle = () => {
+      govde.querySelectorAll(".taslak-gorev").forEach(e => {
+        e.style.opacity = "";
+        e.style.outline = "";
+        e.style.outlineOffset = "";
       });
-      el.addEventListener("dragend", () => { el.style.opacity = ""; });
-      el.addEventListener("dragover", (e) => { e.preventDefault(); });
-      el.addEventListener("drop", (e) => {
-        e.preventDefault(); e.stopPropagation();
-        this.taslakTasi(this._surukleKaynak, { gun: +el.dataset.gun, idx: +el.dataset.idx });
-      });
-    });
+      govde.querySelectorAll(".taslak-gun").forEach(e => { e.style.background = ""; });
+    };
 
-    // Gun kutusunun bosluguna birakinca gunun sonuna eklenir
-    govde.querySelectorAll(".taslak-gun").forEach(kutu => {
-      kutu.addEventListener("dragover", (e) => { e.preventDefault(); });
-      kutu.addEventListener("drop", (e) => {
-        e.preventDefault();
-        const gun = +kutu.dataset.gun;
-        this.taslakTasi(this._surukleKaynak, { gun: gun, idx: (this._taslak.gunler[gun] || []).length });
+    // Isaretcinin altindaki hedefi bulur: once gorev, yoksa gun kutusu.
+    const hedefBul = (x, y) => {
+      const el = document.elementFromPoint(x, y);
+      if (!el) return null;
+      const gorev = el.closest(".taslak-gorev");
+      if (gorev) return { gun: +gorev.dataset.gun, idx: +gorev.dataset.idx, el: gorev };
+      const gun = el.closest(".taslak-gun");
+      if (gun) {
+        const g = +gun.dataset.gun;
+        return { gun: g, idx: (this._taslak.gunler[g] || []).length, el: gun };
+      }
+      return null;
+    };
+
+    govde.querySelectorAll(".taslak-tut").forEach(tutamac => {
+      tutamac.addEventListener("pointerdown", (e) => {
+        const kart = e.target.closest(".taslak-gorev");
+        if (!kart) return;
+        e.preventDefault();          // sayfa kaymasin
+        tutamac.setPointerCapture(e.pointerId);
+
+        this._surukleKaynak = { gun: +kart.dataset.gun, idx: +kart.dataset.idx };
+        kart.style.opacity = "0.45";
+        let sonHedef = null;
+
+        const hareket = (ev) => {
+          const h = hedefBul(ev.clientX, ev.clientY);
+          temizle();
+          kart.style.opacity = "0.45";
+          if (h) {
+            sonHedef = { gun: h.gun, idx: h.idx };
+            if (h.el.classList.contains("taslak-gorev")) {
+              h.el.style.outline = "2px solid var(--primary)";
+              h.el.style.outlineOffset = "1px";
+            } else {
+              h.el.style.background = "var(--bg-sub)";
+            }
+          } else {
+            sonHedef = null;
+          }
+        };
+
+        const bitir = () => {
+          tutamac.removeEventListener("pointermove", hareket);
+          tutamac.removeEventListener("pointerup", bitir);
+          tutamac.removeEventListener("pointercancel", bitir);
+          temizle();
+          if (sonHedef) this.taslakTasi(this._surukleKaynak, sonHedef);
+          this._surukleKaynak = null;
+        };
+
+        tutamac.addEventListener("pointermove", hareket);
+        tutamac.addEventListener("pointerup", bitir);
+        tutamac.addEventListener("pointercancel", bitir);
       });
     });
+  },
+
+  // Gorevi bir sira yukari/asagi tasir. Gunun basinda "yukari" bir
+  // onceki gunun sonuna, sonunda "asagi" bir sonraki gunun basina gecer.
+  taslakGorevKaydir: function(gunNo, idx, yon) {
+    if (!this._taslak) return;
+    const gunler = this._taslak.gunler;
+    const liste = gunler[gunNo];
+    if (!liste) return;
+
+    const hedefIdx = idx + yon;
+    if (hedefIdx >= 0 && hedefIdx < liste.length) {
+      // DOGRUDAN YER DEGISTIRME. taslakTasi "hedefin ONUNE birak"
+      // mantigiyla calisir; bir gorevi bir alt siraya tasimak cikarma
+      // sonrasi yine ayni indise denk gelir ve HICBIR SEY OLMAZ.
+      // Ok dugmesinin istedigi anlam komsuyla yer degistirmektir.
+      const t = liste[idx];
+      liste[idx] = liste[hedefIdx];
+      liste[hedefIdx] = t;
+      this.renderImportDraft();
+      return;
+    }
+
+    // Gun sinirini asiyor: komsu gune tasi
+    const gunNolar = Object.keys(gunler).map(Number).sort((a, b) => a - b);
+    const yeri = gunNolar.indexOf(gunNo);
+    const komsu = gunNolar[yeri + yon];
+    if (komsu === undefined) return;
+    const komsuIdx = yon < 0 ? (gunler[komsu] || []).length : 0;
+    this.taslakTasi({ gun: gunNo, idx: idx }, { gun: komsu, idx: komsuIdx });
   },
 
   taslakTasi: function(kaynak, hedef) {
