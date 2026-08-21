@@ -876,9 +876,19 @@ header::before {
   .yks-cd-title i { font-size: 0.95rem; }
   .yks-cd-meta { margin-left: 0; align-items: flex-start; text-align: left; width: 100%; }
   .yks-cd-substats { justify-content: flex-start; }
-  .yks-cd-groups { width: 100%; }
+  /* width:100% yetmez: ustteki kuralda flex:1 var (flex-basis:0%),
+     flex ana ekseninde width yok sayilir ve gruplar baslik satirina
+     sikisip ekran disina tasar - kullanici "0 Hafta 0 Gun" goruyordu
+     cunku Ay ve Saat gruplari gorunmez kaliyordu. */
+  .yks-cd-groups { flex: 1 1 100%; width: 100%; }
   .flip-card { width: 31px; height: 42px; border-radius: 8px; }
   .flip-card span { font-size: 1.45rem; }
+}
+
+@media (max-width: 379px) {
+  .flip-card { width: 27px; height: 38px; }
+  .flip-card span { font-size: 1.25rem; }
+  .yks-cd-groups { gap: 0.6rem; }
 }
 
 /* ===== AI KOÇUM — KONUŞMA BALONU (GÜNLÜK BRİFİNG) ===== */
