@@ -4994,6 +4994,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     this.updateAiConnectionStatus();
     this.updateRetakeDiagnosticUI();
     this.checkWeeklyRenewalReminder();
+    this.renderDashboardSummary();
 
     // Update dashboard subscription status
     const subTier = this.state.subscriptionTier || "free";
@@ -8072,6 +8073,17 @@ normalizeClause: function(clause) {
         if (cEl) cEl.value = task.logged ? (task.correct || 0) : '';
         if (wEl) wEl.value = task.logged ? (task.incorrect || 0) : '';
         if (tEl) tEl.value = Math.round((parseInt(task.duration) || 30));
+
+        const bEl = document.getElementById('testScoreBlank');
+        const bHint = document.getElementById('testScoreBlankHint');
+        const hedef = parseInt(task.qCount, 10) || 0;
+        if (bEl) bEl.value = task.logged && task.blank !== undefined ? task.blank : '';
+        if (bHint) {
+          bHint.textContent = hedef > 0
+            ? `Boş bırakırsan ${hedef} hedef sorudan otomatik hesaplanır.`
+            : "Boş bıraktığın soru sayısı (bilmiyorsan boş geç).";
+        }
+
         this.buildMockSectionInputs(task);
         this.openModal('testScoreModal');
         return;
@@ -8346,11 +8358,21 @@ normalizeClause: function(clause) {
     const correct = parseInt(document.getElementById('testScoreCorrect').value) || 0;
     const wrong = parseInt(document.getElementById('testScoreWrong').value) || 0;
     const timeSpent = parseInt(document.getElementById('testScoreTime').value) || 30;
-    
+
     const task = dayData.tasks[taskIdx];
+
+    // BOS SAYISI. Eskiden yalnizca dogru/yanlis kaydediliyordu; bu yuzden
+    // "net kazanamiyor mu, yoksa yanlisla kaybediyor mu?" sorusu
+    // yanitlanamiyordu. Girilmediyse hedef soru sayisindan turetilir.
+    const blankEl = document.getElementById('testScoreBlank');
+    const hedefSoru = parseInt(task.qCount, 10) || 0;
+    let blank = blankEl && blankEl.value !== "" ? (parseInt(blankEl.value, 10) || 0) : null;
+    if (blank === null) blank = hedefSoru > 0 ? Math.max(0, hedefSoru - correct - wrong) : 0;
+
     task.completed = true;
     task.correct = correct;
     task.incorrect = wrong;
+    task.blank = blank;
     task.timeSpent = timeSpent;
     task.logged = true;
 
@@ -8378,10 +8400,17 @@ normalizeClause: function(clause) {
       label: `G${dayNum} - ${task.subject}`,
       correct: correct,
       incorrect: wrong,
-      total: (correct + wrong),
+      blank: blank,
+      total: (correct + wrong + blank),
+      cozulen: (correct + wrong),
       time: timeSpent,
       subject: task.subject,
+      topic: task.topic || "",
       hour: new Date().getHours(),
+      // Zaman damgasi: "Son 7 gun / 30 gun" filtreleri bunu kullanir.
+      // Eski kayitlarda yoktur; filtre onlari "tum zamanlar"da gosterir.
+      ts: Date.now(),
+      dayNum: dayNum,
       examType: task.examType || (task.label && task.label.includes("AYT") || task.subject === "Edebiyat" ? "AYT" : "TYT")
     });
     this.state.totalQuestionsSolved = (this.state.totalQuestionsSolved || 0) + (correct + wrong);
@@ -9653,6 +9682,236 @@ normalizeClause: function(clause) {
   },
 
   // TAB 4: ChartJS Rendering
+  // ============================================================
+  // METIN TABANLI ANALIZLER — grafikle bogmadan, dogrudan eyleme donuk
+  //   A) Bos / Yanlis dengesi  B) Zaman-Net verimi  C) Mufredat yetisme
+  // ============================================================
+  // ILK EKRAN OZETI — grafik degil, uc sayi: bugunku calisma, toplam
+  // ilerleme, son deneme neti. Ogrenci uygulamayi actiginda ilk bunu gorur.
+  renderDashboardSummary: function() {
+    const yaz = (id, deger, alt) => {
+      const e = document.getElementById(id); if (e) e.textContent = deger;
+      const a = document.getElementById(id + "Sub"); if (a) a.innerHTML = alt || "&nbsp;";
+    };
+
+    // 1) Bugunku calisma suresi — bugunun tamamlanan gorevlerinden
+    const bugun = this.bugunkuProgramGunu();
+    const gun = (this.state.daysData && (this.state.daysData[bugun] || this.state.daysData[String(bugun)])) || null;
+    const gorevler = (gun && gun.tasks) || [];
+    const bitenGorev = gorevler.filter(t => t.completed);
+    let dakika = 0;
+    bitenGorev.forEach(t => {
+      dakika += t.timeSpent ? parseInt(t.timeSpent, 10) : (this.parseDurationMinutes(t.duration) || 0);
+    });
+    const saat = Math.floor(dakika / 60), dk = dakika % 60;
+    yaz("sumTodayTime", saat > 0 ? `${saat} sa ${dk} dk` : `${dakika} dk`,
+        gorevler.length ? `${bitenGorev.length}/${gorevler.length} görev tamam` : "bugün görev yok");
+
+    // 2) Toplam ilerleme — programdaki tamamlanan gorev orani
+    let toplamGorev = 0, toplamBiten = 0;
+    const gunler = this.state.daysData || {};
+    Object.keys(gunler).forEach(k => {
+      const g = gunler[k];
+      if (!g || !Array.isArray(g.tasks)) return;
+      toplamGorev += g.tasks.length;
+      toplamBiten += g.tasks.filter(t => t.completed).length;
+    });
+    const yuzde = toplamGorev > 0 ? Math.round((toplamBiten / toplamGorev) * 100) : 0;
+    yaz("sumProgress", `%${yuzde}`, toplamGorev > 0 ? `${toplamBiten}/${toplamGorev} görev` : "program yok");
+
+    // 3) Son deneme neti — en son kaydedilen calismanin neti
+    const kayitlar = this.state.chartData || [];
+    if (kayitlar.length === 0) {
+      yaz("sumLastNet", "—", "henüz kayıt yok");
+    } else {
+      const son = kayitlar[kayitlar.length - 1];
+      const net = Math.round((((son.correct || 0) - (son.incorrect || 0) / 4)) * 10) / 10;
+      const parca = [`${son.correct || 0}D`, `${son.incorrect || 0}Y`];
+      if (son.blank !== undefined) parca.push(`${son.blank}B`);
+      yaz("sumLastNet", String(net), `${this.escapeHtml(son.subject || "")} · ${parca.join(" ")}`);
+    }
+  },
+
+  renderInsightCards: function(records) {
+    const kap = document.getElementById("insightCards");
+    if (!kap) return;
+
+    const kart = (ikon, baslik, renk, govde) => `
+      <div class="glass-card" style="padding:1.1rem; margin-bottom:1rem; border-left:4px solid ${renk};">
+        <h4 style="margin:0 0 0.6rem; display:flex; align-items:center; gap:0.5rem; font-family:var(--font-header); font-weight:800; font-size:0.9rem;">
+          <i class="fa-solid ${ikon}" style="color:${renk};"></i> ${baslik}
+        </h4>
+        ${govde}
+      </div>`;
+
+    const satir = (sol, sag, renk) => `
+      <div style="display:flex; justify-content:space-between; align-items:baseline; gap:0.75rem; padding:0.35rem 0; border-bottom:1px dashed var(--border-color); font-size:0.82rem;">
+        <span>${sol}</span><span style="font-weight:800; color:${renk || 'var(--text-main)'}; white-space:nowrap;">${sag}</span>
+      </div>`;
+
+    let html = "";
+
+    // ── A) BOS / YANLIS DENGESI ──────────────────────────────
+    const dersler = {};
+    records.forEach(r => {
+      const d = r.subject || "Diğer";
+      const g = dersler[d] = dersler[d] || { dogru: 0, yanlis: 0, bos: 0, sure: 0, kayit: 0 };
+      g.dogru += r.correct || 0;
+      g.yanlis += r.incorrect || 0;
+      g.bos += r.blank || 0;
+      g.sure += r.time || 0;
+      g.kayit++;
+    });
+
+    const bosVerisiVar = records.some(r => r.blank !== undefined);
+    if (bosVerisiVar) {
+      const sirali = Object.keys(dersler).map(d => {
+        const g = dersler[d];
+        const toplam = g.dogru + g.yanlis + g.bos;
+        return {
+          ders: d,
+          bosOran: toplam > 0 ? Math.round((g.bos / toplam) * 100) : 0,
+          yanlisOran: toplam > 0 ? Math.round((g.yanlis / toplam) * 100) : 0,
+          toplam: toplam
+        };
+      }).filter(x => x.toplam >= 10).sort((a, b) => (b.bosOran + b.yanlisOran) - (a.bosOran + a.yanlisOran));
+
+      if (sirali.length) {
+        const govde = sirali.slice(0, 6).map(x => {
+          // Hangisi baskin? Ogrenciye ne yapmasi gerektigini soyleyen kisim bu.
+          let tani, renk;
+          if (x.bosOran >= 25 && x.bosOran > x.yanlisOran) {
+            tani = `%${x.bosOran} boş — konu eksiği, çözmeye bile başlayamıyorsun`;
+            renk = "var(--warning)";
+          } else if (x.yanlisOran >= 25 && x.yanlisOran >= x.bosOran) {
+            tani = `%${x.yanlisOran} yanlış — biliyorsun ama hata yapıyorsun ya da sallıyorsun`;
+            renk = "var(--danger)";
+          } else {
+            tani = `%${x.bosOran} boş · %${x.yanlisOran} yanlış — dengeli`;
+            renk = "var(--success)";
+          }
+          return satir(`<strong>${this.escapeHtml(x.ders)}</strong><br><span style="font-size:0.72rem; color:var(--text-muted);">${tani}</span>`,
+                       `${x.toplam} soru`, renk);
+        }).join("");
+        html += kart("fa-circle-half-stroke", "Boş mu Bırakıyorsun, Yanlış mı Yapıyorsun?", "var(--primary)",
+          govde + `<p style="font-size:0.7rem; color:var(--text-muted); margin:0.6rem 0 0; line-height:1.45;">
+            Boş oranı yüksekse eksik olan <strong>konu bilgisi</strong>; yanlış oranı yüksekse sorun <strong>dikkat ya da acelecilik</strong>.
+            İkisi farklı çalışma gerektirir.</p>`);
+      }
+    }
+
+    // ── B) ZAMAN / NET VERIMI ────────────────────────────────
+    const verim = Object.keys(dersler).map(d => {
+      const g = dersler[d];
+      const net = Math.round(((g.dogru - g.yanlis / 4)) * 10) / 10;
+      const saat = Math.round((g.sure / 60) * 10) / 10;
+      return { ders: d, net: net, saat: saat, netSaat: saat > 0 ? Math.round((net / saat) * 10) / 10 : null };
+    }).filter(x => x.saat >= 0.5).sort((a, b) => (b.netSaat || -1) - (a.netSaat || -1));
+
+    if (verim.length >= 2) {
+      const enIyi = verim[0], enKotu = verim[verim.length - 1];
+      const govde = verim.slice(0, 8).map(x => {
+        const renk = x.netSaat === null ? "var(--text-muted)"
+          : x.netSaat >= (enIyi.netSaat * 0.7) ? "var(--success)"
+          : x.netSaat >= (enIyi.netSaat * 0.4) ? "var(--warning)" : "var(--danger)";
+        return satir(`<strong>${this.escapeHtml(x.ders)}</strong> <span style="font-size:0.72rem; color:var(--text-muted);">${x.saat} saat · ${x.net} net</span>`,
+                     x.netSaat === null ? "—" : `${x.netSaat} net/saat`, renk);
+      }).join("");
+      let yorum = "";
+      if (enIyi.netSaat && enKotu.netSaat !== null && enIyi.netSaat > enKotu.netSaat * 1.5) {
+        yorum = `<p style="font-size:0.75rem; margin:0.6rem 0 0; line-height:1.5;">
+          <strong>${this.escapeHtml(enIyi.ders)}</strong> saatine ${enIyi.netSaat} net kazandırıyor,
+          <strong>${this.escapeHtml(enKotu.ders)}</strong> ise ${enKotu.netSaat}.
+          ${this.escapeHtml(enKotu.ders)} dersine ayırdığın süre karşılığını vermiyor —
+          çalışma yöntemini değiştirmen, süreyi artırmandan daha çok işe yarar.</p>`;
+      }
+      html += kart("fa-gauge-high", "Harcadığın Zaman Karşılığını Veriyor mu?", "var(--primary)", govde + yorum);
+    }
+
+    // ── C) MUFREDAT YETISME TAHMINI ──────────────────────────
+    const tahmin = this.mufredatYetismeTahmini();
+    if (tahmin && tahmin.yetersizVeri) {
+      // Tahmin yapilamiyor ama ilerleme yine de gosterilir; uydurma
+      // bir bitis tarihi verilmez.
+      html += kart("fa-flag-checkered", "Müfredat İlerlemen", "var(--text-muted)",
+        satir("Tamamlanan konu", `${tahmin.biten} / ${tahmin.toplam} (%${tahmin.yuzde})`, "var(--text-main)") +
+        `<p style="font-size:0.78rem; margin:0.7rem 0 0; line-height:1.5; color:var(--text-muted);">
+          Yetişme tahmini için en az <strong>${tahmin.enAzGun} günlük</strong> çalışma geçmişi gerekiyor
+          (şu an ${tahmin.gecenGun}. gündesin). Bu süre dolduğunda hızına bakıp müfredatı sınava
+          yetiştirip yetiştiremeyeceğini söyleyeceğim.</p>`);
+    } else if (tahmin) {
+      const renk = tahmin.yetisiyor ? "var(--success)" : "var(--danger)";
+      const govde =
+        satir("Tamamlanan konu", `${tahmin.biten} / ${tahmin.toplam} (%${tahmin.yuzde})`, "var(--text-main)") +
+        satir("Güncel hızın", `${tahmin.hiz} konu/hafta`, "var(--text-main)") +
+        satir("Sınava kalan", `${tahmin.kalanGun} gün`, "var(--text-main)") +
+        satir("Bu hızla biteceği tarih", tahmin.bitisMetni, renk) +
+        `<p style="font-size:0.78rem; margin:0.7rem 0 0; line-height:1.5;">${tahmin.mesaj}</p>`;
+      html += kart("fa-flag-checkered", "Müfredatı Sınava Yetiştirebilecek misin?", renk, govde);
+    }
+
+    if (html === "") { kap.style.display = "none"; return; }
+    kap.innerHTML = html;
+    kap.style.display = "block";
+  },
+
+  // Mevcut calisma hizina gore mufredatin ne zaman bitecegini tahmin eder.
+  // Veri yetersizse (hic konu bitmemisse) null doner — uydurma tahmin uretmez.
+  mufredatYetismeTahmini: function() {
+    try {
+      const track = this.state.track || "Sayısal";
+      const focus = this.state.examFocus || "both";
+      const toplam = this.curriculum.totalTopicCount(track, focus);
+      if (!toplam) return null;
+
+      // curriculumProgress tamamlanan konu id'lerini tutan bir DIZIdir.
+      const ilerleme = this.state.curriculumProgress;
+      const biten = Array.isArray(ilerleme) ? ilerleme.length : 0;
+      if (!biten) return null;
+
+      // Basladigindan bu yana gecen gun.
+      // COK KISA sureden tahmin uretilmez: 2 gunde 48 konu isaretleyen
+      // bir kullanici icin "haftada 168 konu, mufredati 299 gun once
+      // bitiriyorsun" gibi anlamsiz bir sonuc cikiyordu. Guvenilir bir
+      // hiz icin en az EN_AZ_GUN gun gecmis olmali.
+      const EN_AZ_GUN = 14;
+      const bugun = this.bugunkuProgramGunu();
+      const gecenGun = Math.max(1, bugun);
+      if (gecenGun < EN_AZ_GUN) {
+        return {
+          yetersizVeri: true,
+          toplam: toplam, biten: biten, yuzde: Math.round((biten / toplam) * 100),
+          gecenGun: gecenGun, enAzGun: EN_AZ_GUN
+        };
+      }
+      const hizGunluk = biten / gecenGun;
+      const hizHaftalik = Math.round(hizGunluk * 7 * 10) / 10;
+      if (hizHaftalik <= 0) return null;
+
+      const kalanKonu = Math.max(0, toplam - biten);
+      const gerekenGun = Math.ceil(kalanKonu / hizGunluk);
+      const kalanGun = Math.max(0, Math.ceil((this.getExamDate() - new Date()) / 86400000));
+
+      const bitis = new Date();
+      bitis.setDate(bitis.getDate() + gerekenGun);
+      const aylar = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
+      const bitisMetni = `${bitis.getDate()} ${aylar[bitis.getMonth()]} ${bitis.getFullYear()}`;
+
+      const yetisiyor = gerekenGun <= kalanGun;
+      const fark = Math.abs(kalanGun - gerekenGun);
+      const mesaj = yetisiyor
+        ? `Bu hızla müfredatı sınavdan <strong>${fark} gün önce</strong> bitiriyorsun. Tempoyu koru.`
+        : `Bu hızla müfredat sınavdan <strong>${fark} gün sonra</strong> biter — yetişmiyor. ` +
+          `Yetiştirmek için haftalık hızını <strong>${Math.ceil(kalanKonu / Math.max(1, kalanGun / 7))} konuya</strong> çıkarman gerekiyor.`;
+
+      return {
+        toplam: toplam, biten: biten, yuzde: Math.round((biten / toplam) * 100),
+        hiz: hizHaftalik, kalanGun: kalanGun, gerekenGun: gerekenGun,
+        bitisMetni: bitisMetni, yetisiyor: yetisiyor, mesaj: mesaj
+      };
+    } catch (e) { return null; }
+  },
+
   renderCharts: function() {
     const hasData = this.state.chartData && this.state.chartData.length > 0;
     const contentArea = document.getElementById("chartsContentArea");
@@ -9691,6 +9950,33 @@ normalizeClause: function(clause) {
         const itemType = r.examType || ((r.label || "").includes("AYT") || r.subject === "Edebiyat" ? "AYT" : "TYT");
         return itemType === filterVal;
       });
+    }
+
+    // DONEM FILTRESI (Son 7 / 30 gun / Tum zamanlar).
+    // Zaman damgasi olmayan ESKI kayitlar elenmez; aksi halde filtre
+    // acildigi anda gecmis veri yok olmus gibi gorunurdu.
+    const rangeEl = document.getElementById("chartRangeFilter");
+    const rangeVal = rangeEl ? rangeEl.value : "all";
+    let tsSizKayit = 0;
+    if (rangeVal !== "all") {
+      const sinir = Date.now() - parseInt(rangeVal, 10) * 86400000;
+      records = records.filter(r => {
+        if (!r.ts) { tsSizKayit++; return true; }
+        return r.ts >= sinir;
+      });
+    }
+    this._donemEtiketi = rangeVal === "all" ? "tüm zamanlar" : `son ${rangeVal} gün`;
+    this._tsSizKayit = tsSizKayit;
+
+    if (records.length === 0) {
+      if (contentArea) contentArea.style.display = "none";
+      if (emptyState) emptyState.style.display = "block";
+      const bos = document.getElementById("chartsEmptyState");
+      if (bos) {
+        const bilgi = bos.querySelector("p");
+        if (bilgi) bilgi.textContent = `Seçtiğin dönemde (${this._donemEtiketi}) kayıt yok. Dönemi genişletmeyi dene.`;
+      }
+      return;
     }
 
     // ── Chart 1: Hedef vs Mevcut Net Karşılaştırması (grouped bar) ──
@@ -9876,11 +10162,61 @@ normalizeClause: function(clause) {
     this._chartSummaryStats.speedStatus = measuredCount > 0 ? (speedOnTrack ? "Hedefin İçinde" : "Hedefin Gerisinde") : "-";
     this._chartSummaryStats.speedOnTrack = measuredCount > 0 ? speedOnTrack : null;
 
+    // ── Chart 5: NET GELISIMI (zaman serisi) ──
+    // Dogruluk yuzdesi ile net ayni sey degildir: cok bos birakan ogrencinin
+    // dogrulugu yuksek, neti dusuk olabilir. Ogrencinin asil sordugu soru
+    // "netim artiyor mu?" oldugu icin net ayri bir zaman serisi olarak cizilir.
+    const netHesapla = (r) => {
+      const y = r.incorrect || 0;
+      return Math.round(((r.correct || 0) - y / 4) * 10) / 10;
+    };
+    const netLabels = records.map(r => r.label);
+    const netData = records.map(netHesapla);
+
+    if (this.charts.netTrend) this.charts.netTrend.destroy();
+    const netCanvas = document.getElementById("netTrendChart");
+    if (netCanvas) {
+      this.charts.netTrend = new Chart(netCanvas.getContext("2d"), {
+        type: 'line',
+        data: {
+          labels: netLabels,
+          datasets: [{
+            label: 'Net (doğru − yanlış/4)',
+            data: netData,
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37,99,235,0.10)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: true, labels: { font: { family: 'Outfit' } } } },
+          scales: {
+            x: { grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { color: '#475569', font: { size: 9 }, maxRotation: 45 } },
+            y: { grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { color: '#475569' },
+                 title: { display: true, text: 'Net', color: '#475569', font: { family: 'Outfit', weight: 'bold' } } }
+          }
+        }
+      });
+    }
+
+    // Metin tabanli analizler (bos/yanlis dengesi, verim, mufredat tahmini)
+    this.renderInsightCards(records);
+
     // ── Chart 4 (yeni öneri): Zaman İçinde Gelişim Trendi ──
     // Diğer üç grafik birer anlık kesit; bu grafik test test doğruluk oranının
     // kronolojik seyrini gösterip ilerleme/gerileme trendini ortaya koyar.
     const trendLabels = records.map(r => r.label);
-    const trendData = records.map(r => r.total > 0 ? Math.round((r.correct / r.total) * 100) : 0);
+    // Dogruluk, COZULEN soru uzerinden olculur. r.total artik bosu da
+    // icerdigi icin bolum bunu kullanirsa cok bos birakan ogrencinin
+    // dogrulugu haksiz yere dusuk gorunurdu.
+    const trendData = records.map(r => {
+      const cozulen = r.cozulen !== undefined ? r.cozulen : (r.correct + r.incorrect);
+      return cozulen > 0 ? Math.round((r.correct / cozulen) * 100) : 0;
+    });
 
     if (this.charts.trend) this.charts.trend.destroy();
     const trendCanvas = document.getElementById("accuracyTrendChart");
@@ -16222,10 +16558,15 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
       label: `G${dayNum} - ÖDT - ${subject}`,
       correct: correctCount,
       incorrect: incorrectCount,
+      blank: Math.max(0, 10 - correctCount - incorrectCount),
       total: 10,
+      cozulen: correctCount + incorrectCount,
       time: 15,
       subject: subject,
+      topic: topic || "",
       hour: new Date().getHours(),
+      ts: Date.now(),
+      dayNum: dayNum,
       examType: "ÖDT"
     });
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ykskocum-v69-sorular';
+const CACHE_NAME = 'ykskocum-v70-analiz';
 const urlsToCache = [
   './',
   './index.html',

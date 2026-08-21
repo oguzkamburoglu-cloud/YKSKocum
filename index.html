@@ -780,6 +780,32 @@
                  girilen hedef ve seviye tespiti sonucuna göre öneri sunulur,
                  öğrenci kabul ederse uygulanır. -->
             <div id="programSuggestionCard" style="display:none; margin-bottom:1.25rem;"></div>
+
+            <!-- ILK EKRAN OZETI — grafik yok, uc sayi. Ogrenci uygulamayi
+                 actiginda once bunlari gormeli. -->
+            <div id="dashSummaryCards" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:0.85rem; margin-bottom:1.25rem;">
+              <div class="glass-card" style="padding:1rem; text-align:center;">
+                <div style="font-size:0.7rem; font-weight:800; color:var(--text-muted); letter-spacing:0.02em;">
+                  <i class="fa-solid fa-clock"></i> BUGÜNKÜ ÇALIŞMA
+                </div>
+                <div id="sumTodayTime" style="font-family:var(--font-header); font-weight:800; font-size:1.7rem; color:var(--text-main); margin-top:0.3rem;">0 dk</div>
+                <div id="sumTodayTimeSub" style="font-size:0.68rem; color:var(--text-muted);">&nbsp;</div>
+              </div>
+              <div class="glass-card" style="padding:1rem; text-align:center;">
+                <div style="font-size:0.7rem; font-weight:800; color:var(--text-muted); letter-spacing:0.02em;">
+                  <i class="fa-solid fa-chart-pie"></i> TOPLAM İLERLEME
+                </div>
+                <div id="sumProgress" style="font-family:var(--font-header); font-weight:800; font-size:1.7rem; color:var(--text-main); margin-top:0.3rem;">%0</div>
+                <div id="sumProgressSub" style="font-size:0.68rem; color:var(--text-muted);">&nbsp;</div>
+              </div>
+              <div class="glass-card" style="padding:1rem; text-align:center;">
+                <div style="font-size:0.7rem; font-weight:800; color:var(--text-muted); letter-spacing:0.02em;">
+                  <i class="fa-solid fa-bullseye"></i> SON DENEME NETİ
+                </div>
+                <div id="sumLastNet" style="font-family:var(--font-header); font-weight:800; font-size:1.7rem; color:var(--text-main); margin-top:0.3rem;">—</div>
+                <div id="sumLastNetSub" style="font-size:0.68rem; color:var(--text-muted);">&nbsp;</div>
+              </div>
+            </div>
             <div class="glass-card" style="padding: 1.5rem; background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 12px; position: relative;">
               <!-- Tape on top -->
               <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%) rotate(-1.5deg); width: 80px; height: 18px; background: rgba(190, 205, 225, 0.45); border-radius: 2px; z-index: 10;"></div>
@@ -1134,6 +1160,12 @@
                     <option value="TYT">Sadece TYT Verileri</option>
                     <option value="AYT">Sadece AYT Verileri</option>
                   </select>
+                  <label style="font-size:0.8rem; font-weight:600; color:var(--text-muted); margin-left:0.75rem;"><i class="fa-solid fa-calendar-week"></i> Dönem:</label>
+                  <select id="chartRangeFilter" onchange="app.renderCharts()" style="padding:0.35rem 0.5rem; font-size:0.8rem; font-weight:700; border-radius:4px; border:1px solid var(--border-color);">
+                    <option value="7">Son 7 Gün</option>
+                    <option value="30" selected>Son 30 Gün</option>
+                    <option value="all">Tüm Zamanlar</option>
+                  </select>
                 </div>
               </div>
               <p class="panel-intro">AI Çalışma Analizi; güncel durumunu, risklerini ve önerdiği en iyi hamleyi tek panelde özetleyip deneme netlerini ve gelişimini YKS hedeflerinle karşılaştırır.</p>
@@ -1161,6 +1193,8 @@
               <div id="aiCoachCommentaryCardContainer" style="margin-bottom: 2rem;"></div>
 
               <!-- DENEME BÖLÜM ANALİZİ — daha önce görünmeyen bölüm bazlı teşhis -->
+              <div class="glass-card" id="insightCards" style="display:none; padding:0; margin-bottom:2rem; background:none; border:none; box-shadow:none;"></div>
+
               <div class="glass-card" id="sectionAnalysisCard" style="display:none; padding:1.25rem; margin-bottom:2rem; border-color:var(--ai-border); background:var(--ai-tint);">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; cursor:pointer;" onclick="app.toggleSectionAnalysisCard()">
                   <h4 style="margin:0; display:flex; align-items:center; gap:0.5rem;">
@@ -1198,6 +1232,18 @@
                     <div class="premium-chart-head"><span class="premium-chart-icon"><i class="fa-solid fa-arrow-trend-up"></i></span> Zaman İçinde Gelişim</div>
                     <p class="premium-chart-note">Her testteki doğruluk oranının kronolojik seyri.</p>
                     <div class="premium-chart-canvas-wrap"><canvas id="accuracyTrendChart"></canvas></div>
+                  </div>
+                </div>
+
+                <div class="premium-chart-card">
+                  <div class="premium-chart-head">
+                    <h4 style="margin:0; display:flex; align-items:center; gap:0.5rem; font-family:var(--font-header); font-weight:800; font-size:0.9rem;">
+                      <i class="fa-solid fa-chart-line text-primary"></i> Net Gelişimin
+                    </h4>
+                    <p class="panel-intro" style="margin:0.25rem 0 0; font-size:0.72rem;">Her çalışmadaki netinin (doğru − yanlış/4) zaman içindeki seyri.</p>
+                  </div>
+                  <div class="premium-chart-body">
+                    <div class="premium-chart-canvas-wrap"><canvas id="netTrendChart"></canvas></div>
                   </div>
                 </div>
               </div>
@@ -2121,6 +2167,11 @@
           <label style="font-size: 1rem;">Yanlış Sayısı <span style="color: var(--danger);">*</span></label>
           <input type="number" id="testScoreWrong" min="0" max="200" placeholder="0" required style="padding: 0.9rem; border: 1.5px solid var(--border-color); border-radius: 10px; width: 100%; font-size: 1.4rem; font-weight: 800;">
         </div>
+        <div class="form-group">
+          <label style="font-size: 1rem;">Boş Sayısı</label>
+          <input type="number" id="testScoreBlank" min="0" max="200" placeholder="0" style="padding: 0.9rem; border: 1.5px solid var(--border-color); border-radius: 10px; width: 100%; font-size: 1.4rem; font-weight: 800;">
+          <p id="testScoreBlankHint" style="font-size:0.68rem; color:var(--text-muted); margin:0.3rem 0 0; line-height:1.4;"></p>
+        </div>
       </div>
       <div class="form-group" style="margin-bottom: 2rem; text-align: left;">
         <label style="font-size: 1rem;">Süre (Dakika)</label>
@@ -2329,6 +2380,6 @@
   <script src="curriculum.js?v=3"></script>
   <script src="questions.js?v=2"></script>
   <script src="quotes.js?v=1"></script>
-  <script src="app.js?v=124"></script>
+  <script src="app.js?v=127"></script>
 </body>
 </html>
