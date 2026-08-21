@@ -1,0 +1,572 @@
+<title>YKSKoçum Analiz Testleri</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@500;600;700&display=swap">
+
+<style>
+  :root {
+    --ground:   #F5F7F9;
+    --surface:  #FFFFFF;
+    --sunken:   #EDF0F4;
+    --line:     #DBE1E9;
+    --line-soft:#E8EDF2;
+    --ink:      #161B22;
+    --ink-2:    #3C4552;
+    --muted:    #626D7C;
+    --accent:   #2F5D8C;
+    --accent-w: #E4EDF6;
+    --pass:     #2C7A62;
+    --pass-w:   #E2F0EB;
+    --bug:      #AF4128;
+    --bug-w:    #F8E7E2;
+    --warn:     #99690C;
+    --warn-w:   #F7EEDA;
+    --shadow:   0 1px 2px rgba(22,27,34,.05), 0 6px 20px rgba(22,27,34,.05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:   #10141A;
+      --surface:  #171D25;
+      --sunken:   #1D242E;
+      --line:     #2C3642;
+      --line-soft:#232B35;
+      --ink:      #E7ECF3;
+      --ink-2:    #C2CBD8;
+      --muted:    #8E9AAA;
+      --accent:   #79ADDD;
+      --accent-w: #1B2733;
+      --pass:     #6FC5A6;
+      --pass-w:   #16261F;
+      --bug:      #E0836B;
+      --bug-w:    #2A1A15;
+      --warn:     #DDAE55;
+      --warn-w:   #262013;
+      --shadow:   0 1px 2px rgba(0,0,0,.4), 0 6px 22px rgba(0,0,0,.28);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:   #10141A;
+    --surface:  #171D25;
+    --sunken:   #1D242E;
+    --line:     #2C3642;
+    --line-soft:#232B35;
+    --ink:      #E7ECF3;
+    --ink-2:    #C2CBD8;
+    --muted:    #8E9AAA;
+    --accent:   #79ADDD;
+    --accent-w: #1B2733;
+    --pass:     #6FC5A6;
+    --pass-w:   #16261F;
+    --bug:      #E0836B;
+    --bug-w:    #2A1A15;
+    --warn:     #DDAE55;
+    --warn-w:   #262013;
+    --shadow:   0 1px 2px rgba(0,0,0,.4), 0 6px 22px rgba(0,0,0,.28);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+    margin: 0;
+    padding: 0 1.25rem 5rem;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 54rem; margin: 0 auto; }
+
+  /* ---------- başlık ---------- */
+  .masthead {
+    display: flex; flex-direction: column; gap: .9rem;
+    padding: 3.5rem 0 1.75rem;
+    border-bottom: 2px solid var(--ink);
+  }
+  .kicker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .72rem; font-weight: 500; letter-spacing: .13em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  h1 {
+    font-family: "IBM Plex Serif", ui-serif, Georgia, serif;
+    font-weight: 700; font-size: clamp(2rem, 5.2vw, 2.9rem);
+    line-height: 1.12; letter-spacing: -.02em;
+    margin: 0; text-wrap: balance;
+  }
+  .standfirst {
+    font-size: 1.05rem; color: var(--ink-2);
+    max-width: 42rem; margin: 0;
+  }
+
+  /* ---------- özet şeridi ---------- */
+  .stats {
+    display: grid; gap: 1px;
+    grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+    background: var(--line);
+    border: 1px solid var(--line);
+    margin: 2rem 0 0;
+    overflow: hidden;
+  }
+  .stat { background: var(--surface); padding: 1.05rem 1.15rem; }
+  .stat .n {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 1.85rem; font-weight: 600; line-height: 1.1;
+    letter-spacing: -.02em; display: block;
+  }
+  .stat .l {
+    font-size: .78rem; color: var(--muted); margin-top: .3rem; display: block;
+  }
+  .stat.ok .n  { color: var(--pass); }
+  .stat.bad .n { color: var(--bug); }
+
+  .runline {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .82rem; color: var(--muted);
+    background: var(--sunken); border: 1px solid var(--line);
+    border-top: none; padding: .7rem 1.15rem;
+    display: flex; flex-wrap: wrap; gap: .4rem 1.25rem;
+  }
+  .runline b { color: var(--pass); font-weight: 600; }
+
+  /* ---------- bölümler ---------- */
+  section { margin-top: 3.5rem; }
+  .sec-head { display: flex; align-items: baseline; gap: .8rem; margin-bottom: .35rem; }
+  .sec-num {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .8rem; font-weight: 600; color: var(--accent);
+    border: 1px solid var(--accent); border-radius: 2px;
+    padding: .05rem .4rem; flex: 0 0 auto;
+  }
+  h2 {
+    font-family: "IBM Plex Serif", ui-serif, Georgia, serif;
+    font-size: 1.5rem; font-weight: 600; letter-spacing: -.012em;
+    margin: 0; text-wrap: balance;
+  }
+  h3 {
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: .95rem; font-weight: 600; margin: 2rem 0 .6rem;
+    color: var(--ink);
+  }
+  .lede { color: var(--ink-2); margin: 0 0 1.5rem; max-width: 42rem; }
+
+  /* ---------- tablo ---------- */
+  .tw { overflow-x: auto; border: 1px solid var(--line); background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; min-width: 30rem; }
+  th, td {
+    text-align: left; padding: .62rem .85rem;
+    border-bottom: 1px solid var(--line-soft); vertical-align: top;
+  }
+  thead th {
+    font-size: .72rem; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600;
+    background: var(--sunken); border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.id, td.num {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  td.id { color: var(--accent); font-weight: 500; }
+  td.num { font-weight: 500; }
+  .hi { color: var(--bug); font-weight: 600; }
+  .ok { color: var(--pass); font-weight: 600; }
+
+  /* ---------- hata kaydı: şerit ŞİDDET kodlar ---------- */
+  .bug {
+    background: var(--surface); border: 1px solid var(--line);
+    border-left: 4px solid var(--sev, var(--muted));
+    padding: 1.2rem 1.35rem; margin-bottom: 1.1rem; box-shadow: var(--shadow);
+  }
+  .bug.kritik { --sev: var(--bug); }
+  .bug.orta   { --sev: var(--warn); }
+  .bug-top { display: flex; flex-wrap: wrap; align-items: center; gap: .55rem; margin-bottom: .55rem; }
+  .bug-id {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .78rem; font-weight: 600; color: var(--muted);
+  }
+  .pill {
+    font-size: .68rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+    padding: .12rem .48rem; border-radius: 2px;
+  }
+  .pill.kritik { background: var(--bug-w);  color: var(--bug); }
+  .pill.orta   { background: var(--warn-w); color: var(--warn); }
+  .pill.fixed  { background: var(--pass-w); color: var(--pass); }
+  .bug h4 {
+    font-family: "IBM Plex Serif", ui-serif, Georgia, serif;
+    font-size: 1.1rem; font-weight: 600; margin: 0 0 .5rem; width: 100%;
+    text-wrap: balance;
+  }
+  .bug p { margin: 0 0 .7rem; color: var(--ink-2); font-size: .94rem; }
+  .bug p:last-child { margin-bottom: 0; }
+  .fix {
+    background: var(--sunken); border-left: 2px solid var(--pass);
+    padding: .6rem .85rem; font-size: .89rem; color: var(--ink-2);
+  }
+  .fix b { color: var(--ink); }
+
+  code, .mono {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .87em; background: var(--sunken);
+    padding: .08rem .32rem; border: 1px solid var(--line-soft);
+  }
+  pre {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    background: var(--sunken); border: 1px solid var(--line);
+    padding: .9rem 1.1rem; overflow-x: auto; font-size: .85rem;
+    line-height: 1.6; margin: 0 0 1.25rem;
+  }
+  pre code { background: none; border: none; padding: 0; }
+
+  .note {
+    border: 1px solid var(--line); border-top: 3px solid var(--accent);
+    background: var(--surface); padding: 1.15rem 1.35rem; margin-top: 1.5rem;
+  }
+  .note h4 {
+    font-size: .82rem; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 .55rem; font-weight: 600;
+  }
+  .note p { margin: 0 0 .7rem; color: var(--ink-2); font-size: .93rem; }
+  .note p:last-child { margin: 0; }
+
+  ul { padding-left: 1.15rem; color: var(--ink-2); }
+  li { margin-bottom: .4rem; }
+
+  footer {
+    margin-top: 4rem; padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+    font-size: .84rem; color: var(--muted);
+  }
+  a { color: var(--accent); }
+  a:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <span class="kicker">QA Raporu · Analiz, Raporlama ve Akıllı Öneri Motoru</span>
+    <h1>YKSKoçum Analiz Testleri</h1>
+    <p class="standfirst">
+      Dört analiz grubunun tamamı için yazılan test paketi, gerçek <code>app.js</code> üzerinde
+      koşuldu. Şablon test değil: paket ilk koşumunda kırıldı ve beş gerçek hata ortaya çıkardı.
+    </p>
+  </header>
+
+  <div class="stats">
+    <div class="stat ok"><span class="n">144</span><span class="l">test · jsc</span></div>
+    <div class="stat ok"><span class="n">23</span><span class="l">test · Jest</span></div>
+    <div class="stat bad"><span class="n">5</span><span class="l">bulunan hata</span></div>
+    <div class="stat ok"><span class="n">0</span><span class="l">kalan test</span></div>
+  </div>
+  <div class="runline">
+    <span><b>./test/calistir.sh</b> → çıkış kodu 0</span>
+    <span>bağımlılık yok</span>
+    <span>CI'ye hazır</span>
+  </div>
+
+  <!-- ============ GRUP 1 ============ -->
+  <section>
+    <div class="sec-head"><span class="sec-num">Grup 1</span><h2>Veri hesaplama ve matematiksel doğruluk</h2></div>
+    <p class="lede">
+      YKS neti <code>doğru − yanlış/4</code> ile hesaplanır ve çeyreklik adımlarla gelir.
+      Bu grup, hesabın küsuratta bozulmadığını ve tüm ekranlarda aynı sonucu verdiğini doğrular.
+    </p>
+
+    <h3>1.1 · Net hesabı — küsuratlı durumlar</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>ID</th><th>Girdi</th><th>Beklenen</th><th>İlk koşum</th></tr></thead>
+        <tbody>
+          <tr><td class="id">N-01</td><td>13 doğru · 3 yanlış</td><td class="num">12.25</td><td class="num hi">12.3 ✗</td></tr>
+          <tr><td class="id">N-02</td><td>10 doğru · 1 yanlış</td><td class="num">9.75</td><td class="num hi">9.8 ✗</td></tr>
+          <tr><td class="id">N-03</td><td>20 doğru · 2 yanlış</td><td class="num">19.5</td><td class="num ok">19.5 ✓</td></tr>
+          <tr><td class="id">N-04</td><td>40 doğru · 4 yanlış</td><td class="num">39</td><td class="num ok">39 ✓</td></tr>
+          <tr><td class="id">N-05</td><td>0 doğru · 4 yanlış</td><td class="num">−1</td><td class="num ok">−1 ✓</td></tr>
+          <tr><td class="id">N-06</td><td>1 doğru · 7 yanlış</td><td class="num">−0.75</td><td class="num hi">−0.7 ✗</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="lede" style="margin-top:.9rem">
+      <strong>Kabul kriteri:</strong> değer hem hesapta hem özet kartında birebir görünmeli.
+      Bir ondalığa yuvarlama kabul edilmez.
+    </p>
+
+    <h3>1.2 · Net tanımı tutarlılığı</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>ID</th><th>Senaryo</th><th>Beklenen</th></tr></thead>
+        <tbody>
+          <tr><td class="id">N-07</td><td>2D 20Y → özet kartı ve verim kartı</td><td>ikisi de <span class="mono">−3</span></td></tr>
+          <tr><td class="id">N-08</td><td><code>netHesapla(2, 20)</code></td><td>−3 · sıfıra <strong>kırpılmaz</strong></td></tr>
+          <tr><td class="id">N-09</td><td><code>netHesapla(undefined, undefined)</code></td><td class="num">0</td></tr>
+          <tr><td class="id">N-10</td><td><code>netHesapla("13", "3")</code> metin girdi</td><td class="num">12.25</td></tr>
+          <tr><td class="id">N-11</td><td><code>netHesapla(NaN, 4)</code></td><td class="num">−1</td></tr>
+          <tr><td class="id">N-12</td><td>Kaynakta <code>Math.max(0, D − Y/4)</code> kalıbı</td><td>0 eşleşme · regresyon koruması</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>1.3 · Zaman / net verimlilik oranı</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>ID</th><th>Girdi</th><th>Beklenen</th></tr></thead>
+        <tbody>
+          <tr><td class="id">V-01</td><td>Fizik · 8D 4Y · 600 dk</td><td class="num">0.7 net/saat</td></tr>
+          <tr><td class="id">V-02</td><td>Kimya · 22D 8Y · 300 dk</td><td class="num">4 net/saat</td></tr>
+          <tr><td class="id">V-03</td><td>İki ders arasında ≥1.5× fark</td><td>verimsiz ders adıyla uyarı</td></tr>
+          <tr><td class="id">V-04</td><td>Süre = 0</td><td>çökmez · sıfıra bölme yok</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>1.4 · Konu bitirme yüzdesi — sıfıra bölme ve boş veri</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>ID</th><th>Senaryo</th><th>Beklenen</th></tr></thead>
+        <tbody>
+          <tr><td class="id">M-01</td><td>Hiç konu bitmemiş</td><td>özet döner · biten 0 · tüm dersler %0</td></tr>
+          <tr><td class="id">M-02</td><td>Aynı durumda yüzde alanları</td><td>hiçbiri <code>NaN</code> değil</td></tr>
+          <tr><td class="id">M-03</td><td>Geçersiz alan adı</td><td>çökmez · Sayısal'a düşer <em>(bilinçli)</em></td></tr>
+          <tr><td class="id">M-04</td><td>Bir dersin 1/3'ü bitmiş</td><td><code>round(biten/toplam×100)</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ GRUP 2 ============ -->
+  <section>
+    <div class="sec-head"><span class="sec-num">Grup 2</span><h2>Görselleştirme verisi ve uç durumlar</h2></div>
+    <p class="lede">Sıfır veri, imkânsız değerler ve dönem filtreleri. 42 test.</p>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Senaryo</th><th>Sonuç</th></tr></thead>
+        <tbody>
+          <tr><td>Hiç deneme girilmemiş → grafik çizimi</td><td class="ok">Çökmüyor · "veri yok" durumu · hiç grafik çizilmiyor</td></tr>
+          <tr><td>Hiç deneme girilmemiş → özet kartları</td><td class="ok">— / 0 dk / %0 · <code>undefined</code> yok</td></tr>
+          <tr><td>Negatif doğru, yanlış ve süre</td><td class="ok">Çökmüyor · <span class="mono">netHesapla(−5,3) = −5.75</span></td></tr>
+          <tr><td>Boş sayısı 500 (tutarsız kayıt)</td><td class="ok">Çökmüyor · oran %100'ü aşmıyor</td></tr>
+          <tr><td>3 yıllık aralıkta günlük grafik</td><td class="ok">Çökmüyor · ≤400 çubukla sınırlı</td></tr>
+          <tr><td>Havuz 2 soru, sınav 25 soru istiyor</td><td class="ok">2 soru dönüyor · <strong>kopya üretmiyor</strong></td></tr>
+          <tr><td>Son 7 / 30 gün / Tüm zamanlar</td><td class="ok">Sınırlar doğru · zaman damgasız eski kayıtlar korunuyor</td></tr>
+          <tr><td>Bir günde 25 saat çalışma</td><td class="hi">Sessizce kabul ediliyordu → BUG-04</td></tr>
+          <tr><td>YDT net serisi</td><td class="hi">Hiç yoktu → BUG-03</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ GRUP 3 ============ -->
+  <section>
+    <div class="sec-head"><span class="sec-num">Grup 3</span><h2>Mock data ile render doğrulaması</h2></div>
+    <p class="lede">
+      Belirlenimci bir öğrenci senaryosu: Matematik'te çok yanlış, Tarih'te çok boş,
+      Fizik'te çok zaman az net, Türkçe'de son hafta gelişme. Kartların
+      <em>var olduğu</em> değil, <em>ne söylediği</em> doğrulanıyor. 44 test.
+    </p>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Beklenen çıktı</th><th>Durum</th></tr></thead>
+        <tbody>
+          <tr><td>Tarih → "konu eksiği" tanısı · sarı</td><td class="ok">✓</td></tr>
+          <tr><td>Matematik → "hata yapıyorsun ya da sallıyorsun" · kırmızı</td><td class="ok">✓</td></tr>
+          <tr><td>Verimsiz ders → Fizik işaretleniyor</td><td class="ok">✓</td></tr>
+          <tr><td>İlk kaçırılan konu → Türev · 12 soru (9 yanlış · 3 boş)</td><td class="ok">✓</td></tr>
+          <tr><td>Haftalık karne → en çok gelişen Türkçe (+20 net)</td><td class="ok">✓</td></tr>
+          <tr><td>Net trend → TYT ve AYT ayrı seri · <code>spanGaps</code> açık</td><td class="ok">✓</td></tr>
+          <tr><td>Günlük istikrar → çalışılmayan günler 0 ve soluk renkte</td><td class="ok">✓</td></tr>
+          <tr><td>Aynı mock veri iki koşumda aynı çıktı</td><td class="ok">✓</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ GRUP 4 ============ -->
+  <section>
+    <div class="sec-head"><span class="sec-num">Grup 4</span><h2>Program üreticisi bütçe uyumu</h2></div>
+    <p class="lede">
+      Brief'te yoktu; "uygulama açılır açılmaz program saatlere sığmıyor uyarısı geliyor"
+      şikâyeti üzerine eklendi. 8 senaryo · 27 regresyon testi.
+    </p>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Ölçüm</th><th>Önce</th><th>Sonra</th></tr></thead>
+        <tbody>
+          <tr><td>Gün 2 · okula giden, "4 saat" diyen öğrenci</td><td class="num hi">9 görev · 11.1 sa</td><td class="num ok">4 görev · 4.0 sa</td></tr>
+          <tr><td>Fiziksel pencereyi aşan gün</td><td class="num hi">172 / 302</td><td class="num ok">0</td></tr>
+          <tr><td>En büyük taşma</td><td class="num hi">410 dk</td><td class="num ok">—</td></tr>
+          <tr><td>Üretilen toplam (hedef 1350 sa)</td><td class="num hi">2136 sa · 1.58×</td><td class="num ok">1003–1146 sa</td></tr>
+          <tr><td>Uygulanamaz görev (soru başına &lt;30 sn)</td><td class="num">—</td><td class="num ok">0</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <h4>Bilinçli istisna</h4>
+      <p>
+        Deneme günleri beyan edilen kapasiteyi aşabilir: gerçek bir TYT denemesi 165,
+        AYT 180 dakikadır ve kısaltılamaz — sınav provasının anlamı budur. Bu günler yine de
+        fiziksel pencereye sığar. Test bu istisnayı gerekçesiyle belgeliyor.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ BULGULAR ============ -->
+  <section>
+    <div class="sec-head"><span class="sec-num">Bulgular</span><h2>Testlerin ortaya çıkardığı beş hata</h2></div>
+    <p class="lede">Beşi de düzeltildi ve her biri için regresyon testi bırakıldı.</p>
+
+    <article class="bug kritik">
+      <div class="bug-top">
+        <span class="bug-id">BUG-01</span>
+        <span class="pill kritik">Kritik</span>
+        <span class="pill fixed">Düzeltildi</span>
+        <h4>Netler bir ondalığa yuvarlanıyordu</h4>
+      </div>
+      <p>
+        Kod <code>Math.round(x*10)/10</code> kullanıyordu. Netler çeyreklik adımlarla geldiği için
+        <span class="mono">12.25 → 12.3</span>, <span class="mono">9.75 → 9.8</span>,
+        <span class="mono">−0.75 → −0.7</span> oluyordu. Öğrenciye ve veli raporuna yanlış net gidiyordu.
+      </p>
+      <p class="fix"><b>Çözüm:</b> tek tanım <code>netHesapla()</code> · iki ondalık.</p>
+    </article>
+
+    <article class="bug kritik">
+      <div class="bug-top">
+        <span class="bug-id">BUG-02</span>
+        <span class="pill kritik">Kritik</span>
+        <span class="pill fixed">Düzeltildi</span>
+        <h4>Uygulamada iki farklı net tanımı vardı</h4>
+      </div>
+      <p>
+        Yedi hesap noktasının üçü negatifi sıfıra kırpıyordu. Aynı öğrenci aynı veriyle
+        özet kartında <span class="mono">−3</span>, veli raporunda <span class="mono">0</span> görüyordu.
+        Kırpma ayrıca "yanlışla net kaybediyorsun" sinyalini gizliyor — oysa istenen
+        <em>sallama eğilimi uyarısı</em>nın dayanağı tam olarak negatif nettir.
+      </p>
+      <p class="fix"><b>Çözüm:</b> yedi çağrı noktası tek fonksiyona bağlandı · kaynakta eski kalıbı arayan regresyon testi eklendi.</p>
+    </article>
+
+    <article class="bug kritik">
+      <div class="bug-top">
+        <span class="bug-id">BUG-03</span>
+        <span class="pill kritik">Kritik</span>
+        <span class="pill fixed">Düzeltildi</span>
+        <h4>YDT hiç tanınmıyordu</h4>
+      </div>
+      <p>
+        Sınav türü türetimi <em>"AYT değilse TYT"</em> mantığıyla çalışıyordu. Dil alanındaki
+        öğrencinin İngilizce ve YDT netleri <strong>TYT serisine karışıyordu</strong>.
+        Uygulamada Dil alanı seçilebiliyor ama analizde YDT diye bir şey yoktu.
+      </p>
+      <p class="fix"><b>Çözüm:</b> <code>sinavTuruBelirle()</code> · net trend grafiğine ayrı YDT serisi.</p>
+    </article>
+
+    <article class="bug orta">
+      <div class="bug-top">
+        <span class="bug-id">BUG-04</span>
+        <span class="pill orta">Orta</span>
+        <span class="pill fixed">Düzeltildi</span>
+        <h4>Günde 24 saati aşan toplam sessizce kabul ediliyordu</h4>
+      </div>
+      <p>
+        Tek kayıt 300 dakika ile sınırlı, ama aynı güne birden çok kayıt girilince toplam
+        25+ saate çıkabiliyordu. Bu doğrudan net/saat verim analizini ve istikrar grafiğini bozar.
+      </p>
+      <p class="fix">
+        <b>Çözüm:</b> veri bilerek kırpılmadı — öğrencinin kaydı onundur. Girişte uyarı veriliyor.
+      </p>
+    </article>
+
+    <article class="bug kritik">
+      <div class="bug-top">
+        <span class="bug-id">BUG-05</span>
+        <span class="pill kritik">Kritik</span>
+        <span class="pill fixed">Düzeltildi</span>
+        <h4>Program üreticisi günlük bütçeyi hiç sormuyordu</h4>
+      </div>
+      <p>
+        Görev sayısı yalnızca seviyeye göre belirleniyor, günün fiziksel penceresi ve öğrencinin
+        beyan ettiği kapasite hesaba katılmıyordu. "Hafta içi 4 saat" diyen öğrenciye
+        <strong>günde 11.1 saatlik</strong> program üretiliyor, 302 günün 172'si taşıyor ve uygulama
+        açılır açılmaz "saatlere sığmıyor" uyarısı veriyordu. <em>Uyarı doğruydu; program yanlıştı.</em>
+      </p>
+      <p class="fix">
+        <b>Çözüm:</b> <code>gunlukCalismaButcesi()</code> + <code>gunuButceyeSigdir()</code> —
+        önce orantılı küçültme (süreyle birlikte <strong>soru sayısı da</strong> düşer, yoksa
+        "30 soru / 12 dk" gibi uygulanamaz görevler oluşur), yetmezse fazla görev çıkarılır.
+      </p>
+    </article>
+
+    <div class="note">
+      <h4>Kırılganlık notu — hata değil</h4>
+      <p>
+        <code>renderCharts</code> içinde dört korumasız <code>getElementById(...).X</code> erişimi var
+        (<span class="mono">netsLineChart</span>, <span class="mono">balanceRadarChart</span>,
+        <span class="mono">balanceRecommendation</span>, <span class="mono">speedLineChart</span>).
+        Elemanlar bugün mevcut, ama biri bir HTML düzenlemesinde kaldırılırsa
+        <strong>tüm analiz sekmesi tek satırda ölür</strong>. Diğer erişimler null korumalıdır.
+      </p>
+      <p>
+        Ayrıca <code>state.curriculumProgress</code> dizisine kodun hiçbir yerinde yazılmıyor —
+        hep boş. Tek doğruluk kaynağı <code>state.topicStatuses</code>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ ALTYAPI ============ -->
+  <section>
+    <div class="sec-head"><span class="sec-num">Altyapı</span><h2>Test paketi nasıl kurulu</h2></div>
+    <p class="lede">
+      Projede derleme adımı yok — <code>app.js</code> tek dosya, <code>&lt;script&gt;</code> ile
+      yükleniyor. Sırf test için npm bağımlılığı eklemek bugün olmayan bir kurulum yükü getirirdi.
+      Asıl paket bu yüzden bağımlılıksız; macOS'ta hazır gelen JavaScriptCore ile koşuyor ve
+      <code>app.js</code>'i gerçek hâliyle yüklüyor.
+    </p>
+
+    <pre><code>./test/calistir.sh        # çıkış kodu 0 / 1 — CI'ye uygun</code></pre>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th>Dosya</th><th>İçerik</th><th>Test</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">harness.js</td><td>DOM · localStorage · Chart.js taklidi, veri dosyası yükleyici, test çerçevesi</td><td class="num">—</td></tr>
+          <tr><td class="mono">01-hesaplama.js</td><td>Veri hesaplama ve matematiksel doğruluk</td><td class="num">31</td></tr>
+          <tr><td class="mono">02-gorsellestirme-edge.js</td><td>Sıfır veri, uç değerler, dönem filtreleri</td><td class="num">42</td></tr>
+          <tr><td class="mono">mock-veri.js</td><td>Paylaşılan, belirlenimci öğrenci senaryosu</td><td class="num">—</td></tr>
+          <tr><td class="mono">03-render-mock.js</td><td>Kart ve grafik render doğrulaması</td><td class="num">44</td></tr>
+          <tr><td class="mono">04-program-butcesi.js</td><td>Program üreticisi bütçe uyumu</td><td class="num">27</td></tr>
+          <tr><td class="mono">jest/analiz.test.js</td><td>Jest portu · isteğe bağlı, npm gerekir</td><td class="num">23</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <h4>Testin kendisi de doğrulanmaya muhtaç</h4>
+      <p>
+        İlk koşumlarda kalan testlerin bir kısmı uygulamanın değil <strong>testin</strong> hatasıydı:
+        <code>exam</code> alanını küçük harf sandım, geçersiz alanın <code>null</code> döneceğini
+        varsaydım (kodda kasıtlı fallback var), bir regex HTML yapısıyla uyuşmuyordu. Bunlar
+        "bulunan hata" diye raporlanmadı; kod okunup düzeltildi ve gerekçeleri teste yorum olarak yazıldı.
+      </p>
+      <p>
+        Jest portunun ilk hâli de kırıktı: <code>vm.runInThisContext</code> kodu jsdom'un dışındaki
+        bağlamda koşuyor ve 23 testin hepsi <span class="mono">window is not defined</span> ile patlıyordu.
+        Koşulmasaydı çalışmayan bir dosya teslim edilmiş olacaktı.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    Kaynak: <span class="mono">test/</span> · Senaryo dokümanı: <span class="mono">test/SENARYOLAR.md</span> ·
+    Koşum tarihi: 21 Ağustos 2026 · Tüm testler geçiyor, çıkış kodu 0.
+  </footer>
+
+</div>

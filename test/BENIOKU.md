@@ -21,6 +21,7 @@ Harici bağımlılık yoktur (npm/node gerekmez). Testler macOS'ta hazır gelen
 | `mock-veri.js` | Paylaşılan, **belirlenimci** mock öğrenci senaryosu |
 | `03-render-mock.js` | Grup 3 — mock data ile kart ve grafik render doğrulaması (44 test) |
 | `04-program-butcesi.js` | Grup 4 — program üreticisi günlük bütçeye uyuyor mu (27 test) |
+| `rapor.html` | Paylaşılabilir QA raporu (tarayıcıda aç) |
 | `jest/` | Aynı testlerin Jest portu (isteğe bağlı, npm gerekir) |
 
 ## Harness neden gerekli
