@@ -3,7 +3,7 @@
 Tarayıcıda çalışan, sunucu gerektirmeyen bir YKS hazırlık asistanı.
 Tüm veriler kullanıcının kendi tarayıcısında (localStorage) saklanır.
 
-**Canlı:** https://oguzkamburoglu-cloud.github.io/Defne-YKS/
+**Canlı:** https://oguzkamburoglu-cloud.github.io/YKSKo-um/
 
 ## Özellikler
 
