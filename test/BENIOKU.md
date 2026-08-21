@@ -27,6 +27,7 @@ Harici bağımlılık yoktur (npm/node gerekmez). Testler macOS'ta hazır gelen
 | `08-asama2-kenar-durumlar.js` | Master plan Aşama 2 — kenar durumlar ve veri sınırları (41 test) |
 | `09-asama3-guvenlik.js` | Master plan Aşama 3 — güvenlik ve veri izolasyonu (36 test) |
 | `rapor.html` | Paylaşılabilir QA raporu (tarayıcıda aç) |
+| `e2e/` | Playwright E2E — gerçek tarayıcıda uçtan uca akışlar (7 test) |
 | `jest/` | Aynı testlerin Jest portu (isteğe bağlı, npm gerekir) |
 
 ## Harness neden gerekli

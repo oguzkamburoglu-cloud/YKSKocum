@@ -9,5 +9,14 @@ _archive/
 # Netlify için hazırlanan kopya (kaynak zaten kök dizinde)
 yayin/
 
+# Playwright koşum çıktıları
+test-results/
+playwright-report/
+
+# Node bağımlılıkları — asıl test paketi bunları GEREKTİRMEZ
+# (./test/calistir.sh bağımlılıksız koşar; Jest ve Playwright isteğe bağlı)
+node_modules/
+package-lock.json
+
 # İşletim sistemi
 .DS_Store
