@@ -4942,6 +4942,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     var _el_aiKey = document.getElementById("aiCoachApiKey"); if (_el_aiKey) _el_aiKey.value = this.getLlmApiKey();
     this.updateAiConnectionStatus();
     this.updateRetakeDiagnosticUI();
+    this.checkWeeklyRenewalReminder();
 
     // Update dashboard subscription status
     const subTier = this.state.subscriptionTier || "free";
@@ -14129,43 +14130,24 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
   // Metinden programa — TEK AYRISTIRICI.
   // Foto/PDF okuma, elle yazma ve sesli giris ayni bu fonksiyonu cagirir.
   // Basarili olursa { taskCount, importedDays } dondurur, aksi halde null.
-  importProgramTextIntoPlanner: function(text) {
-    if (!text || String(text).trim() === "") {
-      this.showToast("Aktarılacak metin boş.", "error");
-      return null;
-    }
+  // Metinden gorev listesi uretir — YAN ETKISI YOKTUR.
+  // Foto/PDF okuma, elle yazma ve sesli giris ayni bu ayristiriciyi kullanir.
+  // Donen yapi: { gunler: {gunNo: [gorev]}, taskCount, sureliGorev, suresizGorev }
+  // Programa hicbir sey yazmaz; taslak ekrani bunun uzerine kurulur.
+  parseProgramTextToDays: function(text) {
+    if (!text || String(text).trim() === "") return null;
 
-    // Modül artık planlayıcı modalının içinde değil, Sihirbaz'ın
-    // "Fotoğraftan" sekmesinde. Bu yüzden aktarım başlarken planlayıcı
-    // henüz kurulmamış olabilir: aktif programı tampona yükleyip
-    // planlayıcıyı açıyoruz, aktarım sonrası kullanıcı kontrol edip kaydediyor.
-    if (!this.isPlanning) {
-      this.plannerCreateNewProgramFromScratch();
-    }
-
-    // Planlayıcı tamponu aktif programdan kopyalanmış olarak gelir.
-    // Eskiden tüm 360 gün sıfırlanıyordu; fotoğrafta yer almayan günler
-    // de siliniyordu. Artık YALNIZCA fotoğrafta geçen günler temizlenir.
-    if (!this.plannerBuffer) this.plannerBuffer = {};
-    const clearedDays = {};
-    const ensureDay = (day) => {
-      if (!this.plannerBuffer[day] || !Array.isArray(this.plannerBuffer[day].tasks)) {
-        this.plannerBuffer[day] = { completed: false, tasks: [] };
-      }
-      if (!clearedDays[day]) {
-        this.plannerBuffer[day].tasks = [];
-        this.plannerBuffer[day].schedule = [];
-        clearedDays[day] = true;
-      }
-      return this.plannerBuffer[day];
-    };
-
+    const gunler = {};
     let currentDay = 1;
     let taskCount = 0;
-    // Sure acikca soylendi mi? ("45 dk", "2 saat") — aktarim sonrasi
-    // "saatleri ben ayarlayayim mi?" sorusu bu sayaca gore sorulur.
+    // Sure acikca soylendi mi? ("45 dk", "2 saat")
     let sureliGorev = 0;
     let suresizGorev = 0;
+
+    const ensureDay = (day) => {
+      if (!gunler[day]) gunler[day] = [];
+      return gunler[day];
+    };
 
     text.split("\n").forEach(rawLine => {
       let line = rawLine.trim();
@@ -14291,28 +14273,307 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
       // Fotoğraftan gelen göreve de yayınevi/kitap bilgisi iliştirilir
       this.sourceBooks.attach(newTask);
 
-      ensureDay(currentDay).tasks.push(newTask);
+      ensureDay(currentDay).push(newTask);
       taskCount++;
     });
 
-    if (taskCount === 0) {
+    if (taskCount === 0) return null;
+
+    return {
+      gunler: gunler,
+      taskCount: taskCount,
+      sureliGorev: sureliGorev,
+      suresizGorev: suresizGorev
+    };
+  },
+
+  // Metinden programa — ayristirmayi parseProgramTextToDays yapar,
+  // burasi yalnizca sonucu planlayici tamponuna yazar.
+  // Basarili olursa ozet dondurur, aksi halde null.
+  importProgramTextIntoPlanner: function(text) {
+    if (!text || String(text).trim() === "") {
+      this.showToast("Aktarılacak metin boş.", "error");
+      return null;
+    }
+
+    const cozum = this.parseProgramTextToDays(text);
+    if (!cozum) {
       this.showToast("Metinden görev çıkarılamadı. Satırları 'Gün 1:' ve '- Matematik: Limit 30 soru' biçiminde düzenleyip tekrar dene.", "error");
       return null;
     }
 
-    const importedDays = Object.keys(clearedDays).map(Number).sort((a, b) => a - b);
-    const firstDay = importedDays[0] || 1;
+    // Aktarim baslarken planlayici henuz kurulmamis olabilir.
+    if (!this.isPlanning) {
+      this.plannerCreateNewProgramFromScratch();
+    }
+    if (!this.plannerBuffer) this.plannerBuffer = {};
 
+    // YALNIZCA metinde gecen gunler temizlenir; digerleri korunur.
+    const importedDays = Object.keys(cozum.gunler).map(Number).sort((a, b) => a - b);
+    importedDays.forEach(g => {
+      this.plannerBuffer[g] = { completed: false, tasks: cozum.gunler[g], schedule: [] };
+    });
+
+    const firstDay = importedDays[0] || 1;
     const daySelect = document.getElementById("plannerDaySelect");
     if (daySelect) daySelect.value = String(firstDay);
     this.plannerSelectDay(firstDay);
 
     return {
-      taskCount: taskCount,
+      taskCount: cozum.taskCount,
       importedDays: importedDays,
-      sureliGorev: sureliGorev,
-      suresizGorev: suresizGorev
+      sureliGorev: cozum.sureliGorev,
+      suresizGorev: cozum.suresizGorev
     };
+  },
+
+  // ============================================================
+  // AKTARIM TASLAGI — programa yazmadan once goster / duzenle / onayla
+  // ------------------------------------------------------------
+  // Sesli giris ve foto/PDF okuma artik dogrudan programa yazmaz.
+  // Once bu taslak acilir: kullanici gorevleri surukleyip siralar,
+  // sureleri duzenler, sonra "Onayla ve Programa Ekle" der.
+  // ============================================================
+
+  _taslak: null,
+
+  // Gun numarasini gercek tarihe cevirir ("21 Agu, Cum").
+  taslakGunTarihi: function(gunNo) {
+    try {
+      const bas = this.state && this.state.startDate ? new Date(this.state.startDate) : new Date();
+      if (isNaN(bas)) return "";
+      bas.setDate(bas.getDate() + (gunNo - 1));
+      const gunAdi = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"][bas.getDay()];
+      const ayAdi = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"][bas.getMonth()];
+      return `${bas.getDate()} ${ayAdi}, ${gunAdi}`;
+    } catch (e) { return ""; }
+  },
+
+  // Gunun ilk gorevi hangi saatte baslar? Planlayicidaki mantikla ayni:
+  // mezunlar kalkistan 90 dk sonra, okula gidenler hafta ici 16:00'da.
+  // Program gununun GERCEK haftanin gunu (0=Pazar ... 6=Cumartesi).
+  // Kodun eski yerlerinde "gun % 7" kullaniliyor; bu takvimle uyusmadigi
+  // icin hafta sonu yanlis tespit ediliyordu (2. gun gercekte Cumartesi
+  // olmasina ragmen hafta ici sayiliyordu).
+  programGunHaftaninGunu: function(gunNo) {
+    try {
+      const bas = this.state && this.state.startDate ? new Date(this.state.startDate + "T00:00:00") : new Date();
+      if (isNaN(bas)) return gunNo % 7;
+      bas.setDate(bas.getDate() + (gunNo - 1));
+      return bas.getDay();
+    } catch (e) { return gunNo % 7; }
+  },
+
+  taslakBaslangicDakika: function(gunNo) {
+    const hg = this.programGunHaftaninGunu(gunNo);
+    const haftaSonu = (hg === 0 || hg === 6);
+    if (this.state.isGraduate) {
+      return this.timeStrToMinutes(this.state.wakeTime || "08:00") + 90;
+    }
+    return haftaSonu
+      ? this.timeStrToMinutes(this.state.wakeTime || "08:00") + 120
+      : 16 * 60;
+  },
+
+  // Soylenen SIRAYA gore saatleri hesaplar. Sira degistiginde
+  // (surukle-birak) yeniden cagrilir; saatler kendiliginden kayar.
+  taslakSaatleriHesapla: function(gunNo, gorevler) {
+    let imlec = this.taslakBaslangicDakika(gunNo);
+    const MOLA = 15;
+    return gorevler.map((g, i) => {
+      const sure = this.parseDurationMinutes(g.duration) || 45;
+      const bas = imlec;
+      const bit = imlec + sure;
+      imlec = bit + (i < gorevler.length - 1 ? MOLA : 0);
+      return { bas: this.minutesToTimeStr(bas), bit: this.minutesToTimeStr(bit) };
+    });
+  },
+
+  showImportDraft: function(cozum, kaynak) {
+    if (!cozum || !cozum.gunler) return;
+    this._taslak = {
+      gunler: JSON.parse(JSON.stringify(cozum.gunler)),
+      kaynak: kaynak || "metin",
+      sureliGorev: cozum.sureliGorev,
+      suresizGorev: cozum.suresizGorev
+    };
+    this.renderImportDraft();
+    this.openModal("importDraftModal");
+  },
+
+  renderImportDraft: function() {
+    const govde = document.getElementById("importDraftBody");
+    if (!govde || !this._taslak) return;
+
+    const gunNolar = Object.keys(this._taslak.gunler).map(Number).sort((a, b) => a - b);
+    const toplamGorev = gunNolar.reduce((a, g) => a + this._taslak.gunler[g].length, 0);
+
+    const intro = document.getElementById("importDraftIntro");
+    if (intro) {
+      const kaynakAdi = this._taslak.kaynak === "ses" ? "Sesli girişten" :
+                        this._taslak.kaynak === "foto" ? "Fotoğraf/PDF'ten" : "Metinden";
+      intro.innerHTML = `${kaynakAdi} <strong>${gunNolar.length} gün</strong> ve ` +
+        `<strong>${toplamGorev} görev</strong> okundu. Kontrol edip onayladığında programına eklenecek.`;
+    }
+
+    govde.innerHTML = gunNolar.map(gunNo => {
+      const gorevler = this._taslak.gunler[gunNo];
+      const saatler = this.taslakSaatleriHesapla(gunNo, gorevler);
+      const tarih = this.taslakGunTarihi(gunNo);
+      const satirlar = gorevler.map((g, i) => `
+        <li class="taslak-gorev" draggable="true"
+            data-gun="${gunNo}" data-idx="${i}"
+            style="display:flex; align-items:center; gap:0.6rem; padding:0.55rem 0.7rem; margin:0.3rem 0;
+                   background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; cursor:grab;">
+          <i class="fa-solid fa-grip-vertical" style="color:var(--text-muted); font-size:0.8rem;"></i>
+          <span style="font-family:var(--font-header); font-variant-numeric:tabular-nums; font-size:0.75rem;
+                       color:var(--primary); font-weight:800; white-space:nowrap;">${saatler[i].bas}–${saatler[i].bit}</span>
+          <span style="flex:1; font-size:0.82rem; line-height:1.35;">${g.label}<br>
+            <span style="color:var(--text-muted); font-size:0.72rem;">${g.topic || ""}</span>
+          </span>
+          <input type="number" min="10" max="240" step="5" value="${this.parseDurationMinutes(g.duration) || 45}"
+                 onchange="app.taslakSureDegistir(${gunNo}, ${i}, this.value)"
+                 style="width:62px; flex:0 0 auto; padding:0.25rem 0.35rem; font-size:0.75rem; text-align:center;
+                        border:1px solid var(--border-color); border-radius:6px; background:var(--bg-sub); color:var(--text-main);">
+          <span style="font-size:0.7rem; color:var(--text-muted);">dk</span>
+          <button onclick="app.taslakGorevSil(${gunNo}, ${i})" title="Görevi çıkar"
+                  style="border:none; background:none; color:var(--danger); cursor:pointer; font-size:0.85rem; padding:0.2rem;">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </li>`).join("");
+
+      return `
+        <div class="taslak-gun" data-gun="${gunNo}"
+             style="border:1.5px solid var(--border-color); border-radius:10px; padding:0.8rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+            <div style="font-weight:800; font-size:0.88rem; color:var(--text-main);">
+              <i class="fa-solid fa-calendar-day text-primary"></i> Gün ${gunNo}${tarih ? ` <span style="font-weight:600; color:var(--text-muted); font-size:0.76rem;">(${tarih})</span>` : ""}
+            </div>
+            <span style="font-size:0.72rem; color:var(--text-muted); font-weight:700;">${gorevler.length} görev</span>
+          </div>
+          <ul style="list-style:none; margin:0; padding:0; min-height:12px;">${satirlar}</ul>
+        </div>`;
+    }).join("");
+
+    this.bindTaslakSurukle();
+  },
+
+  // Surukle-birak: gun icinde siralama, gunler arasi tasima.
+  bindTaslakSurukle: function() {
+    const govde = document.getElementById("importDraftBody");
+    if (!govde) return;
+
+    govde.querySelectorAll(".taslak-gorev").forEach(el => {
+      el.addEventListener("dragstart", (e) => {
+        this._surukleKaynak = { gun: +el.dataset.gun, idx: +el.dataset.idx };
+        el.style.opacity = "0.45";
+        try { e.dataTransfer.setData("text/plain", "gorev"); } catch (err) {}
+        if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
+      });
+      el.addEventListener("dragend", () => { el.style.opacity = ""; });
+      el.addEventListener("dragover", (e) => { e.preventDefault(); });
+      el.addEventListener("drop", (e) => {
+        e.preventDefault(); e.stopPropagation();
+        this.taslakTasi(this._surukleKaynak, { gun: +el.dataset.gun, idx: +el.dataset.idx });
+      });
+    });
+
+    // Gun kutusunun bosluguna birakinca gunun sonuna eklenir
+    govde.querySelectorAll(".taslak-gun").forEach(kutu => {
+      kutu.addEventListener("dragover", (e) => { e.preventDefault(); });
+      kutu.addEventListener("drop", (e) => {
+        e.preventDefault();
+        const gun = +kutu.dataset.gun;
+        this.taslakTasi(this._surukleKaynak, { gun: gun, idx: (this._taslak.gunler[gun] || []).length });
+      });
+    });
+  },
+
+  taslakTasi: function(kaynak, hedef) {
+    if (!kaynak || !hedef || !this._taslak) return;
+    const g = this._taslak.gunler;
+    if (!g[kaynak.gun] || !g[hedef.gun]) return;
+    if (kaynak.gun === hedef.gun && kaynak.idx === hedef.idx) return;
+
+    const [gorev] = g[kaynak.gun].splice(kaynak.idx, 1);
+    if (!gorev) return;
+    let yeniIdx = hedef.idx;
+    if (kaynak.gun === hedef.gun && kaynak.idx < hedef.idx) yeniIdx--;
+    g[hedef.gun].splice(Math.max(0, yeniIdx), 0, gorev);
+
+    // Tasima sonrasi bosalan gun listede durmasin
+    Object.keys(g).forEach(k => { if (g[k].length === 0) delete g[k]; });
+
+    this._surukleKaynak = null;
+    if (Object.keys(g).length === 0) {
+      this.cancelImportDraft();
+      return;
+    }
+    this.renderImportDraft();
+  },
+
+  taslakSureDegistir: function(gunNo, idx, dakika) {
+    if (!this._taslak) return;
+    const dk = Math.max(10, Math.min(240, parseInt(dakika, 10) || 45));
+    const gorev = (this._taslak.gunler[gunNo] || [])[idx];
+    if (!gorev) return;
+    gorev.duration = `${dk} dk`;
+    gorev.sureKaynagi = "elle";
+    this.renderImportDraft();
+  },
+
+  taslakGorevSil: function(gunNo, idx) {
+    if (!this._taslak) return;
+    const liste = this._taslak.gunler[gunNo];
+    if (!liste) return;
+    liste.splice(idx, 1);
+    if (liste.length === 0) delete this._taslak.gunler[gunNo];
+    if (Object.keys(this._taslak.gunler).length === 0) {
+      this.cancelImportDraft();
+      this.showToast("Taslakta görev kalmadı, aktarım iptal edildi.", "info");
+      return;
+    }
+    this.renderImportDraft();
+  },
+
+  cancelImportDraft: function() {
+    this._taslak = null;
+    this.closeModal("importDraftModal");
+    this.showToast("Taslak iptal edildi, programına hiçbir şey eklenmedi.", "info");
+  },
+
+  // Onay: taslak artik programa yazilir.
+  confirmImportDraft: function() {
+    if (!this._taslak) return;
+    const taslak = this._taslak;
+
+    if (!this.isPlanning) this.plannerCreateNewProgramFromScratch();
+    if (!this.plannerBuffer) this.plannerBuffer = {};
+
+    const gunNolar = Object.keys(taslak.gunler).map(Number).sort((a, b) => a - b);
+    let toplam = 0;
+    gunNolar.forEach(gunNo => {
+      const gorevler = taslak.gunler[gunNo];
+      this.plannerBuffer[gunNo] = { completed: false, tasks: gorevler, schedule: [] };
+      // Saatler soylenen siraya gore zaten hesaplandi; cizelgeyi de kur.
+      this.plannerBuffer[gunNo].schedule = this.buildDaySchedule(gorevler, this.programGunHaftaninGunu(gunNo));
+      toplam += gorevler.length;
+    });
+
+    this._taslak = null;
+    this.closeModal("importDraftModal");
+
+    const ilkGun = gunNolar[0] || 1;
+    const daySelect = document.getElementById("plannerDaySelect");
+    if (daySelect) daySelect.value = String(ilkGun);
+    this.plannerSelectDay(ilkGun);
+
+    this.announceProgramImport({
+      taskCount: toplam,
+      importedDays: gunNolar,
+      sureliGorev: taslak.sureliGorev,
+      suresizGorev: taslak.suresizGorev
+    });
   },
 
   // Aktarim sonrasi tek ekran: ozet + eksik gunler + saatler.
@@ -14404,6 +14665,19 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
         `. Şu an bu görevlere varsayılan süreler atandı. Süreleri günlük çalışma kapasitene göre ben dağıtayım mı?`,
         secenek("aktarimSaat", "ayarla", "<strong>Evet, sen ayarla</strong> — günlük kapasitemi bu görevlere paylaştır, saat akışını da kur.", true) +
         secenek("aktarimSaat", "elle", "<strong>Hayır</strong> — varsayılan süreler kalsın, gerekirse kendim düzenlerim.", false)
+      );
+    }
+
+    // C) Aylik tekrar — bir haftalik (ya da daha kisa) duzen aktarildiysa
+    //    bunu ay boyunca tekrarlamak anlamlidir.
+    const aktarilanAralik = gunler.length ? (enBuyuk - enKucuk + 1) : 0;
+    this._aylikTekrarUygun = aktarilanAralik > 0 && aktarilanAralik <= 7 && kalanGun >= 7;
+    if (this._aylikTekrarUygun) {
+      html += kutu(
+        '<i class="fa-solid fa-rotate"></i> Aylık tekrar',
+        `Bu <strong>${aktarilanAralik} günlük</strong> düzeni <strong>4 hafta boyunca</strong> aynen tekrarlayayım mı?`,
+        secenek("aktarimTekrar", "hayir", "<strong>Hayır</strong> — her hafta bittiğinde yenisini oluşturacağım.", true) +
+        secenek("aktarimTekrar", "evet", "<strong>Evet, 4 hafta tekrarla</strong> — aynı düzen bir ay boyunca uygulansın.", false)
       );
     }
 
@@ -14511,19 +14785,109 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
       yapilanlar.push(`${sureDegisen} görevin süresi kapasitene göre ayarlandı, ${saatlenen} günün saat akışı kuruldu`);
     }
 
+    // C) Aylik tekrar
+    const tekrarKarari = sec("aktarimTekrar");
+    if (tekrarKarari === "evet" && gunler.length > 0) {
+      const enKucuk = gunler[0];
+      const enBuyuk = gunler[gunler.length - 1];
+      const aralik = enBuyuk - enKucuk + 1;
+      let kopyalanan = 0;
+      // 4 hafta = aktarilan araligin ardindan 3 tekrar daha
+      for (let tur = 1; tur < 4; tur++) {
+        gunler.forEach(g => {
+          const hedef = g + aralik * tur;
+          if (hedef > this.PROGRAM_DAYS) return;
+          const kaynak = (this.plannerBuffer[g] && this.plannerBuffer[g].tasks) || [];
+          if (kaynak.length === 0) return;
+          const kopya = kaynak.map(t => Object.assign({}, t, {
+            id: `task_ay_${hedef}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+            completed: false,
+            logged: false
+          }));
+          this.plannerBuffer[hedef] = {
+            completed: false,
+            tasks: kopya,
+            schedule: this.buildDaySchedule(kopya, hedef % 7)
+          };
+          kopyalanan++;
+        });
+      }
+      this.state.haftalikYenilemeHatirlat = false;
+      yapilanlar.push(`${kopyalanan} gün 4 hafta boyunca tekrarlandı`);
+    } else if (tekrarKarari === "hayir" && gunler.length > 0) {
+      // Tekrar istemiyorsa: hafta bitmeye 1 gun kala koc hatirlatsin.
+      this.scheduleWeeklyRenewalReminder(gunler[gunler.length - 1]);
+      yapilanlar.push("hafta bitmeden bir gün önce hatırlatma kuruldu");
+    }
+
     this.closeModal("importFollowUpModal");
     this.plannerSelectDay(gunler[0] || 1);
+    this.saveState();
     this.showToast(
       yapilanlar.length ? "Uygulandı: " + yapilanlar.join(", ") + "." : "Değişiklik yapılmadı.",
       "success"
     );
   },
 
+  // Bugun programin kacinci gunu? activeDay kullanicinin BAKTIGI gundur,
+  // bugun degildir; hatirlatma icin gercek takvim gunu gerekir.
+  bugunkuProgramGunu: function() {
+    try {
+      if (!this.state || !this.state.startDate) return this.state && this.state.activeDay || 1;
+      const bas = new Date(this.state.startDate + "T00:00:00");
+      if (isNaN(bas)) return this.state.activeDay || 1;
+      const bugun = new Date();
+      bugun.setHours(0, 0, 0, 0);
+      const fark = Math.floor((bugun - bas) / 86400000) + 1;
+      return Math.max(1, Math.min(this.PROGRAM_DAYS, fark));
+    } catch (e) {
+      return (this.state && this.state.activeDay) || 1;
+    }
+  },
+
+  // Haftalik program yenileme hatirlaticisi.
+  // Aktarilan duzenin son gununden BIR GUN once AI koc uyarir.
+  scheduleWeeklyRenewalReminder: function(sonGun) {
+    const hatirlatmaGunu = Math.max(1, (parseInt(sonGun, 10) || 1) - 1);
+    this.state.haftalikYenilemeHatirlat = true;
+    this.state.haftalikYenilemeGunu = hatirlatmaGunu;
+    this.state.haftalikYenilemeSonGun = parseInt(sonGun, 10) || 1;
+    this.state.haftalikYenilemeBildirildi = false;
+    this.saveState();
+  },
+
+  // Gun degistiginde / panel yenilendiginde calisir. Hatirlatma gunu
+  // geldiyse AI koc bildirimini bir kez gonderir.
+  checkWeeklyRenewalReminder: function() {
+    if (!this.state.haftalikYenilemeHatirlat) return;
+    if (this.state.haftalikYenilemeBildirildi) return;
+
+    const bugun = this.bugunkuProgramGunu();
+    if (!bugun || bugun < this.state.haftalikYenilemeGunu) return;
+
+    const sonGun = this.state.haftalikYenilemeSonGun;
+    const mesaj = `Programın ${sonGun}. günde bitiyor — yarın son gün. ` +
+      `Yeni haftanın programını sesle ya da fotoğraftan hızlıca oluşturabilirsin.`;
+
+    this.addNotification("warning", "AI Koç: Haftalık Program Yenileme", mesaj);
+    this.showCoachAlert("🗓️ Haftan Bitmek Üzere", mesaj);
+    this.state.haftalikYenilemeBildirildi = true;
+    this.saveState();
+  },
+
   // Giris 1: Fotograf / PDF akisi
   plannerParseOCRTextAndImport: function() {
     const textEl = document.getElementById("ocrResultText");
-    const sonuc = this.importProgramTextIntoPlanner(textEl ? textEl.value : "");
-    if (!sonuc) return;
+    const metin = textEl ? textEl.value : "";
+    if (!metin || !metin.trim()) {
+      this.showToast("Aktarılacak metin boş.", "error");
+      return;
+    }
+    const cozum = this.parseProgramTextToDays(metin);
+    if (!cozum) {
+      this.showToast("Metinden görev çıkarılamadı. Satırları 'Gün 1:' ve '- Matematik: Limit 30 soru' biçiminde düzenleyip tekrar dene.", "error");
+      return;
+    }
 
     const resultArea = document.getElementById("ocrResultArea");
     const statusDiv = document.getElementById("ocrStatus");
@@ -14532,7 +14896,8 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     if (statusDiv) statusDiv.style.display = "none";
     if (fileInput) fileInput.value = "";
 
-    this.announceProgramImport(sonuc);
+    // Programa dogrudan yazilmaz: once taslak gosterilir.
+    this.showImportDraft(cozum, "foto");
   },
 
   // Ornek metni doldurur — bicimi bir kez gorunce yazmak kolaylasiyor.
@@ -14656,10 +15021,20 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
       }
       const gunSayisi = satirlar.split("\n").filter(l => /:$/.test(l)).length;
       const isSayisi = satirlar.split("\n").filter(l => /^-/.test(l)).length;
-      this.plannerVoiceUI(false,
-        `✓ Söylediklerin metne eklendi (${gunSayisi} gün, ${isSayisi} görev). ` +
-        `Kontrol edip <strong>&laquo;Metni Plana Aktar&raquo;</strong> düğmesine bas.`);
       this._voiceBuffer = "";
+
+      // Konusma bitince dogrudan taslak acilir; kullanici gorevleri
+      // surukleyip duzenler ve onaylayinca programa eklenir.
+      const cozum = this.parseProgramTextToDays(satirlar);
+      if (cozum) {
+        this.plannerVoiceUI(false,
+          `✓ Söylediklerin okundu (${gunSayisi} gün, ${isSayisi} görev). Taslağı kontrol et.`);
+        this.showImportDraft(cozum, "ses");
+      } else {
+        this.plannerVoiceUI(false,
+          `Söylediklerin metne eklendi ama görev çıkarılamadı. Metni düzenleyip ` +
+          `<strong>&laquo;Metni Plana Aktar&raquo;</strong> düğmesine bas.`, true);
+      }
     };
 
     try {
@@ -14679,10 +15054,14 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
       el.focus();
       return;
     }
-    const sonuc = this.importProgramTextIntoPlanner(el.value);
-    if (!sonuc) return;
+    const cozum = this.parseProgramTextToDays(el.value);
+    if (!cozum) {
+      this.showToast("Metinden görev çıkarılamadı. Satırları 'Gün 1:' ve '- Matematik: Limit 30 soru' biçiminde düzenleyip tekrar dene.", "error");
+      return;
+    }
     el.value = "";
-    this.announceProgramImport(sonuc);
+    // Programa dogrudan yazilmaz: once taslak gosterilir.
+    this.showImportDraft(cozum, "metin");
   },
 
   syncCustomProgramListSelector: function() {

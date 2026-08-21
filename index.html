@@ -1524,6 +1524,31 @@
 
   <!-- MODAL 0.5: WEEKLY AI REPORT & REVISION -->
   <!-- MODAL: PROGRAM SAATLERE SIĞMIYOR (kalkış/yatış penceresi taşması) -->
+  <!-- Aktarim taslagi: programa yazilmadan once goster / duzenle / onayla -->
+  <div class="modal-overlay" role="dialog" aria-modal="true" id="importDraftModal" style="z-index:9890;">
+    <div class="modal-content" style="max-width: 780px;">
+      <button class="modal-close" onclick="app.cancelImportDraft()"><i class="fa-solid fa-xmark"></i></button>
+      <h2 style="margin-bottom: 0.4rem;"><i class="fa-solid fa-clipboard-list text-primary"></i> Program Taslağı</h2>
+      <p class="panel-intro" id="importDraftIntro" style="margin-bottom: 1rem;"></p>
+
+      <div style="background:var(--bg-sub); border:1px dashed var(--border-color); border-radius:8px; padding:0.6rem 0.85rem; margin-bottom:1rem; font-size:0.75rem; color:var(--text-muted); line-height:1.5;">
+        <i class="fa-solid fa-hand-pointer"></i> Görevleri <strong>sürükleyip</strong> gün içinde sıralayabilir veya başka bir güne taşıyabilirsin.
+        Saatler söylediğin sıraya göre otomatik hesaplanır. Süreyi değiştirmek için dakika kutusunu düzenle.
+      </div>
+
+      <div id="importDraftBody" style="display:flex; flex-direction:column; gap:1rem; max-height:52vh; overflow-y:auto;"></div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:0.6rem; margin-top:1.25rem; flex-wrap:wrap;">
+        <button class="btn btn-secondary text-danger" onclick="app.cancelImportDraft()">
+          <i class="fa-solid fa-trash-can"></i> Vazgeç
+        </button>
+        <button class="btn btn-primary" onclick="app.confirmImportDraft()">
+          <i class="fa-solid fa-check"></i> Onayla ve Programa Ekle
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Sesli/metinden aktarim sonrasi: eksik gunler ve saatler icin tek ekranda soru -->
   <div class="modal-overlay" role="dialog" aria-modal="true" id="importFollowUpModal" style="z-index:9900;">
     <div class="modal-content" style="max-width: 620px;">
@@ -2340,6 +2365,6 @@
   <script src="curriculum.js?v=3"></script>
   <script src="questions.js"></script>
   <script src="quotes.js?v=1"></script>
-  <script src="app.js?v=119"></script>
+  <script src="app.js?v=122"></script>
 </body>
 </html>
