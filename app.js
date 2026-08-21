@@ -9828,6 +9828,171 @@ normalizeClause: function(clause) {
       html += kart("fa-gauge-high", "Harcadığın Zaman Karşılığını Veriyor mu?", "var(--primary)", govde + yorum);
     }
 
+    // ── A2) KONU BAZLI "EN COK NET KACIRILAN" (hata isi haritasi) ──
+    // Kaynak: tamamlanmis gorevlerin konu + yanlis/bos verisi.
+    // chartData'daki eski kayitlarda konu yok; daysData her zaman tasir.
+    const konuKayip = {};
+    const gunler = this.state.daysData || {};
+    Object.keys(gunler).forEach(g => {
+      const gun = gunler[g];
+      if (!gun || !Array.isArray(gun.tasks)) return;
+      gun.tasks.forEach(t => {
+        if (!t.completed || !t.logged) return;
+        const konu = (t.topic || "").trim();
+        if (!konu) return;
+        const yanlis = t.incorrect || 0;
+        const bos = t.blank || 0;
+        if (yanlis + bos === 0) return;
+        const k = konuKayip[konu] = konuKayip[konu] || { konu: konu, ders: t.subject || "", yanlis: 0, bos: 0, kez: 0 };
+        k.yanlis += yanlis; k.bos += bos; k.kez++;
+      });
+    });
+    const kayipListe = Object.values(konuKayip)
+      .map(k => Object.assign(k, { kayip: k.yanlis + k.bos }))
+      .sort((a, b) => b.kayip - a.kayip)
+      .slice(0, 6);
+
+    // ── E) HAFTALIK KARNE ────────────────────────────────────
+    // "Bu hafta kac saat calistin, en cok hangi derste geliserdin,
+    //  neye odaklanmalisin" — tek bakista karne.
+    const HAFTA = 7 * 86400000, simdi = Date.now();
+    const buHafta = records.filter(r => r.ts && r.ts >= simdi - HAFTA);
+    const gecenHafta = records.filter(r => r.ts && r.ts >= simdi - 2 * HAFTA && r.ts < simdi - HAFTA);
+
+    if (buHafta.length) {
+      const dk = buHafta.reduce((a, r) => a + (r.time || 0), 0);
+      const saat = Math.round((dk / 60) * 10) / 10;
+
+      // Ders bazli net degisimi (bu hafta - gecen hafta)
+      const netToplam = (liste) => {
+        const m = {};
+        liste.forEach(r => {
+          const d = r.subject || "Diğer";
+          m[d] = (m[d] || 0) + ((r.correct || 0) - (r.incorrect || 0) / 4);
+        });
+        return m;
+      };
+      const bu = netToplam(buHafta), gecen = netToplam(gecenHafta);
+      let enIyiDers = null, enIyiFark = 0;
+      Object.keys(bu).forEach(d => {
+        if (gecen[d] === undefined) return;
+        const fark = bu[d] - gecen[d];
+        if (fark > enIyiFark) { enIyiFark = fark; enIyiDers = d; }
+      });
+
+      const satirlar = [
+        satir("Bu hafta toplam çalışma", `${saat} saat`, "var(--text-main)"),
+        satir("Tamamlanan çalışma", `${buHafta.length} kayıt`, "var(--text-main)")
+      ];
+      if (enIyiDers) {
+        satirlar.push(satir("En çok geliştiğin ders",
+          `${this.escapeHtml(enIyiDers)} (+${Math.round(enIyiFark * 10) / 10} net)`, "var(--success)"));
+      } else if (gecenHafta.length === 0) {
+        satirlar.push(satir("En çok geliştiğin ders",
+          "karşılaştırma için geçen hafta verisi yok", "var(--text-muted)"));
+      }
+      if (kayipListe && kayipListe.length) {
+        satirlar.push(satir("Odaklanman gereken konu",
+          `${this.escapeHtml(kayipListe[0].ders)} — ${this.escapeHtml(kayipListe[0].konu)}`, "var(--danger)"));
+      }
+
+      html += kart("fa-clipboard-user", "Haftalık Karnen", "var(--success)", satirlar.join(""));
+    }
+
+    if (kayipListe.length) {
+      const enBuyuk = kayipListe[0].kayip;
+      const govde = kayipListe.map(k => {
+        const oran = enBuyuk > 0 ? Math.round((k.kayip / enBuyuk) * 100) : 0;
+        const renk = oran >= 70 ? "var(--danger)" : oran >= 40 ? "var(--warning)" : "var(--success)";
+        return `
+          <div style="padding:0.45rem 0; border-bottom:1px dashed var(--border-color);">
+            <div style="display:flex; justify-content:space-between; gap:0.75rem; font-size:0.82rem;">
+              <span><strong>${this.escapeHtml(k.konu)}</strong>
+                <span style="font-size:0.72rem; color:var(--text-muted);">· ${this.escapeHtml(k.ders)}</span></span>
+              <span style="font-weight:800; color:${renk}; white-space:nowrap;">${k.kayip} soru</span>
+            </div>
+            <div style="background:rgba(0,0,0,0.05); height:6px; border-radius:3px; margin-top:0.3rem; overflow:hidden;">
+              <div style="width:${oran}%; height:100%; background:${renk};"></div>
+            </div>
+            <div style="font-size:0.68rem; color:var(--text-muted); margin-top:0.2rem;">
+              ${k.yanlis} yanlış · ${k.bos} boş · ${k.kez} çalışmada
+            </div>
+          </div>`;
+      }).join("");
+      const ilk = kayipListe[0];
+      html += kart("fa-fire", "En Çok Net Kaçırdığın Konular", "var(--danger)",
+        govde + `<p style="font-size:0.78rem; margin:0.7rem 0 0; line-height:1.5;">
+          <strong>${this.escapeHtml(ilk.konu)}</strong> konusundan ${ilk.kez} çalışmada toplam
+          <strong>${ilk.kayip} soru</strong> kaçırdın. Önceliğin bu konu olmalı.</p>`);
+    }
+
+    // ── B2) SURE DAGILIMI DENGE KONTROLU ─────────────────────
+    const sureToplam = Object.values(dersler).reduce((a, g) => a + g.sure, 0);
+    if (sureToplam > 60) {
+      const paylar = Object.keys(dersler).map(d => ({
+        ders: d, dk: dersler[d].sure,
+        pay: Math.round((dersler[d].sure / sureToplam) * 100)
+      })).sort((a, b) => b.pay - a.pay);
+
+      // Alanindaki derslerden hic calisilmayanlar
+      const ozet = this.mufredatDersOzeti();
+      const beklenen = ozet ? ozet.liste.map(x => x.ders.replace(/^(TYT|AYT)\s+/, "")) : [];
+      const calisilan = Object.keys(dersler);
+      const hicCalisilmayan = [...new Set(beklenen)].filter(d => !calisilan.includes(d));
+
+      const govde = paylar.slice(0, 8).map(x => {
+        const renk = x.pay >= 45 ? "var(--warning)" : "var(--primary)";
+        return `
+          <div style="padding:0.35rem 0;">
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+              <span>${this.escapeHtml(x.ders)}</span>
+              <span style="font-weight:800; color:${renk};">%${x.pay} · ${Math.round(x.dk / 60 * 10) / 10} sa</span>
+            </div>
+            <div style="background:rgba(0,0,0,0.05); height:6px; border-radius:3px; margin-top:0.25rem; overflow:hidden;">
+              <div style="width:${x.pay}%; height:100%; background:${renk};"></div>
+            </div>
+          </div>`;
+      }).join("");
+
+      let uyari = "";
+      const enBuyukPay = paylar[0];
+      // NOT: yuzdeye Turkce ek getirilmiyor. "%49'ini / %60'ini" gibi
+      // ekler sayinin okunusuna gore degistigi icin dogru uretilemez.
+      if (enBuyukPay && enBuyukPay.pay >= 45) {
+        uyari = `Zamanının en büyük kısmı (<strong>%${enBuyukPay.pay}</strong>) ` +
+                `${this.escapeHtml(enBuyukPay.ders)} dersine gitmiş.`;
+      }
+      if (hicCalisilmayan.length) {
+        const eksik = hicCalisilmayan.slice(0, 3).map(d => this.escapeHtml(d));
+        const liste = eksik.length > 1
+          ? eksik.slice(0, -1).join(", ") + " ve " + eksik[eksik.length - 1]
+          : eksik[0];
+        uyari += (uyari ? " " : "") +
+          `<strong>${liste}</strong> ders${eksik.length > 1 ? "lerine" : "ine"} ise bu dönemde hiç vakit ayırmamışsın.`;
+      }
+      html += kart("fa-scale-unbalanced", "Zamanını Nasıl Bölüştürdün?", "var(--primary)",
+        govde + (uyari ? `<p style="font-size:0.78rem; margin:0.7rem 0 0; line-height:1.5;">${uyari}</p>` : ""));
+    }
+
+    // ── D) DERS BAZLI MUFREDAT ILERLEMESI ────────────────────
+    const dersOzet = this.mufredatDersOzeti();
+    if (dersOzet && dersOzet.liste.length) {
+      const govde = dersOzet.liste.slice(0, 12).map(x => {
+        const renk = x.yuzde >= 70 ? "var(--success)" : x.yuzde >= 35 ? "var(--warning)" : "var(--danger)";
+        return `
+          <div style="padding:0.35rem 0;">
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+              <span>${this.escapeHtml(x.ders)}</span>
+              <span style="font-weight:800; color:${renk};">%${x.yuzde} <span style="font-weight:600; color:var(--text-muted); font-size:0.7rem;">(${x.biten}/${x.toplam})</span></span>
+            </div>
+            <div style="background:rgba(0,0,0,0.05); height:7px; border-radius:4px; margin-top:0.25rem; overflow:hidden;">
+              <div style="width:${x.yuzde}%; height:100%; background:${renk};"></div>
+            </div>
+          </div>`;
+      }).join("");
+      html += kart("fa-list-check", "Ders Bazlı Müfredat İlerlemen", "var(--primary)", govde);
+    }
+
     // ── C) MUFREDAT YETISME TAHMINI ──────────────────────────
     const tahmin = this.mufredatYetismeTahmini();
     if (tahmin && tahmin.yetersizVeri) {
@@ -9855,6 +10020,39 @@ normalizeClause: function(clause) {
     kap.style.display = "block";
   },
 
+  // Mufredat ilerlemesinin ders bazli ozeti. Tek dogruluk kaynagi
+  // state.topicStatuses'tur ("Ders - Konu" -> {status}).
+  mufredatDersOzeti: function() {
+    try {
+      const track = this.state.track || "Sayısal";
+      const focus = this.state.examFocus || "both";
+      const hepsi = this.curriculum.topicsFor(track, focus);
+      if (!hepsi || !hepsi.length) return null;
+
+      const durum = this.state.topicStatuses || {};
+      const bittiMi = (t) => {
+        const st = durum[`${t.subject} - ${t.name}`];
+        return !!(st && (st.status === "Ogrenildi" || st.status === "Calisildi"));
+      };
+
+      const dersler = {};
+      let biten = 0;
+      hepsi.forEach(t => {
+        const ad = (t.exam ? t.exam.toUpperCase() + " " : "") + t.subject;
+        const g = dersler[ad] = dersler[ad] || { toplam: 0, biten: 0 };
+        g.toplam++;
+        if (bittiMi(t)) { g.biten++; biten++; }
+      });
+
+      const liste = Object.keys(dersler).map(ad => ({
+        ders: ad, toplam: dersler[ad].toplam, biten: dersler[ad].biten,
+        yuzde: Math.round((dersler[ad].biten / dersler[ad].toplam) * 100)
+      })).sort((a, b) => b.yuzde - a.yuzde);
+
+      return { toplam: hepsi.length, biten: biten, liste: liste };
+    } catch (e) { return null; }
+  },
+
   // Mevcut calisma hizina gore mufredatin ne zaman bitecegini tahmin eder.
   // Veri yetersizse (hic konu bitmemisse) null doner — uydurma tahmin uretmez.
   mufredatYetismeTahmini: function() {
@@ -9864,9 +10062,11 @@ normalizeClause: function(clause) {
       const toplam = this.curriculum.totalTopicCount(track, focus);
       if (!toplam) return null;
 
-      // curriculumProgress tamamlanan konu id'lerini tutan bir DIZIdir.
-      const ilerleme = this.state.curriculumProgress;
-      const biten = Array.isArray(ilerleme) ? ilerleme.length : 0;
+      // TAMAMLANAN KONU KAYNAGI: state.topicStatuses.
+      // state.curriculumProgress'e hicbir yerde yazilmiyor (hep bos dizi);
+      // oradan okunsaydi bu kart gercek kullanimda hic gorunmezdi.
+      const ozet = this.mufredatDersOzeti();
+      const biten = ozet ? ozet.biten : 0;
       if (!biten) return null;
 
       // Basladigindan bu yana gecen gun.
@@ -10171,25 +10371,32 @@ normalizeClause: function(clause) {
       return Math.round(((r.correct || 0) - y / 4) * 10) / 10;
     };
     const netLabels = records.map(r => r.label);
-    const netData = records.map(netHesapla);
+    // TYT ve AYT AYRI cizilir: ikisi farkli olceklerde ilerler, tek cizgide
+    // birlestirilince ogrenci hangisinde ilerledigini goremez.
+    const turBul = (r) => r.examType === "AYT" ? "AYT" : r.examType === "ÖDT" ? "ÖDT" : "TYT";
+    const seri = (tur) => records.map(r => turBul(r) === tur ? netHesapla(r) : null);
+    const netVarMi = (tur) => records.some(r => turBul(r) === tur);
+
+    const veriSetleri = [];
+    if (netVarMi("TYT")) veriSetleri.push({
+      label: 'TYT Net', data: seri("TYT"), borderColor: '#2563eb',
+      backgroundColor: 'rgba(37,99,235,0.10)', tension: 0.3, pointRadius: 3, spanGaps: true
+    });
+    if (netVarMi("AYT")) veriSetleri.push({
+      label: 'AYT Net', data: seri("AYT"), borderColor: '#8b5cf6',
+      backgroundColor: 'rgba(139,92,246,0.10)', tension: 0.3, pointRadius: 3, spanGaps: true
+    });
+    if (netVarMi("ÖDT")) veriSetleri.push({
+      label: 'ÖDT Net', data: seri("ÖDT"), borderColor: '#f59e0b',
+      backgroundColor: 'rgba(245,158,11,0.10)', tension: 0.3, pointRadius: 3, spanGaps: true
+    });
 
     if (this.charts.netTrend) this.charts.netTrend.destroy();
     const netCanvas = document.getElementById("netTrendChart");
     if (netCanvas) {
       this.charts.netTrend = new Chart(netCanvas.getContext("2d"), {
         type: 'line',
-        data: {
-          labels: netLabels,
-          datasets: [{
-            label: 'Net (doğru − yanlış/4)',
-            data: netData,
-            borderColor: '#2563eb',
-            backgroundColor: 'rgba(37,99,235,0.10)',
-            fill: true,
-            tension: 0.3,
-            pointRadius: 3
-          }]
-        },
+        data: { labels: netLabels, datasets: veriSetleri },
         options: {
           responsive: true,
           maintainAspectRatio: false,
@@ -10201,6 +10408,60 @@ normalizeClause: function(clause) {
           }
         }
       });
+    }
+
+    // ── Chart 6: GUNLUK CALISMA ISTIKRARI ──
+    // Hangi gun kac saat calisildi. Bos gunler cubugu olmayan gunlerdir;
+    // istikrarin bozuldugu yer bakisla gorulur.
+    const gunSaat = {};
+    records.forEach(r => {
+      if (!r.ts) return;
+      const d = new Date(r.ts);
+      const anahtar = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      gunSaat[anahtar] = (gunSaat[anahtar] || 0) + (r.time || 0);
+    });
+    const gunAnahtarlari = Object.keys(gunSaat).sort();
+    if (gunAnahtarlari.length) {
+      // Ilk ve son kayit arasindaki TUM gunler cizilir; calisilmayan gun
+      // atlanmaz, sifir olarak gorunur — istikrar boslugu ancak boyle belli olur.
+      const ilk = new Date(gunAnahtarlari[0] + "T00:00:00");
+      const son = new Date(gunAnahtarlari[gunAnahtarlari.length - 1] + "T00:00:00");
+      const etiketler = [], degerler = [];
+      const aylar = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
+      const imlec = new Date(ilk);
+      let guvenlik = 0;
+      while (imlec <= son && guvenlik++ < 400) {
+        const a = `${imlec.getFullYear()}-${String(imlec.getMonth() + 1).padStart(2, "0")}-${String(imlec.getDate()).padStart(2, "0")}`;
+        etiketler.push(`${imlec.getDate()} ${aylar[imlec.getMonth()]}`);
+        degerler.push(Math.round(((gunSaat[a] || 0) / 60) * 10) / 10);
+        imlec.setDate(imlec.getDate() + 1);
+      }
+
+      if (this.charts.dailyStudy) this.charts.dailyStudy.destroy();
+      const gunCanvas = document.getElementById("dailyStudyChart");
+      if (gunCanvas) {
+        this.charts.dailyStudy = new Chart(gunCanvas.getContext("2d"), {
+          type: 'bar',
+          data: {
+            labels: etiketler,
+            datasets: [{
+              label: 'Çalışma (saat)',
+              data: degerler,
+              backgroundColor: degerler.map(v => v === 0 ? 'rgba(148,163,184,0.25)' : 'rgba(37,99,235,0.75)'),
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { display: false }, ticks: { color: '#475569', font: { size: 9 }, maxRotation: 60 } },
+              y: { grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { color: '#475569' }, beginAtZero: true,
+                   title: { display: true, text: 'Saat', color: '#475569', font: { family: 'Outfit', weight: 'bold' } } }
+            }
+          }
+        });
+      }
     }
 
     // Metin tabanli analizler (bos/yanlis dengesi, verim, mufredat tahmini)
