@@ -59,9 +59,16 @@ testleri yanlışlıkla "uygulama hatası" gibi görünür.
 
 Toplam **117 test** (jsc) + **23 test** (Jest portu). Hepsi geçiyor.
 
-## Kırılganlık notu (hata değil)
+## Kırılganlık — giderildi
 
-`renderCharts` içinde **4 korumasız** `getElementById(...).X` erişimi var
-(`netsLineChart`, `balanceRadarChart`, `balanceRecommendation`, `speedLineChart`).
-Elemanlar bugün `index.html`'de mevcut, ama biri kaldırılırsa **tüm analiz
-sekmesi** tek satırda ölür. Diğer erişimler null korumalıdır.
+`renderCharts` içindeki 4 korumasız `getElementById(...).X` erişimi
+(`netsLineChart`, `balanceRadarChart`, `balanceRecommendation`,
+`speedLineChart`) null korumasına alındı. `showCoachAlert` ve
+`showLandingView` de korundu — ilki zamanlayıcılardan çağrılıyor.
+
+Test 2.4 her elemanı tek tek silip çökme olmadığını doğrular.
+
+**Kalan:** dosyanın genelinde 68 korumasız erişim daha var, ama bunlar
+form gönderme işleyicilerinde (`uploadVaultQuestion`, `submitCustomTask`,
+`plannerAddTaskToSelectedDay` …). Form açıkken çalıştıkları için elemanlar
+yapı gereği mevcut; render yollarındaki gibi bir risk taşımıyorlar.

@@ -2065,13 +2065,16 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
 
   showLandingView: function() {
     this.showView("landingView");
-    document.getElementById("navStats").style.display = "none";
+    const navStats = document.getElementById("navStats");
+    if (navStats) navStats.style.display = "none";
 
     const box = document.getElementById("savedProfileLoginBox");
     if (box) {
       if (this.state.name && this.state.daysData && Object.keys(this.state.daysData).length > 0) {
-        document.getElementById("savedProfileName").textContent = this.state.name;
-        document.getElementById("savedProfileTrack").textContent = `${this.state.track} Programı | Hedef: ${this.state.targetDept}`;
+        const pAd = document.getElementById("savedProfileName");
+        const pAlan = document.getElementById("savedProfileTrack");
+        if (pAd) pAd.textContent = this.state.name;
+        if (pAlan) pAlan.textContent = `${this.state.track} Programı | Hedef: ${this.state.targetDept}`;
         box.style.display = "flex";
       } else {
         box.style.display = "none";
@@ -5739,8 +5742,13 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
   },
 
   showCoachAlert: function(title, htmlContent) {
-    document.getElementById("coachModalTitle").textContent = title;
-    document.getElementById("coachModalBody").innerHTML = htmlContent;
+    // Bu fonksiyon zamanlayicilardan ve bildirim akislarindan da
+    // cagriliyor; modal parcalari yoksa cagiran akisi cokertmemeli.
+    const bBaslik = document.getElementById("coachModalTitle");
+    const bGovde = document.getElementById("coachModalBody");
+    if (!bBaslik || !bGovde) return;
+    bBaslik.textContent = title;
+    bGovde.innerHTML = htmlContent;
     
     const quotes = [
       "\"Çalışmalar antrenmanda kazanılır. Eksiklerini kapat, sınavda şans tanıma!\"",
@@ -5749,7 +5757,8 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       "\"Netlerin tesadüfen artmaz, her yanlış sorunun konusunu eritene kadar çalışmaya devam!\""
     ];
     const randQuote = quotes[Math.floor(Math.random() * quotes.length)];
-    document.getElementById("coachModalQuote").textContent = randQuote;
+    const bSoz = document.getElementById("coachModalQuote");
+    if (bSoz) bSoz.textContent = randQuote;
 
     this.openModal("coachModal");
   },
@@ -10430,47 +10439,49 @@ normalizeClause: function(clause) {
     });
 
     if (this.charts.nets) this.charts.nets.destroy();
-    const netsCtx = document.getElementById("netsLineChart").getContext("2d");
-    this.charts.nets = new Chart(netsCtx, {
-      type: 'bar',
-      data: {
-        labels: subjectLabels,
-        datasets: [
-          {
-            label: 'Hedef Net',
-            data: targetData,
-            backgroundColor: 'rgba(99, 102, 241, 0.7)',
-            borderColor: '#6366f1',
-            borderWidth: 2,
-            borderRadius: 6,
-            barPercentage: 0.7,
-            categoryPercentage: 0.6
-          },
-          {
-            label: 'Mevcut Ortalama Net',
-            data: currentAvgData,
-            backgroundColor: 'rgba(16, 185, 129, 0.7)',
-            borderColor: '#10b981',
-            borderWidth: 2,
-            borderRadius: 6,
-            barPercentage: 0.7,
-            categoryPercentage: 0.6
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { labels: { color: '#475569', font: { family: 'Outfit', weight: 'bold' } } },
-          tooltip: { callbacks: { label: function(ctx) { return ctx.dataset.label + ': ' + ctx.parsed.y + ' net'; } } }
+    const netsEl = document.getElementById("netsLineChart");
+    if (netsEl) {
+    this.charts.nets = new Chart(netsEl.getContext("2d"), {
+        type: 'bar',
+        data: {
+          labels: subjectLabels,
+          datasets: [
+            {
+              label: 'Hedef Net',
+              data: targetData,
+              backgroundColor: 'rgba(99, 102, 241, 0.7)',
+              borderColor: '#6366f1',
+              borderWidth: 2,
+              borderRadius: 6,
+              barPercentage: 0.7,
+              categoryPercentage: 0.6
+            },
+            {
+              label: 'Mevcut Ortalama Net',
+              data: currentAvgData,
+              backgroundColor: 'rgba(16, 185, 129, 0.7)',
+              borderColor: '#10b981',
+              borderWidth: 2,
+              borderRadius: 6,
+              barPercentage: 0.7,
+              categoryPercentage: 0.6
+            }
+          ]
         },
-        scales: {
-          x: { grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { color: '#475569', font: { size: 10, family: 'Outfit' }, maxRotation: 45 } },
-          y: { grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { color: '#475569' }, min: 0, title: { display: true, text: 'Net Sayısı', color: '#475569', font: { family: 'Outfit', weight: 'bold' } } }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#475569', font: { family: 'Outfit', weight: 'bold' } } },
+            tooltip: { callbacks: { label: function(ctx) { return ctx.dataset.label + ': ' + ctx.parsed.y + ' net'; } } }
+          },
+          scales: {
+            x: { grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { color: '#475569', font: { size: 10, family: 'Outfit' }, maxRotation: 45 } },
+            y: { grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { color: '#475569' }, min: 0, title: { display: true, text: 'Net Sayısı', color: '#475569', font: { family: 'Outfit', weight: 'bold' } } }
+          }
         }
-      }
-    });
+      });
+    }
 
     // ── Chart 2: Time Balance Radar Chart ──
     const subjectsList = ["Matematik", "Türkçe", "Fizik", "Kimya", "Biyoloji", "Edebiyat", "Tarih", "Coğrafya"];
@@ -10479,34 +10490,36 @@ normalizeClause: function(clause) {
     });
 
     if (this.charts.radar) this.charts.radar.destroy();
-    const radarCtx = document.getElementById("balanceRadarChart").getContext("2d");
-    this.charts.radar = new Chart(radarCtx, {
-      type: 'radar',
-      data: {
-        labels: subjectsList,
-        datasets: [{
-          label: 'Derslere Ayrılan Süre (Dk)',
-          data: subjectTimes,
-          backgroundColor: 'rgba(99, 102, 241, 0.1)',
-          borderColor: '#6366f1',
-          borderWidth: 3,
-          pointBackgroundColor: '#6366f1'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { labels: { color: '#475569', font: { family: 'Outfit' } } } },
-        scales: {
-          r: {
-            grid: { color: 'rgba(0, 0, 0, 0.04)' },
-            angleLines: { color: 'rgba(0, 0, 0, 0.04)' },
-            pointLabels: { color: '#475569', font: { size: 11, family: 'Outfit' } },
-            ticks: { display: false }
+    const radarEl = document.getElementById("balanceRadarChart");
+    if (radarEl) {
+    this.charts.radar = new Chart(radarEl.getContext("2d"), {
+        type: 'radar',
+        data: {
+          labels: subjectsList,
+          datasets: [{
+            label: 'Derslere Ayrılan Süre (Dk)',
+            data: subjectTimes,
+            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+            borderColor: '#6366f1',
+            borderWidth: 3,
+            pointBackgroundColor: '#6366f1'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#475569', font: { family: 'Outfit' } } } },
+          scales: {
+            r: {
+              grid: { color: 'rgba(0, 0, 0, 0.04)' },
+              angleLines: { color: 'rgba(0, 0, 0, 0.04)' },
+              pointLabels: { color: '#475569', font: { size: 11, family: 'Outfit' } },
+              ticks: { display: false }
+            }
           }
         }
-      }
-    });
+      });
+    }
 
     let maxTimeIdx = 0;
     let minTimeIdx = 0;
@@ -10517,7 +10530,8 @@ normalizeClause: function(clause) {
     const maxSub = subjectsList[maxTimeIdx];
     const minSub = subjectsList[minTimeIdx];
 
-    document.getElementById("balanceRecommendation").innerHTML = `
+    const dengeEl = document.getElementById("balanceRecommendation");
+    if (dengeEl) dengeEl.innerHTML = `
       ⚖️ <strong>Çalışma Dengesi Raporu:</strong> En çok zamanı <strong>${maxSub}</strong> dersine ayırdın.
       Eksik kalan <strong>${minSub}</strong> dersini telafi etmek için sonraki seanslarda ona ağırlık vermelisin.
     `;
@@ -10540,48 +10554,50 @@ normalizeClause: function(clause) {
     });
 
     if (this.charts.speed) this.charts.speed.destroy();
-    const speedCtx = document.getElementById("speedLineChart").getContext("2d");
-    this.charts.speed = new Chart(speedCtx, {
-      type: 'bar',
-      data: {
-        labels: speedLabels,
-        datasets: [
-          {
-            label: 'Senin Hızın (dk/soru)',
-            data: speeds,
-            backgroundColor: speeds.map((s, i) => s <= speedTargets[i] ? 'rgba(16, 185, 129, 0.7)' : 'rgba(239, 68, 68, 0.7)'),
-            borderColor: speeds.map((s, i) => s <= speedTargets[i] ? '#10b981' : '#ef4444'),
-            borderWidth: 2,
-            borderRadius: 6,
-            barPercentage: 0.6
-          },
-          {
-            label: 'YKS Hedef (dk/soru)',
-            data: speedTargets,
-            type: 'line',
-            borderColor: '#eab308',
-            borderDash: [6, 4],
-            borderWidth: 3,
-            fill: false,
-            pointBackgroundColor: '#eab308',
-            pointRadius: 5,
-            tension: 0
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { labels: { color: '#475569', font: { family: 'Outfit', weight: 'bold' } } },
-          tooltip: { callbacks: { label: function(ctx) { return ctx.dataset.label + ': ' + ctx.parsed.y + ' dk/soru'; } } }
+    const speedEl = document.getElementById("speedLineChart");
+    if (speedEl) {
+    this.charts.speed = new Chart(speedEl.getContext("2d"), {
+        type: 'bar',
+        data: {
+          labels: speedLabels,
+          datasets: [
+            {
+              label: 'Senin Hızın (dk/soru)',
+              data: speeds,
+              backgroundColor: speeds.map((s, i) => s <= speedTargets[i] ? 'rgba(16, 185, 129, 0.7)' : 'rgba(239, 68, 68, 0.7)'),
+              borderColor: speeds.map((s, i) => s <= speedTargets[i] ? '#10b981' : '#ef4444'),
+              borderWidth: 2,
+              borderRadius: 6,
+              barPercentage: 0.6
+            },
+            {
+              label: 'YKS Hedef (dk/soru)',
+              data: speedTargets,
+              type: 'line',
+              borderColor: '#eab308',
+              borderDash: [6, 4],
+              borderWidth: 3,
+              fill: false,
+              pointBackgroundColor: '#eab308',
+              pointRadius: 5,
+              tension: 0
+            }
+          ]
         },
-        scales: {
-          x: { grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { color: '#475569', font: { size: 10, family: 'Outfit' }, maxRotation: 45 } },
-          y: { grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { color: '#475569' }, min: 0, title: { display: true, text: 'Dakika / Soru', color: '#475569', font: { family: 'Outfit', weight: 'bold' } } }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#475569', font: { family: 'Outfit', weight: 'bold' } } },
+            tooltip: { callbacks: { label: function(ctx) { return ctx.dataset.label + ': ' + ctx.parsed.y + ' dk/soru'; } } }
+          },
+          scales: {
+            x: { grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { color: '#475569', font: { size: 10, family: 'Outfit' }, maxRotation: 45 } },
+            y: { grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { color: '#475569' }, min: 0, title: { display: true, text: 'Dakika / Soru', color: '#475569', font: { family: 'Outfit', weight: 'bold' } } }
+          }
         }
-      }
-    });
+      });
+    }
 
     const onTrackCount = speeds.reduce((n, s, i) => n + (s > 0 && s <= speedTargets[i] ? 1 : 0), 0);
     const measuredCount = speeds.filter(s => s > 0).length;

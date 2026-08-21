@@ -218,4 +218,43 @@ T.grup("2.3  Filtreleme — Son 7 / 30 gun / Tum zamanlar");
   T.dogru("YDT (Dil) serisi var", seriler.indexOf("YDT Net") !== -1, seriler);
 })();
 
+// ────────────────────────────────────────────────────────────
+T.grup("2.4  Eksik DOM elemanlari — analiz sekmesi ayakta kalmali");
+
+// renderCharts icinde dort korumasiz getElementById(...).X erisimi vardi
+// (netsLineChart, balanceRadarChart, balanceRecommendation,
+// speedLineChart). Elemanlar bugun index.html'de mevcut ama biri bir
+// HTML duzenlemesinde kaldirilirsa TUM analiz sekmesi tek satirda
+// oluyordu. Bu testler her birini tek tek silip cokme olmadigini
+// dogrular.
+["netsLineChart", "balanceRadarChart", "balanceRecommendation",
+ "speedLineChart", "netTrendChart", "dailyStudyChart",
+ "accuracyTrendChart", "insightCards"].forEach(eksikId => {
+  kurulum({ chartData: [
+    kayit({ subject: "Matematik", correct: 20, incorrect: 5, time: 60, ts: Date.now() }),
+    kayit({ subject: "Fizik", correct: 10, incorrect: 8, time: 90, ts: Date.now() })
+  ]});
+  delete _elemanlar[eksikId];          // eleman sayfadan silinmis gibi
+  let patladi = null;
+  try { app.renderCharts(); } catch (e) { patladi = e.message; }
+  T.dogru("'" + eksikId + "' yokken çökmüyor", patladi === null, patladi);
+});
+
+(function () {
+  // showCoachAlert zamanlayicilardan da cagriliyor; modal yoksa
+  // cagiran akisi (ornegin haftalik yenileme hatirlatmasi) cokmemeli.
+  elemanlariTemizle();
+  let patladi = null;
+  try { app.showCoachAlert("Başlık", "Gövde"); } catch (e) { patladi = e.message; }
+  T.dogru("showCoachAlert modal yokken çökmüyor", patladi === null, patladi);
+})();
+
+(function () {
+  const src = readFile("app.js");
+  const i = src.indexOf("renderCharts: function() {");
+  const blok = src.substring(i, i + 26000);
+  const korumasiz = (blok.match(/getElementById\("[^"]+"\)\s*\./g) || []).length;
+  T.esit("renderCharts içinde korumasız erişim kalmadı", korumasiz, 0);
+})();
+
 T.ozet();
