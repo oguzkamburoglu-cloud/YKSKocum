@@ -264,20 +264,20 @@ const app = {
   // ============================================================
   PAKETLER: [
     {
-      id: "baslangic", ad: "Başlangıç", fiyat: 99, birim: "₺/ay",
-      ozet: "Programını kur ve takip et.",
+      id: "baslangic", ad: "Başlangıç", fiyat: 299, birim: "₺/ay",
+      ozet: "Sadece program oluşturma.",
       ozellikler: [
         "Sınava kalan güne göre kişisel program",
-        "Günlük / haftalık / aylık görünüm",
-        "Müfredat haritası ve ilerleme takibi",
-        "Kendi programını elle kurma"
+        "Kendi programını elle kurma",
+        "Günlük ve haftalık program görünümü"
       ]
     },
     {
-      id: "standart", ad: "Standart", fiyat: 199, birim: "₺/ay", vurgu: "En çok tercih edilen",
-      ozet: "Hatalarını kapat, denemeni analiz et.",
+      id: "standart", ad: "Standart", fiyat: 499, birim: "₺/ay", vurgu: "En çok tercih edilen",
+      ozet: "Takip et, hatalarını kapat.",
       ozellikler: [
         "Başlangıç'taki her şey",
+        "Müfredat haritası ve ilerleme takibi",
         "Hata defteri ve aralıklı tekrar (ÖDT)",
         "Deneme analizi ve net takibi",
         "Kaynak kitap önerileri (ÖSYM verisiyle)",
@@ -285,7 +285,7 @@ const app = {
       ]
     },
     {
-      id: "pro", ad: "Pro", fiyat: 349, birim: "₺/ay",
+      id: "pro", ad: "Pro", fiyat: 799, birim: "₺/ay",
       ozet: "Yapay zekâ desteğiyle tam donanım.",
       ozellikler: [
         "Standart'taki her şey",
