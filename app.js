@@ -3465,6 +3465,62 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     this.showView("reportView");
   },
 
+  // Sinav sorusu secimi — GERCEK karistirma.
+  // Eskiden sort(() => 0.5 - Math.random()) kullaniliyordu; bu yontem
+  // yanlidir (bazi siralar digerlerinden cok daha olasidir) ve yil/konu
+  // dengesi gozetmez. Ayrica havuz yetmezse ayni soru kopyalanip iki kez
+  // soruluyordu. Artik:
+  //   1) Fisher-Yates ile tarafsiz karistirilir
+  //   2) Yillara gore siraya dizilir; tek bir yil yigilmaz
+  //   3) Ayni konudan iki soru arka arkaya gelmez
+  //   4) Havuz yetmezse kopya uretilmez, olan kadari sorulur
+  karistirilmisSinavSorulari: function(havuz, adet) {
+    if (!Array.isArray(havuz) || havuz.length === 0) return [];
+
+    const karistir = (dizi) => {
+      const a = dizi.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    };
+
+    // 1-2) Yillara gore grupla, her yildan sirayla cek (round-robin)
+    const yilGrup = {};
+    karistir(havuz).forEach(q => {
+      const y = q.year || 0;
+      (yilGrup[y] = yilGrup[y] || []).push(q);
+    });
+    const yillar = karistir(Object.keys(yilGrup));
+
+    const dengeli = [];
+    let kaldi = true;
+    while (kaldi && dengeli.length < havuz.length) {
+      kaldi = false;
+      for (const y of yillar) {
+        const g = yilGrup[y];
+        if (g && g.length) { dengeli.push(g.shift()); kaldi = true; }
+      }
+    }
+
+    const secilen = dengeli.slice(0, Math.min(adet, dengeli.length));
+
+    // 3) Ayni konu arka arkaya gelmesin — komsu ile yer degistir
+    for (let i = 1; i < secilen.length; i++) {
+      if (secilen[i].topic !== secilen[i - 1].topic) continue;
+      for (let j = i + 1; j < secilen.length; j++) {
+        if (secilen[j].topic !== secilen[i - 1].topic &&
+            (j + 1 >= secilen.length || secilen[j + 1].topic !== secilen[j].topic)) {
+          [secilen[i], secilen[j]] = [secilen[j], secilen[i]];
+          break;
+        }
+      }
+    }
+
+    return secilen;
+  },
+
   generateDiagnosticQuestions: function() {
     const track = this.state.track;
     let subjects = ["Türkçe"];
@@ -3487,16 +3543,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       // Map to correct key in questions.js (e.g. Türkçe -> Turkce)
       const mappedKey = this.subjectKeys[subject] || subject;
       const pool = window.YKS_QUESTION_BANK ? (window.YKS_QUESTION_BANK[mappedKey] || []) : [];
-      const shuffled = [...pool].sort(() => 0.5 - Math.random());
-      const selected = shuffled.slice(0, 25);
-      
-      while (selected.length < 25 && pool.length > 0) {
-        const randomQ = pool[Math.floor(Math.random() * pool.length)];
-        const clonedQ = { ...randomQ, id: randomQ.id + "_dup_" + selected.length };
-        selected.push(clonedQ);
-      }
-      
-      this.state.testQuestions[subject] = selected;
+      this.state.testQuestions[subject] = this.karistirilmisSinavSorulari(pool, 25);
     });
 
     this.state.currentTestSubject = subjects[0];

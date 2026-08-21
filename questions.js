@@ -1,5 +1,7 @@
-// YKS (TYT/AYT) Question Bank (2016 - 2025)
-// Categorized by subjects, topics, and containing real/realistic exam questions.
+// YKS (TYT/AYT) Soru Bankasi — 2016-2025 mufredat ve soru tarzina gore
+// hazirlanmis OZGUN sorular. Bunlar OSYM'nin cikmis sorulari DEGILDIR;
+// OSYM soru kitapciklarinin cogaltilmasi ve kullanilmasi izne baglidir.
+// kaynak: "ozgun" alani tasiyan kayitlar bu oturumda yazilip dogrulanmistir.
 
 const YKS_QUESTION_BANK = {
   Matematik: [
@@ -273,6 +275,327 @@ const YKS_QUESTION_BANK = {
       correct: 4,
       explanation: "Kökler çarpımı formülü c/a'dır. Burada a = 1, b = -5, c = 6'dır. Kökler çarpımı 6 / 1 = 6 olur."
     }
+  ,
+    {
+      "id": "mat_y1",
+      "topic": "Temel Kavramlar",
+      "year": 2021,
+      "text": "Ardışık beş tek doğal sayının toplamı 145 olduğuna göre, bu sayıların en büyüğü kaçtır?",
+      "options": [
+            "29",
+            "31",
+            "33",
+            "35",
+            "37"
+      ],
+      "correct": 2,
+      "explanation": "Ardışık beş sayının toplamı, ortadaki sayının 5 katına eşittir. 145 / 5 = 29 olduğundan ortadaki sayı 29'dur. Sayılar 25, 27, 29, 31, 33 olur; en büyüğü 33'tür.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "mat_y2",
+      "topic": "Bölünebilme Kuralları",
+      "year": 2022,
+      "text": "5A3B dört basamaklı sayısı 45 ile kalansız bölünebilmektedir. Buna göre A + B toplamının alabileceği en büyük değer kaçtır?",
+      "options": [
+            "1",
+            "5",
+            "8",
+            "10",
+            "13"
+      ],
+      "correct": 3,
+      "explanation": "45 = 9 · 5 olduğundan sayı hem 9'a hem 5'e bölünmelidir. 5'e bölünme için B = 0 veya B = 5'tir. B = 0 için rakamlar toplamı 8 + A, 9'un katı olmalı: A = 1 (5130). B = 5 için 13 + A, 9'un katı olmalı: A = 5 (5535). A + B toplamları 1 ve 10'dur; en büyüğü 10'dur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "mat_y3",
+      "topic": "Üslü Sayılar",
+      "year": 2023,
+      "text": "(2^12 · 3^8) / 6^8 işleminin sonucu kaçtır?",
+      "options": [
+            "2",
+            "4",
+            "8",
+            "16",
+            "32"
+      ],
+      "correct": 3,
+      "explanation": "6^8 = (2 · 3)^8 = 2^8 · 3^8'dir. İfade (2^12 · 3^8) / (2^8 · 3^8) = 2^(12-8) = 2^4 = 16 olur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "mat_y4",
+      "topic": "Köklü Sayılar",
+      "year": 2021,
+      "text": "(√12 + √27) / √3 işleminin sonucu kaçtır?",
+      "options": [
+            "3",
+            "4",
+            "5",
+            "6",
+            "7"
+      ],
+      "correct": 2,
+      "explanation": "√12 = 2√3 ve √27 = 3√3'tür. Pay 2√3 + 3√3 = 5√3 olur. 5√3 / √3 = 5 bulunur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "mat_y5",
+      "topic": "Mutlak Değer",
+      "year": 2024,
+      "text": "x bir gerçel sayı olmak üzere, |x - 3| + |x + 2| ifadesinin alabileceği en küçük değer kaçtır?",
+      "options": [
+            "1",
+            "3",
+            "5",
+            "7",
+            "9"
+      ],
+      "correct": 2,
+      "explanation": "İfade, sayı doğrusunda x noktasının 3 ve -2 noktalarına olan uzaklıklarının toplamıdır. Bu toplam, x sayısı -2 ile 3 arasında (uçlar dahil) seçildiğinde en küçük değerini alır ve iki nokta arasındaki uzaklığa, yani 3 - (-2) = 5'e eşit olur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "mat_y6",
+      "topic": "Oran-Orantı",
+      "year": 2022,
+      "text": "a/b = 2/3 ve b/c = 4/5 olduğuna göre, a + b + c = 105 ise c kaçtır?",
+      "options": [
+            "30",
+            "36",
+            "40",
+            "45",
+            "50"
+      ],
+      "correct": 3,
+      "explanation": "a/b = 2/3 için a = 2k, b = 3k alalım. b/c = 4/5 ise c = 5b/4 = 15k/4 olur. Paydayı yok etmek için tümünü 4 ile genişletirsek a : b : c = 8 : 12 : 15 elde edilir. Terimler toplamı 8 + 12 + 15 = 35'tir. 105 / 35 = 3 olduğundan c = 15 · 3 = 45 bulunur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "mat_y7",
+      "topic": "Problemler - Hız",
+      "year": 2023,
+      "text": "Bir araç A kentinden B kentine 60 km/sa, aynı yoldan B'den A'ya ise 40 km/sa sabit hızla gitmiştir. Buna göre aracın tüm yolculuk boyunca ortalama hızı kaç km/sa'tir?",
+      "options": [
+            "45",
+            "48",
+            "50",
+            "52",
+            "55"
+      ],
+      "correct": 1,
+      "explanation": "Gidiş ve dönüşte yol aynı olduğundan ortalama hız, hızların harmonik ortalamasıdır: (2 · 60 · 40) / (60 + 40) = 4800 / 100 = 48 km/sa. Aritmetik ortalama olan 50 yanlış olur, çünkü yavaş hızda daha uzun süre geçirilir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "mat_y8",
+      "topic": "Problemler - Karışım",
+      "year": 2021,
+      "text": "Kütlece %20'lik 40 litre tuzlu suya kaç litre saf su eklenirse karışım %16'lık olur?",
+      "options": [
+            "5",
+            "8",
+            "10",
+            "12",
+            "15"
+      ],
+      "correct": 2,
+      "explanation": "Karışımdaki tuz miktarı 40 · 0,20 = 8 litredir. Su eklendiğinde tuz miktarı değişmez, toplam hacim artar. 8 / (40 + x) = 0,16 eşitliğinden 40 + x = 50 ve x = 10 litre bulunur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "mat_y9",
+      "topic": "Problemler - Yaş",
+      "year": 2024,
+      "text": "Bir baba ile oğlunun yaşları toplamı 56'dır. 4 yıl önce babanın yaşı, oğlunun yaşının 5 katıydı. Buna göre oğlun bugünkü yaşı kaçtır?",
+      "options": [
+            "10",
+            "12",
+            "14",
+            "16",
+            "18"
+      ],
+      "correct": 1,
+      "explanation": "Oğlun yaşı o, babanın yaşı b olsun. b + o = 56'dır. 4 yıl önce b - 4 = 5(o - 4) yani b = 5o - 16 olur. Yerine koyarsak 5o - 16 + o = 56, 6o = 72 ve o = 12 bulunur. (Baba 44; 4 yıl önce 40 = 5 · 8 sağlanır.)",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "mat_y10",
+      "topic": "Kümeler",
+      "year": 2022,
+      "text": "s(A) = 12, s(B) = 9 ve s(A ∩ B) = 5 olduğuna göre, s(A ∪ B) kaçtır?",
+      "options": [
+            "14",
+            "15",
+            "16",
+            "17",
+            "21"
+      ],
+      "correct": 2,
+      "explanation": "s(A ∪ B) = s(A) + s(B) - s(A ∩ B) formülünden 12 + 9 - 5 = 16 bulunur. Kesişim iki kez sayıldığı için bir kez çıkarılır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "mat_y11",
+      "topic": "Permütasyon-Kombinasyon",
+      "year": 2023,
+      "text": "KİTAP kelimesinin harfleri kullanılarak, harflerin tümü birer kez kullanılmak koşuluyla K harfi ile başlayan kaç farklı 5 harfli dizilim yazılabilir?",
+      "options": [
+            "12",
+            "24",
+            "48",
+            "60",
+            "120"
+      ],
+      "correct": 1,
+      "explanation": "Kelimenin 5 harfi de birbirinden farklıdır. K harfi başa sabitlendiğinde geriye kalan 4 harf her sırada dizilebilir: 4! = 4 · 3 · 2 · 1 = 24 farklı dizilim elde edilir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "mat_y12",
+      "topic": "Olasılık",
+      "year": 2025,
+      "text": "1'den 20'ye kadar olan doğal sayıların yazılı olduğu 20 kart arasından rastgele bir kart çekiliyor. Çekilen kartın üzerindeki sayının 3 veya 5 ile tam bölünebilme olasılığı kaçtır?",
+      "options": [
+            "7/20",
+            "8/20",
+            "9/20",
+            "10/20",
+            "11/20"
+      ],
+      "correct": 2,
+      "explanation": "3'ün katları 3, 6, 9, 12, 15, 18 olmak üzere 6 tanedir. 5'in katları 5, 10, 15, 20 olmak üzere 4 tanedir. 15 sayısı her ikisinde de sayıldığından bir kez çıkarılır: 6 + 4 - 1 = 9 elverişli durum vardır. Olasılık 9/20'dir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "mat_y13",
+      "topic": "Fonksiyonlar",
+      "year": 2021,
+      "text": "f(x) = 2x - 3 ve g(x) = x^2 + 1 olduğuna göre, (f o g)(2) değeri kaçtır?",
+      "options": [
+            "5",
+            "6",
+            "7",
+            "8",
+            "9"
+      ],
+      "correct": 2,
+      "explanation": "(f o g)(2) = f(g(2)) demektir. Önce g(2) = 2^2 + 1 = 5 hesaplanır. Sonra f(5) = 2 · 5 - 3 = 7 bulunur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "mat_y14",
+      "topic": "İkinci Dereceden Denklemler",
+      "year": 2024,
+      "text": "x^2 - 5x + 6 = 0 denkleminin kökleri x1 ve x2 olduğuna göre, 1/x1 + 1/x2 toplamı kaçtır?",
+      "options": [
+            "1/6",
+            "5/6",
+            "6/5",
+            "5",
+            "6"
+      ],
+      "correct": 1,
+      "explanation": "Kökler toplamı x1 + x2 = 5, kökler çarpımı x1 · x2 = 6'dır. 1/x1 + 1/x2 ifadesi paydada eşitlenirse (x1 + x2) / (x1 · x2) = 5/6 bulunur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "mat_y15",
+      "topic": "Polinomlar",
+      "year": 2022,
+      "text": "P(x) = x^3 - 2x^2 + ax - 6 polinomu (x - 2) ile kalansız bölünebildiğine göre, a kaçtır?",
+      "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+      ],
+      "correct": 2,
+      "explanation": "Kalanlar teoremine göre (x - 2) ile kalansız bölünme, P(2) = 0 olması demektir. P(2) = 8 - 8 + 2a - 6 = 2a - 6 = 0 eşitliğinden a = 3 bulunur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "mat_y16",
+      "topic": "Logaritma",
+      "year": 2023,
+      "text": "log₂8 + log₃27 - log₅25 işleminin sonucu kaçtır?",
+      "options": [
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+      ],
+      "correct": 2,
+      "explanation": "8 = 2^3 olduğundan log₂8 = 3'tür. 27 = 3^3 olduğundan log₃27 = 3'tür. 25 = 5^2 olduğundan log₅25 = 2'dir. İşlem 3 + 3 - 2 = 4 sonucunu verir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "mat_y17",
+      "topic": "Trigonometri",
+      "year": 2025,
+      "text": "x dar açı olmak üzere sin x = 3/5 olduğuna göre, tan x değeri kaçtır?",
+      "options": [
+            "3/4",
+            "4/3",
+            "4/5",
+            "5/3",
+            "5/4"
+      ],
+      "correct": 0,
+      "explanation": "sin^2 x + cos^2 x = 1 eşitliğinden cos^2 x = 1 - 9/25 = 16/25 olur. x dar açı olduğundan cos x = 4/5'tir. tan x = sin x / cos x = (3/5) / (4/5) = 3/4 bulunur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "mat_y18",
+      "topic": "Diziler",
+      "year": 2021,
+      "text": "İlk terimi 5, ortak farkı 4 olan bir aritmetik dizinin 20. terimi kaçtır?",
+      "options": [
+            "77",
+            "79",
+            "81",
+            "83",
+            "85"
+      ],
+      "correct": 2,
+      "explanation": "Aritmetik dizide genel terim a_n = a_1 + (n - 1) · d'dir. a_20 = 5 + 19 · 4 = 5 + 76 = 81 bulunur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "mat_y19",
+      "topic": "Geometri - Üçgenler",
+      "year": 2024,
+      "text": "Dik kenar uzunlukları 6 cm ve 8 cm olan bir dik üçgende, hipotenüse ait yüksekliğin uzunluğu kaç cm'dir?",
+      "options": [
+            "3,6",
+            "4",
+            "4,8",
+            "5",
+            "5,4"
+      ],
+      "correct": 2,
+      "explanation": "Hipotenüs Pisagor bağıntısıyla √(36 + 64) = 10 cm'dir. Üçgenin alanı iki dik kenardan (6 · 8) / 2 = 24 cm² olarak bulunur. Aynı alan hipotenüs ve ona ait yükseklikle de yazılır: (10 · h) / 2 = 24 eşitliğinden h = 4,8 cm elde edilir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "mat_y20",
+      "topic": "Analitik Geometri",
+      "year": 2025,
+      "text": "Analitik düzlemde A(1, 2) ve B(5, 8) noktaları veriliyor. Buna göre |AB| uzunluğu kaç birimdir?",
+      "options": [
+            "2√13",
+            "2√10",
+            "6",
+            "8",
+            "10"
+      ],
+      "correct": 0,
+      "explanation": "İki nokta arası uzaklık √((5-1)^2 + (8-2)^2) = √(16 + 36) = √52 olarak hesaplanır. √52 = √(4 · 13) = 2√13 birimdir.",
+      "kaynak": "ozgun"
+}
   ],
   Turkce: [
     {
@@ -713,6 +1036,327 @@ const YKS_QUESTION_BANK = {
       correct: 2,
       explanation: "Açıklama yapılacak veya örnek verilecek ifadelerden önce iki nokta (:) işareti kullanılır."
     }
+  ,
+    {
+      "id": "tur_y1",
+      "topic": "Sözcükte Anlam",
+      "year": 2021,
+      "text": "\"Yıllar geçtikçe sesi de duruldu, öfkesi de.\" cümlesindeki \"durulmak\" sözcüğü aşağıdaki anlamlardan hangisiyle kullanılmıştır?",
+      "options": [
+            "Berraklaşmak",
+            "Sakinleşmek, yatışmak",
+            "Yavaşlamak",
+            "Azalmak",
+            "Olgunlaşmak"
+      ],
+      "correct": 1,
+      "explanation": "Cümlede ses ve öfke birlikte anılmıştır; ikisinin de \"durulması\" şiddetini yitirip yatışması anlamına gelir. Sözcük burada temel anlamı olan \"berraklaşmak\" ile değil, mecaz anlamı olan \"sakinleşmek\" ile kullanılmıştır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tur_y2",
+      "topic": "Cümlede Anlam",
+      "year": 2022,
+      "text": "\"Bu kitabı okumadım ama konusunu az çok biliyorum.\" cümlesinde aşağıdaki anlam ilişkilerinden hangisi vardır?",
+      "options": [
+            "Neden-sonuç",
+            "Amaç-sonuç",
+            "Karşılaştırma",
+            "Koşul",
+            "Beklenmezlik (karşıtlık)"
+      ],
+      "correct": 4,
+      "explanation": "\"Ama\" bağlacı, ilk yargıdan beklenenin tersini bildiren ikinci yargıyı bağlar. Kitabı okumamışken konusunu bilmek beklenmedik bir durumdur; bu nedenle cümlede karşıtlık (beklenmezlik) ilişkisi vardır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tur_y3",
+      "topic": "Paragrafta Anlam",
+      "year": 2023,
+      "text": "Bir paragrafın giriş cümlesi için aşağıdakilerden hangisi söylenemez?",
+      "options": [
+            "Kendinden önceki bir cümleye bağlanmaz",
+            "Bağımsız bir yargı bildirir",
+            "\"Bu nedenle, oysa, ayrıca\" gibi ifadelerle başlayabilir",
+            "Paragrafın konusunu sezdirir",
+            "Genellikle genel bir yargı içerir"
+      ],
+      "correct": 2,
+      "explanation": "Giriş cümlesi kendinden önce bir cümle bulunmadığı için bağlayıcı ifadelerle başlayamaz. \"Bu nedenle, oysa, ayrıca\" gibi sözler önceki bir yargıya gönderme yapar; bu yüzden bunlarla başlayan cümle giriş cümlesi olamaz.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tur_y4",
+      "topic": "Paragrafta Yardımcı Düşünce",
+      "year": 2021,
+      "text": "Bir paragrafın ana düşüncesi ile yardımcı düşüncesi arasındaki fark için aşağıdakilerden hangisi doğrudur?",
+      "options": [
+            "Ana düşünce paragrafın tamamına, yardımcı düşünce bir bölümüne aittir",
+            "Yardımcı düşünce paragrafın tamamını kapsar",
+            "Ana düşünce her zaman ilk cümlededir",
+            "Yardımcı düşünce paragrafta yer almaz",
+            "İkisi arasında anlamca fark yoktur"
+      ],
+      "correct": 0,
+      "explanation": "Ana düşünce, yazarın paragrafın bütününde vermek istediği temel mesajdır. Yardımcı düşünceler ise ana düşünceyi destekleyen, paragrafın yalnızca bir bölümünden çıkarılabilen ara yargılardır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tur_y5",
+      "topic": "Yazım Kuralları",
+      "year": 2022,
+      "text": "Aşağıdaki cümlelerin hangisinde yazım yanlışı vardır?",
+      "options": [
+            "Sınava iki hafta kaldı.",
+            "Herkes yerine oturdu.",
+            "Yalnış yapmaktan korkma.",
+            "Bir de onu dinleyelim.",
+            "Hiçbir şey söylemedi."
+      ],
+      "correct": 2,
+      "explanation": "Sözcüğün doğru yazımı \"yanlış\" biçimindedir; \"yalnış\" yaygın bir yazım yanlışıdır. Diğer seçeneklerde \"herkes\", \"bir de\" ve \"hiçbir\" sözcükleri doğru yazılmıştır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tur_y6",
+      "topic": "Noktalama İşaretleri",
+      "year": 2023,
+      "text": "\"Yarın sabah erken kalkacağım ( ) çünkü otobüsüm sekizde kalkıyor ( )\" cümlesinde parantezle belirtilen yerlere sırasıyla hangi noktalama işaretleri getirilmelidir?",
+      "options": [
+            "Virgül - nokta",
+            "Noktalı virgül - nokta",
+            "İki nokta - üç nokta",
+            "Virgül - soru işareti",
+            "Nokta - nokta"
+      ],
+      "correct": 1,
+      "explanation": "\"Çünkü\" bağlacıyla bağlanan ve kendi içinde yargı bildiren iki cümle arasında noktalı virgül kullanılır. Cümle tamamlanmış bir yargıyla bittiği için sonuna nokta konur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tur_y7",
+      "topic": "Sözcükte Yapı",
+      "year": 2024,
+      "text": "Aşağıdaki sözcüklerden hangisi yapıca birleşiktir?",
+      "options": [
+            "Gözlükçü",
+            "Bilgisayar",
+            "Kitaplık",
+            "Yazarlık",
+            "Susuzluk"
+      ],
+      "correct": 1,
+      "explanation": "\"Bilgisayar\" sözcüğü \"bilgi\" ve \"saymak\" sözcüklerinin birleşmesiyle oluşmuş birleşik sözcüktür. Diğerleri kök ve yapım ekinden oluşan türemiş sözcüklerdir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tur_y8",
+      "topic": "Dil Bilgisi - Sözcük Türleri",
+      "year": 2021,
+      "text": "\"Bu soruyu çözebilen tek kişi oydu.\" cümlesindeki \"tek\" sözcüğünün türü aşağıdakilerden hangisidir?",
+      "options": [
+            "İşaret sıfatı",
+            "Sayı sıfatı",
+            "Niteleme sıfatı",
+            "Belgisiz sıfat",
+            "Zarf"
+      ],
+      "correct": 1,
+      "explanation": "\"Tek\" sözcüğü \"kişi\" adını sayı yönünden belirtmektedir. Varlığın sayısını bildiren sıfatlar sayı sıfatıdır; buradaki kullanım \"bir tane\" anlamı taşıdığı için asıl sayı sıfatıdır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tur_y9",
+      "topic": "Dil Bilgisi - Cümlenin Ögeleri",
+      "year": 2022,
+      "text": "\"Öğretmen, sınav sonuçlarını öğrencilere dün açıkladı.\" cümlesinde \"öğrencilere\" sözcüğü hangi ögedir?",
+      "options": [
+            "Nesne",
+            "Dolaylı tümleç",
+            "Zarf tümleci",
+            "Özne",
+            "Yüklem"
+      ],
+      "correct": 1,
+      "explanation": "Yükleme \"kime\" sorusu sorulduğunda \"öğrencilere\" yanıtı alınır. Yönelme (-e), bulunma (-de) ve ayrılma (-den) durum ekleriyle yükleme bağlanan öge dolaylı tümleçtir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tur_y10",
+      "topic": "Dil Bilgisi - Fiil Çatısı",
+      "year": 2023,
+      "text": "\"Camlar sabaha kadar silindi.\" cümlesinin öznesine göre çatısı aşağıdakilerden hangisidir?",
+      "options": [
+            "Etken",
+            "Edilgen",
+            "Dönüşlü",
+            "İşteş",
+            "Geçişli"
+      ],
+      "correct": 1,
+      "explanation": "Cümlede işi yapan belli değildir; \"camlar\" işten etkilenen sözde öznedir. Fiile \"-in\" edilgenlik eki gelmiştir. Bu nedenle cümlenin çatısı edilgendir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tur_y11",
+      "topic": "Fiilimsiler",
+      "year": 2021,
+      "text": "\"Koşarak gelen çocuk, kapıyı açmayı unuttu.\" cümlesinde kaç tane fiilimsi vardır?",
+      "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+      ],
+      "correct": 2,
+      "explanation": "Cümlede \"koşarak\" (zarf-fiil), \"gelen\" (sıfat-fiil) ve \"açmayı\" (isim-fiil) olmak üzere üç fiilimsi bulunur. \"Unuttu\" ise çekimli fiildir, yüklemdir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tur_y12",
+      "topic": "Ses Bilgisi",
+      "year": 2022,
+      "text": "Aşağıdaki sözcüklerin hangisinde ünsüz yumuşaması (ünsüz değişimi) vardır?",
+      "options": [
+            "Kitabı",
+            "Sokak",
+            "Yaprak",
+            "Renkli",
+            "Anlam"
+      ],
+      "correct": 0,
+      "explanation": "\"Kitap\" sözcüğü ünlüyle başlayan \"-ı\" ekini aldığında sondaki sert ünsüz \"p\", yumuşayarak \"b\"ye dönüşür: kitap → kitabı. Diğer sözcüklerde böyle bir değişim yoktur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tur_y13",
+      "topic": "Anlatım Bozukluğu",
+      "year": 2023,
+      "text": "Aşağıdaki cümlelerin hangisinde gereksiz sözcük kullanımından kaynaklanan anlatım bozukluğu vardır?",
+      "options": [
+            "Sınavdan sonra hep birlikte eve döndük.",
+            "Yaklaşık iki saat kadar bekledik.",
+            "Bu konuyu yarın konuşalım.",
+            "Kitabı dikkatle okudu.",
+            "Herkes görüşünü açıkça belirtti."
+      ],
+      "correct": 1,
+      "explanation": "\"Yaklaşık\" ve \"kadar\" sözcüklerinin ikisi de tahmin bildirir; aynı cümlede birlikte kullanılmaları gereksiz sözcük tekrarına yol açar. \"Yaklaşık iki saat\" ya da \"iki saat kadar\" denmelidir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tur_y14",
+      "topic": "Cümle Türleri",
+      "year": 2024,
+      "text": "\"Yağmur yağınca maç ertelendi.\" cümlesinin yapısına göre türü aşağıdakilerden hangisidir?",
+      "options": [
+            "Basit cümle",
+            "Birleşik cümle",
+            "Sıralı cümle",
+            "Bağlı cümle",
+            "Devrik cümle"
+      ],
+      "correct": 1,
+      "explanation": "Cümlede \"yağınca\" zarf-fiili bir yan cümlecik oluşturur ve temel cümleye bağlanır. İçinde fiilimsiyle kurulmuş yan cümlecik bulunan cümleler yapıca birleşik cümledir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tur_y15",
+      "topic": "Paragrafta Anlatım Biçimleri",
+      "year": 2021,
+      "text": "Bir varlığın veya olayın okuyucunun gözünde canlanmasını sağlayacak biçimde aktarılmasına dayanan anlatım biçimi aşağıdakilerden hangisidir?",
+      "options": [
+            "Açıklama",
+            "Tartışma",
+            "Betimleme",
+            "Öyküleme",
+            "Örnekleme"
+      ],
+      "correct": 2,
+      "explanation": "Betimlemede duyu organlarıyla algılananlar sözcüklere dökülür ve okuyucunun zihninde bir tablo oluşturulur. Öyküleme olayı zaman akışıyla, açıklama ise bilgi vererek aktarır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tur_y16",
+      "topic": "Sözcükler Arası Anlam İlişkileri",
+      "year": 2022,
+      "text": "Aşağıdaki sözcük çiftlerinden hangisi eş anlamlı (anlamdaş) değildir?",
+      "options": [
+            "Kara - siyah",
+            "Konuk - misafir",
+            "Hediye - armağan",
+            "Sıcak - soğuk",
+            "Okul - mektep"
+      ],
+      "correct": 3,
+      "explanation": "\"Sıcak\" ve \"soğuk\" birbirinin karşıtıdır; zıt anlamlı sözcüklerdir. Diğer çiftlerde sözcükler aynı kavramı karşılayan, biri Türkçe biri yabancı kökenli eş anlamlılardır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tur_y17",
+      "topic": "Dil Bilgisi - Ek Fiil",
+      "year": 2023,
+      "text": "\"Çocukken çok utangaçtım.\" cümlesindeki \"utangaçtım\" sözcüğünde ek fiilin hangi görevi vardır?",
+      "options": [
+            "İsmi yüklem yapmıştır",
+            "Basit zamanlı fiili birleşik zamanlı yapmıştır",
+            "Fiili isimleştirmiştir",
+            "Olumsuzluk katmıştır",
+            "Soru anlamı katmıştır"
+      ],
+      "correct": 0,
+      "explanation": "\"Utangaç\" bir sıfattır, yani ad soylu sözcüktür. Ek fiilin görülen geçmiş zamanı (-tım) eklenerek bu ad soylu sözcük cümlenin yüklemi hâline getirilmiştir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tur_y18",
+      "topic": "Paragrafta Yapı",
+      "year": 2024,
+      "text": "Bir paragrafta anlatılanların sonuca bağlandığı, düşüncenin özetlendiği bölüm aşağıdakilerden hangisidir?",
+      "options": [
+            "Giriş",
+            "Gelişme",
+            "Sonuç",
+            "Başlık",
+            "Konu"
+      ],
+      "correct": 2,
+      "explanation": "Paragraf giriş, gelişme ve sonuç bölümlerinden oluşur. Giriş konuyu tanıtır, gelişme ayrıntılarla açar, sonuç bölümü ise anlatılanları bir yargıya bağlayıp özetler.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tur_y19",
+      "topic": "Cümlede Anlam - Öznellik",
+      "year": 2025,
+      "text": "Aşağıdaki cümlelerin hangisi öznel bir yargı bildirir?",
+      "options": [
+            "Roman 320 sayfadan oluşuyor.",
+            "Kitap 1998 yılında yayımlandı.",
+            "Yazarın en etkileyici eseri budur.",
+            "Eser on dile çevrildi.",
+            "Romanda üç ana karakter vardır."
+      ],
+      "correct": 2,
+      "explanation": "\"En etkileyici\" ifadesi kişiden kişiye değişen bir değerlendirmedir ve doğruluğu kanıtlanamaz; bu nedenle öznel bir yargıdır. Diğer cümleler ölçülebilir, kanıtlanabilir nesnel bilgiler içerir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tur_y20",
+      "topic": "Sözcükte Anlam - Deyimler",
+      "year": 2025,
+      "text": "\"Etekleri zil çalmak\" deyimi aşağıdaki anlamlardan hangisini karşılar?",
+      "options": [
+            "Çok üzülmek",
+            "Çok sevinmek",
+            "Aceleci davranmak",
+            "Telaşlanmak",
+            "Yorulmak"
+      ],
+      "correct": 1,
+      "explanation": "\"Etekleri zil çalmak\", bir kişinin sevincini gizleyemeyecek kadar çok mutlu olması anlamında kullanılan bir deyimdir.",
+      "kaynak": "ozgun"
+}
   ],
   Fizik: [
     {
@@ -1051,6 +1695,327 @@ const YKS_QUESTION_BANK = {
       correct: 3,
       explanation: "Boyca genleşme formülü ΔL = L0 * α * ΔT'dir. Kalınlık (kesit alanı) boyca uzama miktarını etkilemez."
     }
+  ,
+    {
+      "id": "fiz_y1",
+      "topic": "Fizik Bilimine Giriş",
+      "year": 2021,
+      "text": "Uluslararası Birim Sistemi'nde (SI) kütlenin temel birimi aşağıdakilerden hangisidir?",
+      "options": [
+            "gram",
+            "kilogram",
+            "newton",
+            "joule",
+            "mol"
+      ],
+      "correct": 1,
+      "explanation": "SI'de yedi temel büyüklükten biri olan kütlenin temel birimi kilogramdır (kg). Gram kilogramın ast katıdır; newton kuvvetin, joule enerjinin, mol madde miktarının birimidir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "fiz_y2",
+      "topic": "Vektörler",
+      "year": 2022,
+      "text": "Birbirine dik olarak etki eden 3 N ve 4 N büyüklüğündeki iki kuvvetin bileşkesinin büyüklüğü kaç N'dur?",
+      "options": [
+            "1",
+            "3",
+            "5",
+            "7",
+            "12"
+      ],
+      "correct": 2,
+      "explanation": "Dik iki vektörün bileşkesi Pisagor bağıntısıyla bulunur: √(3² + 4²) = √25 = 5 N. Kuvvetler dik olduğu için doğrudan toplanamaz.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "fiz_y3",
+      "topic": "Mekanik - Kuvvet ve Hareket",
+      "year": 2023,
+      "text": "Sürtünmesiz yatay düzlemde duran 4 kg kütleli bir cisme 12 N büyüklüğünde net kuvvet uygulanıyor. Cismin kazandığı ivme kaç m/s²'dir?",
+      "options": [
+            "2",
+            "3",
+            "4",
+            "6",
+            "8"
+      ],
+      "correct": 1,
+      "explanation": "Newton'un ikinci yasasına göre F = m · a'dır. a = F / m = 12 / 4 = 3 m/s² bulunur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "fiz_y4",
+      "topic": "Mekanik - Dinamik",
+      "year": 2024,
+      "text": "20 m/s hızla giden 1000 kg kütleli bir araç, sabit bir frenleme kuvvetiyle 5 saniyede durmaktadır. Buna göre frenleme kuvvetinin büyüklüğü kaç N'dur?",
+      "options": [
+            "2000",
+            "3000",
+            "4000",
+            "5000",
+            "8000"
+      ],
+      "correct": 2,
+      "explanation": "İvme a = Δv / Δt = (0 - 20) / 5 = -4 m/s²'dir. Kuvvetin büyüklüğü F = m · |a| = 1000 · 4 = 4000 N olarak bulunur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "fiz_y5",
+      "topic": "Mekanik - İş, Güç ve Enerji",
+      "year": 2021,
+      "text": "Yatay bir düzlemde bir cisme, hareket doğrultusunda 50 N'luk sabit bir kuvvet uygulanarak cisim 8 m yol alıyor. Kuvvetin yaptığı iş kaç J'dür?",
+      "options": [
+            "100",
+            "200",
+            "400",
+            "500",
+            "800"
+      ],
+      "correct": 2,
+      "explanation": "Kuvvet ile yer değiştirme aynı doğrultuda olduğundan W = F · x = 50 · 8 = 400 J'dür.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "fiz_y6",
+      "topic": "Mekanik - Sürtünme",
+      "year": 2022,
+      "text": "Yatay düzlemde bulunan 10 kg kütleli bir cisim ile zemin arasındaki sürtünme katsayısı 0,2'dir. (g = 10 m/s²) Buna göre cisme etki eden sürtünme kuvveti kaç N'dur?",
+      "options": [
+            "2",
+            "10",
+            "20",
+            "50",
+            "100"
+      ],
+      "correct": 2,
+      "explanation": "Yatay düzlemde normal kuvvet N = m · g = 10 · 10 = 100 N'dur. Sürtünme kuvveti f = k · N = 0,2 · 100 = 20 N olur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "fiz_y7",
+      "topic": "Mekanik - Dairesel Hareket",
+      "year": 2023,
+      "text": "Yarıçapı 2 m olan çember biçimli bir yolda 4 m/s sabit süratle dönen bir cismin merkezcil ivmesinin büyüklüğü kaç m/s²'dir?",
+      "options": [
+            "2",
+            "4",
+            "8",
+            "16",
+            "32"
+      ],
+      "correct": 2,
+      "explanation": "Merkezcil ivme a = v² / r bağıntısıyla hesaplanır: a = 4² / 2 = 16 / 2 = 8 m/s² bulunur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "fiz_y8",
+      "topic": "Mekanik - Tork ve Denge",
+      "year": 2025,
+      "text": "Bir cisme, dönme eksenine olan dik uzaklığı 0,5 m olan noktadan, kola dik doğrultuda 40 N'luk kuvvet uygulanıyor. Oluşan torkun büyüklüğü kaç N·m'dir?",
+      "options": [
+            "8",
+            "20",
+            "40",
+            "80",
+            "200"
+      ],
+      "correct": 1,
+      "explanation": "Kuvvet kola dik olduğundan tork τ = F · d = 40 · 0,5 = 20 N·m'dir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "fiz_y9",
+      "topic": "Mekanik - Basit Makineler",
+      "year": 2021,
+      "text": "Bir kaldıraçta yük kolu 0,5 m, kuvvet kolu 2 m'dir. 200 N'luk yükü dengelemek için uygulanması gereken kuvvet kaç N'dur?",
+      "options": [
+            "25",
+            "50",
+            "100",
+            "400",
+            "800"
+      ],
+      "correct": 1,
+      "explanation": "Kaldıraç denge koşulu F · kuvvet kolu = Yük · yük kolu'dur. F · 2 = 200 · 0,5 eşitliğinden F = 100 / 2 = 50 N bulunur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "fiz_y10",
+      "topic": "Madde ve Özellikleri",
+      "year": 2022,
+      "text": "Kütlesi 270 g, hacmi 100 cm³ olan bir cismin özkütlesi kaç g/cm³'tür?",
+      "options": [
+            "0,37",
+            "1,7",
+            "2,7",
+            "3,7",
+            "27"
+      ],
+      "correct": 2,
+      "explanation": "Özkütle d = m / V bağıntısıyla bulunur: d = 270 / 100 = 2,7 g/cm³'tür.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "fiz_y11",
+      "topic": "Basınç ve Kaldırma Kuvveti",
+      "year": 2024,
+      "text": "Özkütlesi 1000 kg/m³ olan durgun bir sıvının yüzeyinden 2 m derinlikteki bir noktada sıvının yaptığı basınç kaç Pa'dır? (g = 10 m/s²)",
+      "options": [
+            "200",
+            "2000",
+            "20000",
+            "200000",
+            "2000000"
+      ],
+      "correct": 2,
+      "explanation": "Sıvı basıncı P = h · d · g bağıntısıyla hesaplanır: P = 2 · 1000 · 10 = 20000 Pa'dır. Sıvı basıncı kabın şekline değil, yalnızca derinliğe ve sıvının özkütlesine bağlıdır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "fiz_y12",
+      "topic": "Isı, Sıcaklık ve Genleşme",
+      "year": 2023,
+      "text": "Öz ısısı 4200 J/(kg·°C) olan 2 kg suyun sıcaklığını 10 °C artırmak için gereken ısı kaç J'dür?",
+      "options": [
+            "8400",
+            "42000",
+            "84000",
+            "420000",
+            "840000"
+      ],
+      "correct": 2,
+      "explanation": "Q = m · c · ΔT bağıntısından Q = 2 · 4200 · 10 = 84000 J bulunur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "fiz_y13",
+      "topic": "Elektrik - Elektrostatik",
+      "year": 2021,
+      "text": "Noktasal iki yük arasındaki uzaklık iki katına çıkarılırsa, aralarındaki elektriksel kuvvetin büyüklüğü nasıl değişir?",
+      "options": [
+            "İki katına çıkar",
+            "Dört katına çıkar",
+            "Yarıya iner",
+            "Dörtte birine iner",
+            "Değişmez"
+      ],
+      "correct": 3,
+      "explanation": "Coulomb yasasına göre kuvvet, uzaklığın karesiyle ters orantılıdır (F = k·q₁·q₂ / d²). Uzaklık iki katına çıkınca payda 2² = 4 kat büyür ve kuvvet dörtte birine iner.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "fiz_y14",
+      "topic": "Elektrik - Akım",
+      "year": 2022,
+      "text": "Uçları arasındaki potansiyel fark 12 V olan 4 Ω'luk bir dirençten geçen akım şiddeti kaç A'dir?",
+      "options": [
+            "0,33",
+            "3",
+            "4",
+            "8",
+            "48"
+      ],
+      "correct": 1,
+      "explanation": "Ohm yasasına göre V = I · R'dir. I = V / R = 12 / 4 = 3 A bulunur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "fiz_y15",
+      "topic": "Elektrik ve Manyetizma",
+      "year": 2025,
+      "text": "Üzerinden sabit akım geçen sonsuz uzunluktaki düz bir telin oluşturduğu manyetik alanın şiddeti, telden uzaklaştıkça nasıl değişir?",
+      "options": [
+            "Artar",
+            "Azalır",
+            "Değişmez",
+            "Önce artar, sonra azalır",
+            "Sıfır olur"
+      ],
+      "correct": 1,
+      "explanation": "Düz bir telin oluşturduğu manyetik alan, tele olan uzaklıkla ters orantılıdır (B = 2k·i / d). Uzaklık arttıkça alan şiddeti azalır, ancak hiçbir sonlu uzaklıkta tam olarak sıfır olmaz.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "fiz_y16",
+      "topic": "Optik",
+      "year": 2023,
+      "text": "Bir cisim düzlem aynaya 3 m uzaklıkta durmaktadır. Cisim ile görüntüsü arasındaki uzaklık kaç m'dir?",
+      "options": [
+            "1,5",
+            "3",
+            "4,5",
+            "6",
+            "9"
+      ],
+      "correct": 3,
+      "explanation": "Düzlem aynada görüntü, aynanın arkasında cismin aynaya olan uzaklığı kadar oluşur. Görüntü aynaya 3 m uzaklıktadır; cisim ile görüntü arası 3 + 3 = 6 m olur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "fiz_y17",
+      "topic": "Optik - Kırılma",
+      "year": 2021,
+      "text": "Işık, az yoğun bir ortamdan çok yoğun bir ortama eğik olarak geçerken izlediği yol için aşağıdakilerden hangisi doğrudur?",
+      "options": [
+            "Normalden uzaklaşır",
+            "Normale yaklaşır",
+            "Doğrultusunu değiştirmez",
+            "Geldiği ortama geri döner",
+            "İki ışına ayrılır"
+      ],
+      "correct": 1,
+      "explanation": "Işık çok yoğun ortamda daha yavaş ilerlediği için, az yoğundan çok yoğun ortama geçerken kırılma açısı gelme açısından küçük olur; yani ışın normale yaklaşır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "fiz_y18",
+      "topic": "Optik - Mercekler",
+      "year": 2024,
+      "text": "Odak uzaklığı 20 cm olan ince kenarlı bir merceğin optik gücü kaç diyoptridir?",
+      "options": [
+            "0,2",
+            "2",
+            "5",
+            "20",
+            "50"
+      ],
+      "correct": 2,
+      "explanation": "Optik güç P = 1 / f bağıntısıyla bulunur ve f metre cinsinden yazılır. f = 20 cm = 0,2 m olduğundan P = 1 / 0,2 = 5 diyoptridir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "fiz_y19",
+      "topic": "Dalgalar",
+      "year": 2022,
+      "text": "Dalga boyu 0,5 m ve frekansı 40 Hz olan bir dalganın yayılma hızı kaç m/s'dir?",
+      "options": [
+            "8",
+            "20",
+            "40",
+            "80",
+            "200"
+      ],
+      "correct": 1,
+      "explanation": "Dalga hızı v = λ · f bağıntısıyla hesaplanır: v = 0,5 · 40 = 20 m/s bulunur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "fiz_y20",
+      "topic": "Modern Fizik",
+      "year": 2025,
+      "text": "Fotoelektrik olayda, metal yüzeyden birim zamanda sökülen elektron sayısı öncelikle ışığın hangi özelliğine bağlıdır? (Işığın frekansı eşik frekansından büyüktür.)",
+      "options": [
+            "Frekansına",
+            "Şiddetine",
+            "Yayılma hızına",
+            "Geliş açısına",
+            "Polarizasyonuna"
+      ],
+      "correct": 1,
+      "explanation": "Işığın frekansı eşik frekansını aştıktan sonra, sökülen elektronların sayısı gelen foton sayısıyla yani ışığın şiddetiyle doğru orantılıdır. Frekans ise sökülen elektronların maksimum kinetik enerjisini belirler, sayısını değil.",
+      "kaynak": "ozgun"
+}
   ],
   Kimya: [
     {
@@ -1377,6 +2342,327 @@ const YKS_QUESTION_BANK = {
       correct: 3,
       explanation: "Sıvıların dengedeki buhar basıncı sıvının cinsine, sıcaklığına ve saflığına (çözünmüş madde olup olmamasına) bağlıdır; dış basınca veya sıvının miktarına bağlı değildir. Dış basınç kaynama noktasını etkiler."
     }
+  ,
+    {
+      "id": "kim_y1",
+      "topic": "Atom ve Yapısı",
+      "year": 2021,
+      "text": "Kütle numarası 17, atom numarası 8 olan bir atomun çekirdeğindeki nötron sayısı kaçtır?",
+      "options": [
+            "8",
+            "9",
+            "17",
+            "25",
+            "26"
+      ],
+      "correct": 1,
+      "explanation": "Kütle numarası = proton + nötron sayısıdır. Atom numarası proton sayısına eşit olduğundan proton 8'dir. Nötron sayısı 17 - 8 = 9 bulunur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "kim_y2",
+      "topic": "Atom ve Periyodik Sistem",
+      "year": 2022,
+      "text": "Elektron dizilimi 1s² 2s² 2p⁶ 3s¹ olan bir elementin periyodik cetveldeki yeri aşağıdakilerden hangisidir?",
+      "options": [
+            "2. periyot, 1A grubu",
+            "3. periyot, 1A grubu",
+            "3. periyot, 7A grubu",
+            "1. periyot, 1A grubu",
+            "3. periyot, 2A grubu"
+      ],
+      "correct": 1,
+      "explanation": "En yüksek baş kuantum sayısı (n = 3) periyot numarasını verir. Son katmanda 1 elektron bulunduğu ve bu elektron s orbitalinde olduğu için element 1A grubundadır. Element sodyumdur (Na).",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "kim_y3",
+      "topic": "Kimyasal Türler Arası Etkileşimler",
+      "year": 2023,
+      "text": "NaCl bileşiğindeki sodyum ve klor arasındaki bağ türü aşağıdakilerden hangisidir?",
+      "options": [
+            "Apolar kovalent bağ",
+            "İyonik bağ",
+            "Metalik bağ",
+            "Hidrojen bağı",
+            "Van der Waals etkileşimi"
+      ],
+      "correct": 1,
+      "explanation": "Sodyum bir metal, klor bir ametaldir. Metal elektron vererek katyon, ametal elektron alarak anyon olur; zıt yüklü iyonlar arasındaki elektrostatik çekim iyonik bağdır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "kim_y4",
+      "topic": "Kimyasal Hesaplamalar",
+      "year": 2021,
+      "text": "3 mol H₂O'nun kütlesi kaç gramdır? (H: 1 g/mol, O: 16 g/mol)",
+      "options": [
+            "18",
+            "36",
+            "54",
+            "72",
+            "108"
+      ],
+      "correct": 2,
+      "explanation": "H₂O'nun mol kütlesi 2 · 1 + 16 = 18 g/mol'dür. 3 mol için kütle 3 · 18 = 54 gramdır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "kim_y5",
+      "topic": "Mol Kavramı",
+      "year": 2024,
+      "text": "0,5 mol maddede kaç tane tanecik bulunur? (Avogadro sayısı: 6,02 · 10²³)",
+      "options": [
+            "6,02 · 10²³",
+            "3,01 · 10²³",
+            "1,204 · 10²⁴",
+            "6,02 · 10²²",
+            "1,204 · 10²³"
+      ],
+      "correct": 1,
+      "explanation": "1 mol maddede 6,02 · 10²³ tanecik bulunur. 0,5 mol için 0,5 · 6,02 · 10²³ = 3,01 · 10²³ tanecik olur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "kim_y6",
+      "topic": "Gazlar",
+      "year": 2022,
+      "text": "Normal şartlarda (NŞA) 2 mol gazın kapladığı hacim kaç litredir?",
+      "options": [
+            "11,2",
+            "22,4",
+            "33,6",
+            "44,8",
+            "67,2"
+      ],
+      "correct": 3,
+      "explanation": "Normal şartlarda 1 mol ideal gaz 22,4 litre hacim kaplar. 2 mol için 2 · 22,4 = 44,8 litre bulunur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "kim_y7",
+      "topic": "Maddenin Halleri",
+      "year": 2023,
+      "text": "Süblimleşme olayı aşağıdaki hâl değişimlerinden hangisidir?",
+      "options": [
+            "Katıdan sıvıya",
+            "Sıvıdan gaza",
+            "Katıdan gaza",
+            "Gazdan sıvıya",
+            "Gazdan katıya"
+      ],
+      "correct": 2,
+      "explanation": "Süblimleşme, bir maddenin sıvı hâle geçmeden doğrudan katı hâlden gaz hâline geçmesidir. Naftalin ve kuru buz (katı CO₂) bu davranışı gösterir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "kim_y8",
+      "topic": "Karışımlar",
+      "year": 2021,
+      "text": "Aşağıdaki karışımlardan hangisi homojendir?",
+      "options": [
+            "Çamurlu su",
+            "Tuzlu su",
+            "Sis",
+            "Süt",
+            "Kum-su karışımı"
+      ],
+      "correct": 1,
+      "explanation": "Homojen karışımlarda bileşenler gözle veya optik araçlarla ayırt edilemez ve karışım her yerinde aynı özelliği gösterir. Tuzlu su (çözelti) homojendir; diğer seçenekler heterojen karışımlardır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "kim_y9",
+      "topic": "Karışımlar - Ayırma Teknikleri",
+      "year": 2024,
+      "text": "Suda çözünmüş hâldeki tuzu sudan ayırmak için aşağıdaki yöntemlerden hangisi kullanılır?",
+      "options": [
+            "Süzme",
+            "Buharlaştırma",
+            "Ayırma hunisi",
+            "Mıknatısla ayırma",
+            "Eleme"
+      ],
+      "correct": 1,
+      "explanation": "Tuz suda çözündüğü için süzgeç kâğıdından geçer; süzme işe yaramaz. Su buharlaştırıldığında tuz kapta katı hâlde kalır. Ayırma hunisi birbirine karışmayan sıvılar, mıknatıs ise manyetik maddeler içindir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "kim_y10",
+      "topic": "Asitler, Bazlar ve Tuzlar",
+      "year": 2022,
+      "text": "Derişimi 0,001 M olan HCl çözeltisinin pH değeri kaçtır? (HCl kuvvetli asittir)",
+      "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "11"
+      ],
+      "correct": 2,
+      "explanation": "HCl kuvvetli asit olduğundan tamamen iyonlaşır ve [H⁺] = 0,001 = 10⁻³ M olur. pH = -log[H⁺] = -log(10⁻³) = 3 bulunur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "kim_y11",
+      "topic": "Nötrleşme",
+      "year": 2023,
+      "text": "Bir asit ile bir bazın tepkimesi sonucunda oluşan ürünler aşağıdakilerden hangisidir?",
+      "options": [
+            "Tuz ve su",
+            "Yalnızca tuz",
+            "Asit ve gaz",
+            "Baz ve su",
+            "Tuz ve hidrojen gazı"
+      ],
+      "correct": 0,
+      "explanation": "Nötrleşme tepkimesinde asidin verdiği H⁺ iyonu ile bazın verdiği OH⁻ iyonu birleşerek su oluşturur; geriye kalan iyonlar da tuzu meydana getirir. Örnek: HCl + NaOH → NaCl + H₂O.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "kim_y12",
+      "topic": "Kimyasal Tepkimeler",
+      "year": 2021,
+      "text": "C₃H₈ + O₂ → CO₂ + H₂O tepkimesi denkleştirildiğinde O₂'nin katsayısı kaç olur?",
+      "options": [
+            "3",
+            "4",
+            "5",
+            "6",
+            "7"
+      ],
+      "correct": 2,
+      "explanation": "Karbonlar için 3 CO₂, hidrojenler için 4 H₂O yazılır. Sağ tarafta toplam oksijen atomu 3·2 + 4·1 = 10'dur. Sol tarafta 10 oksijen atomu için 5 O₂ gerekir: C₃H₈ + 5O₂ → 3CO₂ + 4H₂O.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "kim_y13",
+      "topic": "Çözeltiler",
+      "year": 2024,
+      "text": "250 mL çözeltide 0,5 mol NaOH çözünmüştür. Bu çözeltinin molar derişimi kaç mol/L'dir?",
+      "options": [
+            "0,5",
+            "1",
+            "1,5",
+            "2",
+            "2,5"
+      ],
+      "correct": 3,
+      "explanation": "Molar derişim M = mol sayısı / hacim (L) bağıntısıyla bulunur. 250 mL = 0,25 L olduğundan M = 0,5 / 0,25 = 2 mol/L'dir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "kim_y14",
+      "topic": "Yükseltgenme-İndirgenme",
+      "year": 2025,
+      "text": "H₂SO₄ bileşiğinde kükürtün (S) yükseltgenme basamağı kaçtır?",
+      "options": [
+            "+2",
+            "+4",
+            "+6",
+            "-2",
+            "0"
+      ],
+      "correct": 2,
+      "explanation": "Bileşikte hidrojenin yükseltgenme basamağı +1, oksijeninki -2'dir. Nötr bileşikte toplam sıfır olmalıdır: 2(+1) + S + 4(-2) = 0 → 2 + S - 8 = 0 → S = +6 bulunur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "kim_y15",
+      "topic": "Periyodik Özellikler",
+      "year": 2022,
+      "text": "Periyodik cetvelde aynı periyotta soldan sağa doğru gidildiğinde atom yarıçapı nasıl değişir?",
+      "options": [
+            "Artar",
+            "Azalır",
+            "Değişmez",
+            "Önce azalır sonra artar",
+            "Düzensiz değişir"
+      ],
+      "correct": 1,
+      "explanation": "Aynı periyotta soldan sağa giderken katman sayısı sabit kalır ama çekirdek yükü (proton sayısı) artar. Artan çekirdek çekimi elektronları daha güçlü çektiği için atom yarıçapı küçülür.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "kim_y16",
+      "topic": "Fiziksel ve Kimyasal Değişim",
+      "year": 2023,
+      "text": "Aşağıdaki olaylardan hangisi kimyasal bir değişimdir?",
+      "options": [
+            "Buzun erimesi",
+            "Şekerin suda çözünmesi",
+            "Demirin paslanması",
+            "Camın kırılması",
+            "Suyun buharlaşması"
+      ],
+      "correct": 2,
+      "explanation": "Kimyasal değişimde maddenin iç yapısı değişir ve yeni madde oluşur. Demir paslanırken oksijenle tepkimeye girip demir oksit oluşturur. Diğer seçeneklerde maddenin kimliği korunur, yalnızca hâli veya görünümü değişir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "kim_y17",
+      "topic": "İzotop ve İzoton",
+      "year": 2021,
+      "text": "İzotop atomlar için aşağıdakilerden hangisi doğrudur?",
+      "options": [
+            "Proton sayıları farklı, nötron sayıları aynıdır",
+            "Proton sayıları aynı, nötron sayıları farklıdır",
+            "Hem proton hem nötron sayıları aynıdır",
+            "Kütle numaraları aynı, proton sayıları farklıdır",
+            "Elektron sayıları mutlaka farklıdır"
+      ],
+      "correct": 1,
+      "explanation": "İzotop atomlar aynı elementin farklı türleridir; proton (atom) numaraları aynı, nötron sayıları dolayısıyla kütle numaraları farklıdır. Kimyasal özellikleri aynı, fiziksel özellikleri farklıdır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "kim_y18",
+      "topic": "Kimya Bilimi",
+      "year": 2024,
+      "text": "Laboratuvarda uçucu ve zararlı gaz çıkaran deneyler aşağıdakilerden hangisinde yapılmalıdır?",
+      "options": [
+            "Açık tezgâhta",
+            "Çeker ocakta",
+            "Etüvde",
+            "Desikatörde",
+            "Su banyosunda"
+      ],
+      "correct": 1,
+      "explanation": "Çeker ocak, deney sırasında oluşan zararlı gaz ve buharları ortamdan uzaklaştıran havalandırma sistemidir. Etüv kurutma, desikatör nem almadan saklama, su banyosu ise kontrollü ısıtma amacıyla kullanılır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "kim_y19",
+      "topic": "Kimya Her Yerde",
+      "year": 2025,
+      "text": "Çamaşır suyu (NaOCl) ile tuz ruhunun (HCl) birlikte kullanılması neden tehlikelidir?",
+      "options": [
+            "Patlayıcı bir katı oluşur",
+            "Zehirli klor gazı açığa çıkar",
+            "Çözelti donar",
+            "Yanıcı hidrojen gazı oluşur",
+            "Hiçbir tepkime gerçekleşmez"
+      ],
+      "correct": 1,
+      "explanation": "Çamaşır suyu ile asit karıştırıldığında tepkime sonucu zehirli klor (Cl₂) gazı açığa çıkar. Bu gaz solunum yollarını ciddi biçimde tahriş eder; bu yüzden temizlik ürünleri birbirine karıştırılmamalıdır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "kim_y20",
+      "topic": "Kimyasal Hesaplamalar - Kütle Korunumu",
+      "year": 2023,
+      "text": "Kapalı bir kapta 12 g karbon, 32 g oksijenle tam verimle tepkimeye girerek karbondioksit oluşturmuştur. Oluşan karbondioksitin kütlesi kaç gramdır?",
+      "options": [
+            "20",
+            "32",
+            "40",
+            "44",
+            "56"
+      ],
+      "correct": 3,
+      "explanation": "Kütlenin korunumu yasasına göre kapalı sistemde girenlerin toplam kütlesi ürünlerin toplam kütlesine eşittir: 12 + 32 = 44 gram karbondioksit oluşur.",
+      "kaynak": "ozgun"
+}
   ],
   Biyoloji: [
     {
@@ -1727,6 +3013,327 @@ const YKS_QUESTION_BANK = {
       correct: 2,
       explanation: "Glikozun oksijenle yıkımı (solunum) bir katabolizma (yıkım) olayıdır ve su üretilmesine rağmen bir dehidrasyon sentezi değildir, hidroliz de değildir, bir oksitlenme ve yıkımdır. Diğerleri küçük monomerlerin su açığa çıkararak birleştiği dehidrasyon tepkimeleridir."
     }
+  ,
+    {
+      "id": "biy_y1",
+      "topic": "Hücre",
+      "year": 2021,
+      "text": "Hücrede protein sentezinin gerçekleştiği organel aşağıdakilerden hangisidir?",
+      "options": [
+            "Mitokondri",
+            "Ribozom",
+            "Lizozom",
+            "Golgi aygıtı",
+            "Koful"
+      ],
+      "correct": 1,
+      "explanation": "Ribozom, mRNA'daki bilgiyi kullanarak amino asitleri birleştirip protein sentezleyen organeldir. Mitokondri enerji üretir, lizozom sindirim yapar, golgi salgı paketler, koful depolama görevi görür.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "biy_y2",
+      "topic": "Canlıların Temel Bileşenleri",
+      "year": 2022,
+      "text": "Aşağıdaki organik bileşiklerden hangisi hücrede enerji verici olarak kullanılmaz?",
+      "options": [
+            "Karbonhidrat",
+            "Yağ",
+            "Protein",
+            "Vitamin",
+            "Nişasta"
+      ],
+      "correct": 3,
+      "explanation": "Vitaminler düzenleyici görev yapar; yapıya katılmaz ve enerji vermez. Karbonhidratlar birinci, yağlar ikinci, proteinler ise son sırada enerji kaynağı olarak kullanılabilir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "biy_y3",
+      "topic": "Enzimler",
+      "year": 2023,
+      "text": "Enzimlerin çalışma hızını etkileyen faktörler için aşağıdakilerden hangisi doğrudur?",
+      "options": [
+            "Sıcaklık arttıkça hız sürekli artar",
+            "Optimum sıcaklığın üzerinde enzim yapısı bozulur ve hız düşer",
+            "pH değişimi enzimi etkilemez",
+            "Substrat miktarı hızı hiç etkilemez",
+            "Enzimler tepkimede tükenir"
+      ],
+      "correct": 1,
+      "explanation": "Enzimler protein yapılıdır. Optimum sıcaklığa kadar hız artar; bu değerin üzerinde protein yapısı bozulur (denatürasyon) ve enzim işlevini yitirir. Enzimler tepkimeden değişmeden çıkar, tükenmez.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "biy_y4",
+      "topic": "Hücre Bölünmeleri",
+      "year": 2021,
+      "text": "2n = 46 kromozomlu bir insan hücresi mitoz bölünme geçirdiğinde oluşan hücrelerin kromozom sayısı kaçtır?",
+      "options": [
+            "23",
+            "46",
+            "92",
+            "69",
+            "12"
+      ],
+      "correct": 1,
+      "explanation": "Mitoz bölünmede kromozom sayısı korunur; oluşan iki yavru hücre de ana hücreyle aynı sayıda, yani 46 kromozom taşır. Kromozom sayısının yarıya inmesi mayoz bölünmede görülür.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "biy_y5",
+      "topic": "Hücre Bölünmeleri - Mayoz",
+      "year": 2024,
+      "text": "Mayoz bölünmede kalıtsal çeşitliliği artıran temel olay aşağıdakilerden hangisidir?",
+      "options": [
+            "DNA'nın kendini eşlemesi",
+            "Krossing-over (parça değişimi)",
+            "Sitoplazma bölünmesi",
+            "Kromozomların kutuplara çekilmesi",
+            "Çekirdek zarının erimesi"
+      ],
+      "correct": 1,
+      "explanation": "Mayoz I'in profaz evresinde homolog kromozomların kardeş olmayan kromatitleri arasında parça değişimi (krossing-over) olur. Bu, gen kombinasyonlarını değiştirerek kalıtsal çeşitliliği artırır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "biy_y6",
+      "topic": "Kalıtım",
+      "year": 2022,
+      "text": "Aa genotipli iki bireyin çaprazlanması sonucu oluşan döllerin yüzde kaçı çekinik fenotipte olur?",
+      "options": [
+            "%0",
+            "%25",
+            "%50",
+            "%75",
+            "%100"
+      ],
+      "correct": 1,
+      "explanation": "Aa × Aa çaprazlamasında oluşan genotipler 1 AA : 2 Aa : 1 aa oranındadır. Çekinik fenotip yalnızca aa genotipinde görülür; bu da 4 bireyden 1'i, yani %25'tir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "biy_y7",
+      "topic": "Kalıtım - Kan Grupları",
+      "year": 2023,
+      "text": "Kan grubu 0 (sıfır) olan bir bireyin genotipi aşağıdakilerden hangisidir?",
+      "options": [
+            "AO",
+            "BO",
+            "AB",
+            "OO",
+            "AA"
+      ],
+      "correct": 3,
+      "explanation": "0 kan grubunu belirleyen O aleli çekiniktir. Bu nedenle 0 kan grubu yalnızca iki çekinik alelin bir araya gelmesiyle, yani OO genotipiyle ortaya çıkar.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "biy_y8",
+      "topic": "Nükleik Asitler",
+      "year": 2021,
+      "text": "Bir DNA molekülünde adenin (A) nükleotidi oranı %30 ise guanin (G) nükleotidi oranı yüzde kaçtır?",
+      "options": [
+            "%10",
+            "%20",
+            "%30",
+            "%40",
+            "%70"
+      ],
+      "correct": 1,
+      "explanation": "Chargaff kuralına göre DNA'da A = T ve G = C'dir. A = %30 ise T = %30 olur; ikisi toplam %60 eder. Kalan %40 G ve C arasında eşit paylaşılır: G = C = %20'dir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "biy_y9",
+      "topic": "Fotosentez ve Kemosentez",
+      "year": 2022,
+      "text": "Fotosentez tepkimesinde açığa çıkan oksijen gazının kaynağı aşağıdakilerden hangisidir?",
+      "options": [
+            "Karbondioksit",
+            "Su",
+            "Glikoz",
+            "Klorofil",
+            "ATP"
+      ],
+      "correct": 1,
+      "explanation": "Fotosentezin ışığa bağlı evresinde su molekülleri fotoliz ile parçalanır (H₂O → 2H⁺ + ½O₂ + 2e⁻). Açığa çıkan oksijen suyun parçalanmasından gelir, karbondioksitten değil.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "biy_y10",
+      "topic": "Hücresel Solunum",
+      "year": 2023,
+      "text": "Oksijenli solunumda en fazla ATP'nin üretildiği evre ve bölge aşağıdakilerden hangisidir?",
+      "options": [
+            "Glikoliz - sitoplazma",
+            "Krebs döngüsü - mitokondri matriksi",
+            "Elektron taşıma sistemi - mitokondri iç zarı",
+            "Fotoliz - kloroplast",
+            "Fermantasyon - sitoplazma"
+      ],
+      "correct": 2,
+      "explanation": "Glikoliz ve Krebs döngüsünde az sayıda ATP üretilir; asıl ATP kazancı mitokondrinin iç zarındaki elektron taşıma sisteminde oksidatif fosforilasyonla sağlanır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "biy_y11",
+      "topic": "Sistemler - Sindirim",
+      "year": 2024,
+      "text": "Proteinlerin kimyasal sindiriminin başladığı organ aşağıdakilerden hangisidir?",
+      "options": [
+            "Ağız",
+            "Mide",
+            "İnce bağırsak",
+            "Kalın bağırsak",
+            "Yemek borusu"
+      ],
+      "correct": 1,
+      "explanation": "Midede salgılanan pepsin enzimi, asidik ortamda proteinleri daha küçük parçalara ayırır. Ağızda yalnızca karbonhidrat sindirimi (amilaz ile) başlar; kalın bağırsakta kimyasal sindirim olmaz.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "biy_y12",
+      "topic": "Sistemler - Dolaşım",
+      "year": 2021,
+      "text": "İnsan kalbinde temiz (oksijence zengin) kanın bulunduğu bölümler aşağıdakilerden hangisidir?",
+      "options": [
+            "Sağ kulakçık ve sağ karıncık",
+            "Sol kulakçık ve sol karıncık",
+            "Sağ kulakçık ve sol karıncık",
+            "Sol kulakçık ve sağ karıncık",
+            "Yalnızca sağ karıncık"
+      ],
+      "correct": 1,
+      "explanation": "Akciğerlerden gelen oksijence zengin kan sol kulakçığa dolar, oradan sol karıncığa geçer ve aort ile vücuda pompalanır. Kalbin sağ tarafı ise vücuttan gelen kirli kanı taşır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "biy_y13",
+      "topic": "Sistemler - Solunum",
+      "year": 2022,
+      "text": "Akciğerlerde gaz alışverişinin gerçekleştiği yapı aşağıdakilerden hangisidir?",
+      "options": [
+            "Bronş",
+            "Bronşçuk",
+            "Alveol",
+            "Soluk borusu",
+            "Gırtlak"
+      ],
+      "correct": 2,
+      "explanation": "Alveoller, tek sıra epitelden oluşan ve kılcal damarlarla sarılı keseciklerdir. Oksijen ile karbondioksit difüzyonla burada yer değiştirir. Diğer yapılar havayı ileten yollardır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "biy_y14",
+      "topic": "Sistemler - Boşaltım",
+      "year": 2023,
+      "text": "Böbreğin yapı ve görev birimi aşağıdakilerden hangisidir?",
+      "options": [
+            "Alveol",
+            "Nefron",
+            "Villus",
+            "Nöron",
+            "Glomerulus"
+      ],
+      "correct": 1,
+      "explanation": "Nefron; glomerulus, Bowman kapsülü ve boşaltım tüplerinden oluşan, süzülme-geri emilim-salgılama basamaklarını gerçekleştiren böbreğin temel birimidir. Glomerulus nefronun bir parçasıdır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "biy_y15",
+      "topic": "Sistemler - Sinir Sistemi",
+      "year": 2024,
+      "text": "Vücut sıcaklığı, kan basıncı ve solunum gibi yaşamsal olayların düzenlendiği merkez aşağıdakilerden hangisidir?",
+      "options": [
+            "Beyincik",
+            "Omurilik soğanı",
+            "Ön beyin",
+            "Talamus",
+            "Hipofiz"
+      ],
+      "correct": 1,
+      "explanation": "Omurilik soğanı (medulla oblongata) solunum, dolaşım, kalp atışı ve refleks merkezlerini barındırır; bu yüzden yaşamsal merkez olarak adlandırılır. Beyincik denge ve koordinasyondan sorumludur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "biy_y16",
+      "topic": "Sistemler - Endokrin",
+      "year": 2021,
+      "text": "Kandaki glikoz düzeyini düşüren hormon ve onu salgılayan bez aşağıdakilerden hangisidir?",
+      "options": [
+            "Glukagon - pankreas",
+            "İnsülin - pankreas",
+            "Adrenalin - böbrek üstü bezi",
+            "Tiroksin - tiroit",
+            "Büyüme hormonu - hipofiz"
+      ],
+      "correct": 1,
+      "explanation": "Pankreasın beta hücrelerinden salgılanan insülin, glikozun hücrelere alınmasını ve glikojen olarak depolanmasını sağlayarak kan şekerini düşürür. Glukagon ise tam tersi etki gösterir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "biy_y17",
+      "topic": "Sistemler - Destek ve Hareket",
+      "year": 2022,
+      "text": "İskelet kasları için aşağıdakilerden hangisi doğrudur?",
+      "options": [
+            "İstemsiz çalışır ve çabuk yorulmaz",
+            "İstemli çalışır ve çabuk yorulur",
+            "Kalpte bulunur",
+            "Tek çekirdeklidir ve iğ biçimlidir",
+            "Yalnızca uyku sırasında kasılır"
+      ],
+      "correct": 1,
+      "explanation": "İskelet kasları çok çekirdekli, çizgili ve istemli çalışan kaslardır; hızlı kasılır ama çabuk yorulurlar. Düz kaslar istemsizdir ve geç yorulur; kalp kası ise çizgili olmasına rağmen istemsiz çalışır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "biy_y18",
+      "topic": "Ekoloji",
+      "year": 2023,
+      "text": "Bir besin zincirinde enerjinin bir beslenme basamağından diğerine aktarılma oranı yaklaşık olarak nedir?",
+      "options": [
+            "%1",
+            "%10",
+            "%50",
+            "%90",
+            "%100"
+      ],
+      "correct": 1,
+      "explanation": "Bir beslenme basamağındaki enerjinin yaklaşık %10'u bir üst basamağa aktarılır; geri kalanı solunum, hareket ve ısı olarak kaybedilir. Bu nedenle besin zincirleri genellikle 4-5 basamakla sınırlıdır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "biy_y19",
+      "topic": "Canlıların Sınıflandırılması",
+      "year": 2025,
+      "text": "Sınıflandırmada en küçük ve en fazla ortak özelliğe sahip bireyleri içeren birim aşağıdakilerden hangisidir?",
+      "options": [
+            "Âlem",
+            "Şube",
+            "Sınıf",
+            "Cins",
+            "Tür"
+      ],
+      "correct": 4,
+      "explanation": "Sınıflandırma birimleri âlemden türe doğru daralır. Tür, birbirine en çok benzeyen ve çiftleştiklerinde verimli döller verebilen bireyler topluluğudur; birey sayısı en az, ortak özellik en fazladır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "biy_y20",
+      "topic": "Bitki Biyolojisi",
+      "year": 2024,
+      "text": "Bitkilerde su ve mineraller kökten yapraklara hangi iletim dokusuyla taşınır?",
+      "options": [
+            "Ksilem (odun borusu)",
+            "Floem (soymuk borusu)",
+            "Kambiyum",
+            "Epidermis",
+            "Parankima"
+      ],
+      "correct": 0,
+      "explanation": "Ksilem, su ve mineral tuzları kökten yapraklara doğru tek yönlü olarak taşır; taşıma terleme çekimiyle gerçekleşir ve enerji harcanmaz. Floem ise fotosentez ürünlerini çift yönlü taşır.",
+      "kaynak": "ozgun"
+}
   ],
   Edebiyat: [
     {
@@ -2041,6 +3648,327 @@ const YKS_QUESTION_BANK = {
       correct: 0,
       explanation: "Çukurova, Toroslar ve Çeltik tarlalarındaki ağalık düzenine isyan eden İnce Memed destanının yazarı Yaşar Kemal'dir."
     }
+  ,
+    {
+      "id": "edb_y1",
+      "topic": "Şiir Bilgisi",
+      "year": 2021,
+      "text": "Bir dizenin sonundaki söz ya da ekin, sonraki dizede yinelenmesiyle oluşan ses benzerliğine ne ad verilir?",
+      "options": [
+            "Redif",
+            "Kafiye",
+            "Aliterasyon",
+            "Ölçü",
+            "Nazım birimi"
+      ],
+      "correct": 0,
+      "explanation": "Kafiye, dize sonlarındaki ses benzerliği olan farklı sözcüklerdeki ortak seslerdir. Redif ise kafiyeden sonra gelen, görevi ve anlamı aynı olan yinelenmiş ek ya da sözcüklerdir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "edb_y2",
+      "topic": "Edebi Sanatlar",
+      "year": 2022,
+      "text": "\"Ay, bulutların arasından bize gülümsüyordu.\" dizesinde hangi söz sanatı vardır?",
+      "options": [
+            "Teşbih (benzetme)",
+            "Teşhis (kişileştirme)",
+            "Tezat",
+            "Mecazımürsel",
+            "Tevriye"
+      ],
+      "correct": 1,
+      "explanation": "İnsana özgü bir davranış olan \"gülümsemek\", insan dışı bir varlık olan aya yüklenmiştir. İnsan dışı varlıklara insan özelliği verilmesine teşhis (kişileştirme) denir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "edb_y3",
+      "topic": "Halk Edebiyatı",
+      "year": 2023,
+      "text": "Âşık edebiyatında, genellikle 11'li hece ölçüsüyle yazılan ve aşk, doğa, ayrılık gibi konuları işleyen nazım biçimi aşağıdakilerden hangisidir?",
+      "options": [
+            "Koşma",
+            "Mani",
+            "Semai",
+            "İlahi",
+            "Destan"
+      ],
+      "correct": 0,
+      "explanation": "Koşma, âşık edebiyatının en yaygın nazım biçimidir; dörtlüklerle ve 11'li hece ölçüsüyle söylenir. Semai 8'li, mani ise 7'li hece ölçüsüyle yazılır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "edb_y4",
+      "topic": "Halk Edebiyatı - Tekke",
+      "year": 2021,
+      "text": "Tekke (tasavvuf) edebiyatında Allah sevgisini işleyen, ezgiyle söylenen nazım türü aşağıdakilerden hangisidir?",
+      "options": [
+            "Koçaklama",
+            "İlahi",
+            "Güzelleme",
+            "Taşlama",
+            "Ağıt"
+      ],
+      "correct": 1,
+      "explanation": "İlahi, tasavvuf edebiyatında Allah sevgisini ve dinî coşkuyu dile getiren, ezgiyle okunan şiirlerdir. Koçaklama, güzelleme, taşlama ve ağıt ise âşık edebiyatının konularına göre adlandırılan türleridir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "edb_y5",
+      "topic": "Divan Edebiyatı",
+      "year": 2022,
+      "text": "Divan edebiyatında beyit birimiyle yazılan, ilk beyti kendi içinde uyaklı olan ve genellikle aşk, şarap, güzellik konularını işleyen nazım biçimi aşağıdakilerden hangisidir?",
+      "options": [
+            "Kaside",
+            "Gazel",
+            "Mesnevi",
+            "Rubai",
+            "Şarkı"
+      ],
+      "correct": 1,
+      "explanation": "Gazel, ilk beyti kendi içinde uyaklı (musarra), diğer beyitlerin ikinci dizeleri ilk beyitle uyaklı, 5-15 beyitlik nazım biçimidir. Kaside övgü, mesnevi ise uzun anlatı amacıyla kullanılır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "edb_y6",
+      "topic": "Divan Edebiyatı - Nazım Biçimleri",
+      "year": 2024,
+      "text": "Divan edebiyatında her beyti kendi içinde uyaklı olan ve uzun hikâyelerin anlatımında kullanılan nazım biçimi aşağıdakilerden hangisidir?",
+      "options": [
+            "Gazel",
+            "Kaside",
+            "Mesnevi",
+            "Murabba",
+            "Terkibibent"
+      ],
+      "correct": 2,
+      "explanation": "Mesnevide her beyit kendi içinde uyaklıdır (aa, bb, cc...). Bu serbestlik uzun anlatılara olanak tanıdığı için mesnevi, hikâye ve destan anlatımında tercih edilmiştir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "edb_y7",
+      "topic": "Geçiş Dönemi Eserleri",
+      "year": 2021,
+      "text": "İslamiyet'in kabulünden sonra yazılan ilk Türkçe eser olarak kabul edilen ve \"mutluluk veren bilgi\" anlamına gelen yapıt aşağıdakilerden hangisidir?",
+      "options": [
+            "Divanü Lugati't-Türk",
+            "Kutadgu Bilig",
+            "Atabetü'l-Hakayık",
+            "Divan-ı Hikmet",
+            "Muhakemetü'l-Lugateyn"
+      ],
+      "correct": 1,
+      "explanation": "Yusuf Has Hacib'in yazdığı Kutadgu Bilig, \"mutluluk veren bilgi\" anlamına gelir ve geçiş döneminin ilk eseridir. Mesnevi biçiminde yazılmış bir siyasetnamedir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "edb_y8",
+      "topic": "Destanlar",
+      "year": 2022,
+      "text": "Aşağıdakilerden hangisi Türklerin doğal (İslamiyet öncesi) destanlarından biri değildir?",
+      "options": [
+            "Oğuz Kağan Destanı",
+            "Ergenekon Destanı",
+            "Manas Destanı",
+            "Şu Destanı",
+            "Üç Şehitler Destanı"
+      ],
+      "correct": 4,
+      "explanation": "Üç Şehitler Destanı, Fazıl Hüsnü Dağlarca tarafından yazılmış yapay (suni) bir destandır. Diğerleri halk arasında kendiliğinden oluşup sözlü olarak aktarılan doğal destanlardır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "edb_y9",
+      "topic": "Tanzimat Edebiyatı",
+      "year": 2023,
+      "text": "Türk edebiyatındaki ilk yerli roman ve yazarı aşağıdakilerden hangisidir?",
+      "options": [
+            "Taaşşuk-ı Talat ve Fitnat - Şemsettin Sami",
+            "İntibah - Namık Kemal",
+            "Araba Sevdası - Recaizade Mahmut Ekrem",
+            "Sergüzeşt - Samipaşazade Sezai",
+            "Felatun Bey ile Rakım Efendi - Ahmet Mithat Efendi"
+      ],
+      "correct": 0,
+      "explanation": "Şemsettin Sami'nin 1872'de yazdığı Taaşşuk-ı Talat ve Fitnat ilk yerli romanımızdır. İntibah ise ilk edebî roman olarak kabul edilir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "edb_y10",
+      "topic": "Tanzimat Edebiyatı - II. Dönem",
+      "year": 2021,
+      "text": "\"Sanat sanat içindir\" görüşünü benimseyen Tanzimat II. dönem sanatçısı aşağıdakilerden hangisidir?",
+      "options": [
+            "Namık Kemal",
+            "Ziya Paşa",
+            "Şinasi",
+            "Recaizade Mahmut Ekrem",
+            "Ahmet Mithat Efendi"
+      ],
+      "correct": 3,
+      "explanation": "Tanzimat I. dönem sanatçıları (Şinasi, Namık Kemal, Ziya Paşa) \"toplum için sanat\" anlayışını savunmuştur. II. dönemde Recaizade Mahmut Ekrem ve Abdülhak Hamit Tarhan \"sanat için sanat\" görüşünü benimsemiştir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "edb_y11",
+      "topic": "Servetifünun Edebiyatı",
+      "year": 2022,
+      "text": "Servetifünun edebiyatının en önemli romancısı ve \"Aşk-ı Memnu\" adlı eserin yazarı kimdir?",
+      "options": [
+            "Tevfik Fikret",
+            "Halit Ziya Uşaklıgil",
+            "Cenap Şahabettin",
+            "Mehmet Rauf",
+            "Hüseyin Cahit Yalçın"
+      ],
+      "correct": 1,
+      "explanation": "Halit Ziya Uşaklıgil, Batılı anlamda ilk başarılı Türk romanlarını yazan sanatçıdır. Aşk-ı Memnu ve Mai ve Siyah en tanınmış eserleridir. Mehmet Rauf'un Eylül'ü ise ilk psikolojik romandır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "edb_y12",
+      "topic": "Fecriati Edebiyatı",
+      "year": 2023,
+      "text": "Fecriati topluluğunun benimsediği ilke aşağıdakilerden hangisidir?",
+      "options": [
+            "Sanat, şahsi ve muhteremdir",
+            "Sanat toplum içindir",
+            "Dilde sadeleşme esastır",
+            "Halk edebiyatına dönülmelidir",
+            "Öz şiir anlayışı benimsenmelidir"
+      ],
+      "correct": 0,
+      "explanation": "Fecriati topluluğu \"Sanat şahsi ve muhteremdir\" ilkesini benimsemiş, sanatı bireysel bir uğraş olarak görmüştür. Bu yönüyle Servetifünun'un devamı niteliğindedir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "edb_y13",
+      "topic": "Milli Edebiyat",
+      "year": 2021,
+      "text": "Milli Edebiyat akımının dil anlayışı için aşağıdakilerden hangisi doğrudur?",
+      "options": [
+            "Arapça ve Farsça tamlamalar özendirilmiştir",
+            "Konuşma dili yazı dili hâline getirilmeye çalışılmıştır",
+            "Fransızca sözcükler tercih edilmiştir",
+            "Aruz ölçüsü zorunlu tutulmuştur",
+            "Sadece divan şiiri örnek alınmıştır"
+      ],
+      "correct": 1,
+      "explanation": "Milli Edebiyat sanatçıları \"Yeni Lisan\" hareketiyle İstanbul konuşma dilini yazı dili yapmayı, yabancı tamlamalardan arınmayı ve hece ölçüsünü kullanmayı savunmuştur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "edb_y14",
+      "topic": "Milli Edebiyat - Sanatçılar",
+      "year": 2024,
+      "text": "\"Çalıkuşu\" adlı romanın yazarı aşağıdakilerden hangisidir?",
+      "options": [
+            "Halide Edip Adıvar",
+            "Reşat Nuri Güntekin",
+            "Yakup Kadri Karaosmanoğlu",
+            "Refik Halit Karay",
+            "Ömer Seyfettin"
+      ],
+      "correct": 1,
+      "explanation": "Çalıkuşu, Reşat Nuri Güntekin'in Anadolu'ya öğretmen olarak giden Feride'nin öyküsünü anlattığı ünlü romanıdır. Halide Edip'in Sinekli Bakkal'ı, Yakup Kadri'nin Yaban'ı öne çıkan eserleridir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "edb_y15",
+      "topic": "Cumhuriyet Dönemi",
+      "year": 2022,
+      "text": "Garip (Birinci Yeni) akımı için aşağıdakilerden hangisi söylenemez?",
+      "options": [
+            "Ölçü ve uyak reddedilmiştir",
+            "Şiirde söz sanatlarına yer verilmemiştir",
+            "Günlük konuşma dili kullanılmıştır",
+            "Sıradan insanın yaşamı konu edilmiştir",
+            "Kapalı ve imgeli bir dil benimsenmiştir"
+      ],
+      "correct": 4,
+      "explanation": "Kapalı, imgeli ve anlamca örtük dil İkinci Yeni'nin özelliğidir. Garip akımı (Orhan Veli, Melih Cevdet, Oktay Rifat) yalın, açık ve günlük dile dayanan bir şiiri savunmuştur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "edb_y16",
+      "topic": "Cumhuriyet Dönemi - Roman",
+      "year": 2023,
+      "text": "Toplumcu gerçekçi çizgide köy gerçeğini işleyen \"İnce Memed\" romanının yazarı kimdir?",
+      "options": [
+            "Orhan Kemal",
+            "Yaşar Kemal",
+            "Kemal Tahir",
+            "Fakir Baykurt",
+            "Sabahattin Ali"
+      ],
+      "correct": 1,
+      "explanation": "Yaşar Kemal'in İnce Memed romanı, Çukurova'da ağalık düzenine başkaldıran Memed'in öyküsünü anlatır ve toplumcu gerçekçi romanın en tanınmış örneklerindendir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "edb_y17",
+      "topic": "Edebi Akımlar",
+      "year": 2021,
+      "text": "Edebiyatta gözleme ve nesnelliğe dayanan, dış dünyayı olduğu gibi yansıtmayı amaçlayan akım aşağıdakilerden hangisidir?",
+      "options": [
+            "Romantizm",
+            "Realizm",
+            "Sürrealizm",
+            "Sembolizm",
+            "Klasisizm"
+      ],
+      "correct": 1,
+      "explanation": "Realizm (gerçekçilik), duygu ve hayale değil gözleme dayanır; olay ve kişiler yaşamda olabileceği gibi yansıtılır. Romantizm duyguyu, sembolizm ise imgeyi öne çıkarır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "edb_y18",
+      "topic": "Edebi Türler",
+      "year": 2024,
+      "text": "Yazarın herhangi bir konudaki görüşlerini kesin kurallara varmadan, kanıtlama kaygısı gütmeden anlattığı düzyazı türü aşağıdakilerden hangisidir?",
+      "options": [
+            "Makale",
+            "Deneme",
+            "Fıkra",
+            "Eleştiri",
+            "Anı"
+      ],
+      "correct": 1,
+      "explanation": "Denemede yazar konuyu kendi bakış açısıyla, samimi bir üslupla ele alır; okuyucuyu ikna etme veya kanıtlama zorunluluğu duymaz. Makale ise savunulan düşüncenin kanıtlanmasını gerektirir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "edb_y19",
+      "topic": "Şiir Bilgisi - Ölçü",
+      "year": 2025,
+      "text": "Hece ölçüsünde \"durak\" için aşağıdakilerden hangisi doğrudur?",
+      "options": [
+            "Dizenin sonundaki ses benzerliğidir",
+            "Dize içindeki okuma molasıdır ve sözcüğü ortadan bölmez",
+            "Ünlü sayısını belirler",
+            "Yalnızca aruz ölçüsünde bulunur",
+            "Şiirin nazım birimidir"
+      ],
+      "correct": 1,
+      "explanation": "Durak, hece ölçüsüyle yazılan şiirlerde dizenin okunurken bölündüğü yerdir. Durak mutlaka sözcüğün bitiminde olur; bir sözcüğü ortasından bölmez.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "edb_y20",
+      "topic": "Cumhuriyet Dönemi - Şiir",
+      "year": 2025,
+      "text": "\"Otuz Beş Yaş\" şiiriyle tanınan ve şiirlerinde ölüm, yaşama sevinci temalarını işleyen şair aşağıdakilerden hangisidir?",
+      "options": [
+            "Cahit Sıtkı Tarancı",
+            "Necip Fazıl Kısakürek",
+            "Ahmet Muhip Dıranas",
+            "Ziya Osman Saba",
+            "Faruk Nafiz Çamlıbel"
+      ],
+      "correct": 0,
+      "explanation": "Cahit Sıtkı Tarancı'nın \"Otuz Beş Yaş\" şiiri, 1946'da CHP şiir yarışmasında birincilik kazanmıştır. Şair yaşama sevinci ve ölüm korkusu temalarını yalın bir dille işlemiştir.",
+      "kaynak": "ozgun"
+}
   ],
   Tarih: [
     {
@@ -2379,6 +4307,327 @@ const YKS_QUESTION_BANK = {
       correct: 1,
       explanation: "Mustafa Kemal'in özel önem atfettiği, yoğun diploması yürüttüğü ve 1939'da referandumla Türkiye'ye katılan bölge Hatay'dır."
     }
+  ,
+    {
+      "id": "tar_y1",
+      "topic": "Tarih Bilimi",
+      "year": 2021,
+      "text": "Tarih biliminin, geçmişteki olayları incelerken yer ve zaman belirtmesinin temel nedeni aşağıdakilerden hangisidir?",
+      "options": [
+            "Olayların tekrarlanmasını sağlamak",
+            "Olaylar arasında neden-sonuç ilişkisi kurabilmek",
+            "Deney yapabilmek",
+            "Geleceği kesin olarak öngörmek",
+            "Olayları genelleştirmek"
+      ],
+      "correct": 1,
+      "explanation": "Tarihî bir olayın hangi koşullarda gerçekleştiğini anlamak için nerede ve ne zaman olduğu bilinmelidir. Yer ve zaman bilgisi, olaylar arasında doğru neden-sonuç bağı kurmayı sağlar. Tarihte deney ve gözlem yapılamaz.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tar_y2",
+      "topic": "İlk Çağ Uygarlıkları",
+      "year": 2022,
+      "text": "Tarihte bilinen ilk yazılı hukuk kurallarını oluşturan uygarlık aşağıdakilerden hangisidir?",
+      "options": [
+            "Sümerler",
+            "Hititler",
+            "Asurlular",
+            "Fenikeliler",
+            "Lidyalılar"
+      ],
+      "correct": 0,
+      "explanation": "Sümerlerde Urgakina (Urukagina) tarafından hazırlanan yasalar, bilinen ilk yazılı hukuk kurallarıdır. Sümerler ayrıca çivi yazısını da bularak tarihî çağları başlatmıştır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tar_y3",
+      "topic": "İslamiyet Öncesi Türk Tarihi",
+      "year": 2021,
+      "text": "Türk adının geçtiği ilk Türkçe yazılı belgeler aşağıdakilerden hangisidir?",
+      "options": [
+            "Orhun Kitabeleri",
+            "Yenisey Yazıtları",
+            "Kutadgu Bilig",
+            "Divanü Lugati't-Türk",
+            "Karabalgasun Yazıtı"
+      ],
+      "correct": 0,
+      "explanation": "II. Göktürk Devleti döneminde dikilen Orhun Kitabeleri (Göktürk Yazıtları), Türk adının geçtiği ilk Türkçe yazılı belgelerdir. Türk edebiyatının ve tarih yazıcılığının ilk örnekleri sayılır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tar_y4",
+      "topic": "İslam Tarihi",
+      "year": 2023,
+      "text": "Hz. Muhammed'in Mekke'den Medine'ye göç etmesi olayına ne ad verilir?",
+      "options": [
+            "Hicret",
+            "Hudeybiye",
+            "Veda Haccı",
+            "Bedir",
+            "İsra"
+      ],
+      "correct": 0,
+      "explanation": "622 yılında Mekke'den Medine'ye yapılan göçe Hicret denir. Bu olay Müslümanlar için dönüm noktası olmuş ve Hicri takvimin başlangıcı kabul edilmiştir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tar_y5",
+      "topic": "İlk Türk İslam Devletleri",
+      "year": 2022,
+      "text": "Anadolu'nun kapılarının Türklere açılmasını sağlayan 1071 Malazgirt Savaşı hangi devletler arasında yapılmıştır?",
+      "options": [
+            "Osmanlı - Bizans",
+            "Büyük Selçuklu - Bizans",
+            "Anadolu Selçuklu - Bizans",
+            "Karahanlı - Gazneli",
+            "Gazneli - Bizans"
+      ],
+      "correct": 1,
+      "explanation": "1071'de Büyük Selçuklu Sultanı Alparslan ile Bizans İmparatoru Romen Diyojen arasında yapılan Malazgirt Savaşı Selçukluların zaferiyle sonuçlanmış ve Anadolu'nun kapıları Türklere açılmıştır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tar_y6",
+      "topic": "Anadolu Selçuklu Tarihi",
+      "year": 2021,
+      "text": "1176 Miryokefalon Savaşı'nın Türk tarihi açısından önemi aşağıdakilerden hangisidir?",
+      "options": [
+            "Anadolu'nun kapıları Türklere açılmıştır",
+            "Anadolu'nun kesin olarak Türk yurdu olduğu kabul edilmiştir",
+            "İstanbul fethedilmiştir",
+            "Haçlı Seferleri başlamıştır",
+            "Osmanlı Devleti kurulmuştur"
+      ],
+      "correct": 1,
+      "explanation": "II. Kılıç Arslan'ın Bizans'ı yendiği Miryokefalon Savaşı'ndan sonra Bizans, Anadolu'yu geri alma umudunu yitirmiştir. Bu nedenle Anadolu'nun kesin olarak Türk yurdu olduğunun kabul edildiği savaş sayılır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tar_y7",
+      "topic": "Osmanlı Tarihi - Kuruluş",
+      "year": 2023,
+      "text": "Osmanlı Devleti'nin kuruluş döneminde uygulanan ve fethedilen bölgelere Türkmenlerin yerleştirilmesi esasına dayanan politika aşağıdakilerden hangisidir?",
+      "options": [
+            "İskân politikası",
+            "Devşirme sistemi",
+            "Millet sistemi",
+            "Tımar sistemi",
+            "Kapitülasyon"
+      ],
+      "correct": 0,
+      "explanation": "İskân (şenlendirme) politikasıyla fethedilen bölgelere Anadolu'dan Türkmen aileler yerleştirilmiş, böylece bölgenin Türkleşmesi ve fetihlerin kalıcı olması sağlanmıştır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tar_y8",
+      "topic": "Osmanlı Devleti - Yükselme",
+      "year": 2022,
+      "text": "İstanbul'un fethiyle sona eren çağ ve başlayan çağ aşağıdakilerden hangisinde doğru verilmiştir?",
+      "options": [
+            "İlk Çağ - Orta Çağ",
+            "Orta Çağ - Yeni Çağ",
+            "Yeni Çağ - Yakın Çağ",
+            "İlk Çağ - Yeni Çağ",
+            "Orta Çağ - Yakın Çağ"
+      ],
+      "correct": 1,
+      "explanation": "1453'te Fatih Sultan Mehmet'in İstanbul'u fethetmesiyle Orta Çağ kapanmış, Yeni Çağ başlamıştır. Yeni Çağ 1789 Fransız İhtilali ile sona erip Yakın Çağ başlar.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tar_y9",
+      "topic": "Osmanlı Devleti - Kültür ve Uygarlık",
+      "year": 2024,
+      "text": "Osmanlı Devleti'nde toprak gelirlerinin hizmet karşılığı askerlere verilmesi esasına dayanan sistem aşağıdakilerden hangisidir?",
+      "options": [
+            "Tımar sistemi",
+            "Devşirme sistemi",
+            "İltizam sistemi",
+            "Millet sistemi",
+            "Lonca sistemi"
+      ],
+      "correct": 0,
+      "explanation": "Tımar sisteminde toprağın vergi geliri, karşılığında asker yetiştirmek koşuluyla sipahilere bırakılırdı. Bu sistem hem üretimin sürmesini hem de hazineden para çıkmadan ordu beslenmesini sağlıyordu.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tar_y10",
+      "topic": "Osmanlı Tarihi - Duraklama",
+      "year": 2021,
+      "text": "Osmanlı Devleti'nin Batı'da toprak kaybettiği ilk antlaşma olarak kabul edilen antlaşma aşağıdakilerden hangisidir?",
+      "options": [
+            "Karlofça Antlaşması",
+            "Pasarofça Antlaşması",
+            "Küçük Kaynarca Antlaşması",
+            "Zitvatorok Antlaşması",
+            "Belgrad Antlaşması"
+      ],
+      "correct": 0,
+      "explanation": "1699 Karlofça Antlaşması ile Osmanlı Devleti Batı'da ilk kez büyük çapta toprak kaybetmiştir. Bu antlaşma Duraklama Dönemi'nin sonu, Gerileme Dönemi'nin başlangıcı sayılır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tar_y11",
+      "topic": "Osmanlı Tarihi - Lale Devri",
+      "year": 2023,
+      "text": "Lale Devri'nde gerçekleştirilen ve kültür hayatı açısından en önemli sayılan yenilik aşağıdakilerden hangisidir?",
+      "options": [
+            "İlk Türk matbaasının kurulması",
+            "Nizam-ı Cedit ordusunun kurulması",
+            "Tanzimat Fermanı'nın ilanı",
+            "Kapitülasyonların kaldırılması",
+            "Divan teşkilatının kurulması"
+      ],
+      "correct": 0,
+      "explanation": "Lale Devri'nde (1718-1730) İbrahim Müteferrika ve Said Efendi tarafından ilk Türk matbaası kurulmuştur. Bu, bilginin yaygınlaşması açısından dönemin en kalıcı yeniliğidir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tar_y12",
+      "topic": "Osmanlı Devleti - Dağılma",
+      "year": 2022,
+      "text": "Osmanlı Devleti'nde ilk kez anayasal düzene geçilen ve Meclis-i Mebusan'ın açıldığı dönem aşağıdakilerden hangisidir?",
+      "options": [
+            "Tanzimat Dönemi",
+            "Islahat Dönemi",
+            "I. Meşrutiyet",
+            "II. Meşrutiyet",
+            "Lale Devri"
+      ],
+      "correct": 2,
+      "explanation": "1876'da II. Abdülhamit döneminde Kanun-i Esasi ilan edilerek I. Meşrutiyet başlamış, Meclis-i Mebusan açılmıştır. Böylece Osmanlı Devleti ilk kez anayasal düzene geçmiştir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tar_y13",
+      "topic": "I. Dünya Savaşı",
+      "year": 2021,
+      "text": "I. Dünya Savaşı'nda Osmanlı Devleti'nin savaştığı ve İtilaf Devletleri'nin İstanbul'a ulaşmasını engelleyen cephe aşağıdakilerden hangisidir?",
+      "options": [
+            "Kafkas Cephesi",
+            "Çanakkale Cephesi",
+            "Kanal Cephesi",
+            "Irak Cephesi",
+            "Suriye Cephesi"
+      ],
+      "correct": 1,
+      "explanation": "Çanakkale Cephesi'nde kazanılan zafer, İtilaf Devletleri'nin boğazları geçip İstanbul'a ulaşmasını engellemiş ve Rusya'ya yardım götürülmesini önlemiştir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tar_y14",
+      "topic": "Kurtuluş Savaşına Hazırlık",
+      "year": 2023,
+      "text": "\"Milletin bağımsızlığını yine milletin azim ve kararı kurtaracaktır.\" kararının alındığı kongre aşağıdakilerden hangisidir?",
+      "options": [
+            "Erzurum Kongresi",
+            "Sivas Kongresi",
+            "Amasya Genelgesi",
+            "Balıkesir Kongresi",
+            "Alaşehir Kongresi"
+      ],
+      "correct": 2,
+      "explanation": "22 Haziran 1919'da yayımlanan Amasya Genelgesi'nde Kurtuluş Savaşı'nın gerekçesi, amacı ve yöntemi ilk kez birlikte açıklanmış, milletin kendi kaderini belirleyeceği duyurulmuştur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tar_y15",
+      "topic": "Kurtuluş Savaşı - Cepheler",
+      "year": 2022,
+      "text": "Kurtuluş Savaşı'nda \"Hattı müdafaa yoktur, sathı müdafaa vardır. O satıh bütün vatandır.\" emrinin verildiği savaş aşağıdakilerden hangisidir?",
+      "options": [
+            "I. İnönü",
+            "II. İnönü",
+            "Sakarya Meydan Muharebesi",
+            "Büyük Taarruz",
+            "Kütahya-Eskişehir"
+      ],
+      "correct": 2,
+      "explanation": "Mustafa Kemal, 1921 Sakarya Meydan Muharebesi'nde bu emri vermiştir. Savaş, Türk ordusunun savunmadan taarruza geçtiği dönüm noktası olmuş ve 1683'ten beri süren geri çekiliş sona ermiştir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tar_y16",
+      "topic": "Kurtuluş Savaşı",
+      "year": 2024,
+      "text": "Kurtuluş Savaşı'nın askerî safhasını sona erdiren ateşkes antlaşması aşağıdakilerden hangisidir?",
+      "options": [
+            "Mondros Ateşkes Antlaşması",
+            "Mudanya Ateşkes Antlaşması",
+            "Ankara Antlaşması",
+            "Gümrü Antlaşması",
+            "Moskova Antlaşması"
+      ],
+      "correct": 1,
+      "explanation": "11 Ekim 1922'de imzalanan Mudanya Ateşkes Antlaşması ile silahlı mücadele sona ermiş; Doğu Trakya ve İstanbul savaş yapılmadan geri alınmıştır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tar_y17",
+      "topic": "Lozan Barış Antlaşması",
+      "year": 2021,
+      "text": "Lozan Barış Antlaşması'nda çözüme kavuşturulamayan ve sonraya bırakılan sorun aşağıdakilerden hangisidir?",
+      "options": [
+            "Kapitülasyonlar",
+            "Musul sorunu",
+            "Savaş tazminatı",
+            "Azınlıklar",
+            "Borçlar"
+      ],
+      "correct": 1,
+      "explanation": "Lozan'da kapitülasyonlar kaldırılmış, azınlık ve borç sorunları çözülmüştür. Ancak Musul konusunda İngiltere ile anlaşma sağlanamamış, sorun 1926 Ankara Antlaşması'na bırakılmıştır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tar_y18",
+      "topic": "Atatürk Dönemi İnkılapları",
+      "year": 2023,
+      "text": "Türkiye'de kadınlara milletvekili seçme ve seçilme hakkı hangi yıl tanınmıştır?",
+      "options": [
+            "1926",
+            "1930",
+            "1934",
+            "1937",
+            "1924"
+      ],
+      "correct": 2,
+      "explanation": "Kadınlara 1930'da belediye seçimlerine, 1933'te muhtarlık seçimlerine katılma hakkı verilmiş; 1934'te yapılan anayasa değişikliğiyle milletvekili seçme ve seçilme hakkı tanınmıştır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tar_y19",
+      "topic": "Atatürk İlkeleri",
+      "year": 2022,
+      "text": "Devletin ekonomik hayata doğrudan girerek yatırım yapmasını öngören Atatürk ilkesi aşağıdakilerden hangisidir?",
+      "options": [
+            "Halkçılık",
+            "Devletçilik",
+            "Laiklik",
+            "Milliyetçilik",
+            "İnkılapçılık"
+      ],
+      "correct": 1,
+      "explanation": "Devletçilik ilkesi, özel sektörün yetersiz kaldığı alanlarda devletin doğrudan yatırım yapmasını öngörür. 1929 Dünya Ekonomik Bunalımı'ndan sonra 1933 I. Beş Yıllık Sanayi Planı ile uygulanmıştır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "tar_y20",
+      "topic": "Atatürk Dönemi Dış Politika",
+      "year": 2025,
+      "text": "1936'da imzalanan ve Türkiye'ye Boğazlar üzerinde tam egemenlik hakkı tanıyan sözleşme aşağıdakilerden hangisidir?",
+      "options": [
+            "Montrö Boğazlar Sözleşmesi",
+            "Balkan Antantı",
+            "Sadabat Paktı",
+            "Milletler Cemiyeti Sözleşmesi",
+            "Ankara Antlaşması"
+      ],
+      "correct": 0,
+      "explanation": "Lozan'da Boğazlar uluslararası bir komisyona bırakılmıştı. 1936 Montrö Sözleşmesi ile bu komisyon kaldırılmış, Boğazların yönetimi ve savunması tamamen Türkiye'ye geçmiştir.",
+      "kaynak": "ozgun"
+}
   ],
   Cografya: [
     {
@@ -2717,6 +4966,327 @@ const YKS_QUESTION_BANK = {
       correct: 0,
       explanation: "Fırat ve Dicle nehirleri Türkiye'den doğar, Suriye ve Irak'ı geçerek Şattülarap'ta birleşir ve Basra Körfezi'ne dökülür."
     }
+  ,
+    {
+      "id": "cog_y1",
+      "topic": "Coğrafi Konum",
+      "year": 2021,
+      "text": "Türkiye'nin matematik konumunun bir sonucu olarak aşağıdakilerden hangisi gösterilebilir?",
+      "options": [
+            "Üç tarafının denizlerle çevrili olması",
+            "Dört mevsimin belirgin yaşanması",
+            "Asya ile Avrupa arasında köprü olması",
+            "Deprem kuşağında yer alması",
+            "Boğazlara sahip olması"
+      ],
+      "correct": 1,
+      "explanation": "Matematik konum, enlem ve boylamla ilgilidir. Türkiye orta kuşakta (36°-42° kuzey enlemleri) yer aldığı için dört mevsim belirgin yaşanır. Diğer seçenekler özel (coğrafi) konumun sonuçlarıdır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "cog_y2",
+      "topic": "Harita Bilgisi",
+      "year": 2022,
+      "text": "Bir haritanın ölçeği küçüldükçe aşağıdakilerden hangisi artar?",
+      "options": [
+            "Ayrıntı miktarı",
+            "Küçültme oranı",
+            "Çizim alanı",
+            "Gösterilen detay",
+            "Kullanılan renk sayısı"
+      ],
+      "correct": 1,
+      "explanation": "Ölçek küçüldükçe (paydası büyüdükçe) gerçek alan daha çok küçültülerek çizilir. Bu durumda küçültme oranı artar; buna karşılık ayrıntı, detay ve çizim alanı azalır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "cog_y3",
+      "topic": "Yer kabuğu ve İç Kuvvetler",
+      "year": 2021,
+      "text": "Aşağıdaki yeryüzü şekillerinden hangisi iç kuvvetlerin etkisiyle oluşmuştur?",
+      "options": [
+            "Falezler",
+            "Kıvrım dağlar",
+            "Peribacaları",
+            "Delta ovası",
+            "Mağara"
+      ],
+      "correct": 1,
+      "explanation": "İç kuvvetler yerin iç enerjisiyle çalışır ve orojenez (dağ oluşumu), epirojenez, volkanizma, deprem şeklinde görülür. Kıvrım dağlar orojenezle oluşur. Diğerleri dış kuvvetlerin (akarsu, dalga, rüzgâr) eseridir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "cog_y4",
+      "topic": "Dış Kuvvetler",
+      "year": 2023,
+      "text": "Peribacalarının oluşumunda etkili olan temel dış kuvvet aşağıdakilerden hangisidir?",
+      "options": [
+            "Buzul",
+            "Rüzgâr ve akarsu aşındırması",
+            "Dalga",
+            "Yer altı suları",
+            "Heyelan"
+      ],
+      "correct": 1,
+      "explanation": "Peribacaları, volkanik tüf gibi yumuşak tabakaların yağmur suları ve rüzgâr tarafından aşındırılması, üstteki sert kayanın ise koruyucu şapka görevi görmesiyle oluşur. Kapadokya bunun en bilinen örneğidir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "cog_y5",
+      "topic": "Atmosfer ve Sıcaklık",
+      "year": 2022,
+      "text": "Yükseltinin artmasıyla sıcaklığın azalmasının temel nedeni aşağıdakilerden hangisidir?",
+      "options": [
+            "Güneş'e yaklaşılması",
+            "Atmosferin yoğunluğunun azalması ve ısının tutulamaması",
+            "Nem oranının artması",
+            "Basıncın artması",
+            "Rüzgâr hızının azalması"
+      ],
+      "correct": 1,
+      "explanation": "Atmosfer, esas olarak yerden yansıyan uzun dalgalı ışınlarla ısınır. Yükseklerde hava yoğunluğu ve nem azaldığından bu ısı tutulamaz; her 100 metrede sıcaklık yaklaşık 0,5 °C düşer.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "cog_y6",
+      "topic": "Rüzgarlar",
+      "year": 2021,
+      "text": "Rüzgârın oluşmasının temel nedeni aşağıdakilerden hangisidir?",
+      "options": [
+            "İki bölge arasındaki basınç farkı",
+            "Sıcaklığın sabit olması",
+            "Nem oranının eşitlenmesi",
+            "Yer çekiminin azalması",
+            "Yükseltinin artması"
+      ],
+      "correct": 0,
+      "explanation": "Rüzgâr, yüksek basınç alanından alçak basınç alanına doğru hareket eden hava kütlesidir. Basınç farkı arttıkça rüzgârın hızı da artar.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "cog_y7",
+      "topic": "İklim Bilgisi",
+      "year": 2023,
+      "text": "Yazları sıcak ve kurak, kışları ılık ve yağışlı geçen; doğal bitki örtüsü maki olan iklim tipi aşağıdakilerden hangisidir?",
+      "options": [
+            "Karasal iklim",
+            "Akdeniz iklimi",
+            "Karadeniz iklimi",
+            "Muson iklimi",
+            "Çöl iklimi"
+      ],
+      "correct": 1,
+      "explanation": "Akdeniz ikliminde yaz kuraklığı belirgindir, kışlar ılık ve yağışlı geçer. Kuraklığa dayanıklı, sert yapraklı çalılardan oluşan maki bu iklimin doğal bitki örtüsüdür.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "cog_y8",
+      "topic": "Türkiye'nin İklimi",
+      "year": 2022,
+      "text": "Türkiye'de en fazla yağış alan bölge ve bu durumun temel nedeni aşağıdakilerden hangisidir?",
+      "options": [
+            "Doğu Karadeniz - dağların denize paralel uzanması ve nemli havayı yükseltmesi",
+            "İç Anadolu - karasallık",
+            "Güneydoğu Anadolu - alçak yükselti",
+            "Ege - dağların denize dik uzanması",
+            "Marmara - geçiş iklimi"
+      ],
+      "correct": 0,
+      "explanation": "Doğu Karadeniz'de dağlar kıyıya paralel uzanır. Denizden gelen nemli hava kütleleri bu dağları aşmak için yükselir, soğur ve yoğunlaşarak bol yağış bırakır (yamaç yağışı).",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "cog_y9",
+      "topic": "İklim ve Yağış",
+      "year": 2024,
+      "text": "Hava kütlesinin ısınıp yükselmesi, soğuyup yoğunlaşması sonucu oluşan ve genellikle yaz aylarında öğleden sonra görülen yağış türü aşağıdakilerden hangisidir?",
+      "options": [
+            "Yamaç yağışı",
+            "Cephe yağışı",
+            "Konveksiyonel (yükselim) yağış",
+            "Çiy",
+            "Kırağı"
+      ],
+      "correct": 2,
+      "explanation": "Konveksiyonel yağış, yerin aşırı ısınmasıyla havanın yükselip soğuması sonucu oluşur. İç Anadolu'da yaz sonu görülen \"kırkikindi yağmurları\" bu türün tipik örneğidir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "cog_y10",
+      "topic": "Türkiye'nin Yer şekilleri",
+      "year": 2021,
+      "text": "Türkiye'nin ortalama yükseltisinin fazla olmasının bir sonucu olarak aşağıdakilerden hangisi gösterilebilir?",
+      "options": [
+            "Akarsuların hidroelektrik potansiyelinin yüksek olması",
+            "Tarım alanlarının genişlemesi",
+            "Ulaşımın kolaylaşması",
+            "Nüfusun her yere eşit dağılması",
+            "Deniz etkisinin iç kesimlere kolayca ulaşması"
+      ],
+      "correct": 0,
+      "explanation": "Yükseltinin fazla ve engebenin çok olması akarsuların eğimini ve akış hızını artırır. Bu da hidroelektrik enerji potansiyelini yükseltir. Yükselti tarımı, ulaşımı ve yerleşmeyi ise olumsuz etkiler.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "cog_y11",
+      "topic": "Türkiye'nin Akarsuları",
+      "year": 2022,
+      "text": "Türkiye'de akarsuların denge profiline ulaşamamış olmasının temel nedeni aşağıdakilerden hangisidir?",
+      "options": [
+            "Yağış rejiminin düzenli olması",
+            "Arazinin genç ve engebeli olması",
+            "Havzaların küçük olması",
+            "Bitki örtüsünün gür olması",
+            "İklimin nemli olması"
+      ],
+      "correct": 1,
+      "explanation": "Türkiye arazisi jeolojik olarak gençtir ve yükselme hareketleri sürmektedir. Bu nedenle akarsular derine aşındırmayı sürdürür, denge profiline ulaşamaz; boğaz ve vadiler oluşur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "cog_y12",
+      "topic": "Türkiye'nin Gölleri",
+      "year": 2023,
+      "text": "Türkiye'nin en büyük gölü ve oluşum türü aşağıdakilerden hangisinde doğru verilmiştir?",
+      "options": [
+            "Van Gölü - volkanik set gölü",
+            "Tuz Gölü - tektonik göl",
+            "Beyşehir Gölü - karstik göl",
+            "Eğirdir Gölü - buzul gölü",
+            "İznik Gölü - heyelan set gölü"
+      ],
+      "correct": 0,
+      "explanation": "Van Gölü, Türkiye'nin en büyük gölüdür. Nemrut Dağı'ndan çıkan lavların vadiyi kapatmasıyla oluşmuş bir volkanik set gölüdür; suyu sodalıdır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "cog_y13",
+      "topic": "Türkiye'nin Toprakları",
+      "year": 2021,
+      "text": "Kireç taşının çözünmesiyle oluşan, Akdeniz ikliminin görüldüğü alanlarda yaygın olan kırmızı renkli toprak türü aşağıdakilerden hangisidir?",
+      "options": [
+            "Terra rossa",
+            "Çernozyom",
+            "Podzol",
+            "Laterit",
+            "Alüvyal toprak"
+      ],
+      "correct": 0,
+      "explanation": "Terra rossa (kırmızı Akdeniz toprağı), kireç taşlarının çözünmesi sonucu geride kalan demir oksitlerden dolayı kırmızı renklidir. Akdeniz ikliminin görüldüğü karstik alanlarda yaygındır.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "cog_y14",
+      "topic": "Türkiye'nin Bitki Örtüsü",
+      "year": 2024,
+      "text": "İç Anadolu Bölgesi'nin doğal bitki örtüsü olan ve yaz kuraklığına uyum sağlamış ot topluluğu aşağıdakilerden hangisidir?",
+      "options": [
+            "Maki",
+            "Bozkır (step)",
+            "Orman",
+            "Tundra",
+            "Garig"
+      ],
+      "correct": 1,
+      "explanation": "İç Anadolu'da yaz kuraklığı ve yıllık yağışın azlığı orman oluşumunu engeller. İlkbaharda yeşerip yaz sıcaklarıyla kuruyan otsu bitkilerden oluşan bozkır (step) doğal örtüdür.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "cog_y15",
+      "topic": "Nüfus ve Yerleşme",
+      "year": 2022,
+      "text": "Bir ülkede nüfus piramidinin tabanının geniş olması aşağıdakilerden hangisini gösterir?",
+      "options": [
+            "Doğum oranının yüksek olduğunu",
+            "Yaşlı nüfusun fazla olduğunu",
+            "Ortalama yaşam süresinin uzun olduğunu",
+            "Nüfus artış hızının düşük olduğunu",
+            "Göç verildiğini"
+      ],
+      "correct": 0,
+      "explanation": "Nüfus piramidinin tabanı 0-4 yaş grubunu gösterir. Tabanın geniş olması doğum oranının ve dolayısıyla genç nüfusun fazla olduğunu, ülkenin gelişmekte olduğunu ifade eder.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "cog_y16",
+      "topic": "Türkiye'nin Nüfusu",
+      "year": 2023,
+      "text": "Türkiye'de nüfusun kıyı bölgelerde yoğunlaşmasının temel nedeni aşağıdakilerden hangisidir?",
+      "options": [
+            "Yükseltinin fazla olması",
+            "İklim koşullarının elverişli ve ekonomik faaliyetlerin çeşitli olması",
+            "Yer altı kaynaklarının azlığı",
+            "Tarım alanlarının dar olması",
+            "Ulaşımın zor olması"
+      ],
+      "correct": 1,
+      "explanation": "Kıyı bölgelerde ılıman iklim, verimli tarım alanları, sanayi, turizm ve liman ulaşımı bir arada bulunur. Bu ekonomik çeşitlilik nüfusu çeker; iç kesimlerde yükselti ve karasallık nüfusu sınırlar.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "cog_y17",
+      "topic": "Ekonomik Faaliyetler",
+      "year": 2021,
+      "text": "Bir ülkede çalışan nüfusun büyük bölümünün hizmet sektöründe yer alması aşağıdakilerden hangisini gösterir?",
+      "options": [
+            "Ülkenin geliştiğini",
+            "Tarımın tek geçim kaynağı olduğunu",
+            "Sanayinin hiç gelişmediğini",
+            "Nüfusun kırsalda toplandığını",
+            "Doğum oranının yüksek olduğunu"
+      ],
+      "correct": 0,
+      "explanation": "Ekonomik gelişmeyle birlikte tarımda çalışan nüfus oranı azalır, sanayi ve özellikle hizmet sektöründe çalışanların oranı artar. Bu, gelişmişliğin temel göstergelerindendir.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "cog_y18",
+      "topic": "Doğal Afetler",
+      "year": 2022,
+      "text": "Türkiye'de deprem riskinin yüksek olmasının temel nedeni aşağıdakilerden hangisidir?",
+      "options": [
+            "Yükseltinin fazla olması",
+            "Alp-Himalaya deprem kuşağında yer alması",
+            "Akarsuların hızlı akması",
+            "Karstik arazilerin yaygın olması",
+            "Volkanik dağların çok olması"
+      ],
+      "correct": 1,
+      "explanation": "Türkiye, Avrasya, Afrika ve Arabistan levhalarının etkileşim alanında, genç kıvrım kuşağı olan Alp-Himalaya deprem kuşağı üzerindedir. Kuzey Anadolu Fay Hattı bu hareketliliğin sonucudur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "cog_y19",
+      "topic": "Çevre ve Toplum",
+      "year": 2024,
+      "text": "Atmosferdeki karbondioksit oranının artmasının doğrudan yol açtığı çevre sorunu aşağıdakilerden hangisidir?",
+      "options": [
+            "Ozon tabakasının incelmesi",
+            "Küresel ısınma (sera etkisinin artması)",
+            "Asit yağmurları",
+            "Erozyon",
+            "Çölleşmenin durması"
+      ],
+      "correct": 1,
+      "explanation": "Karbondioksit bir sera gazıdır; yerden yansıyan uzun dalgalı ışınları tutarak atmosferin ısınmasına yol açar. Ozon incelmesinden kloroflorokarbonlar, asit yağmurlarından ise kükürt ve azot oksitler sorumludur.",
+      "kaynak": "ozgun"
+},
+    {
+      "id": "cog_y20",
+      "topic": "Su Kaynakları",
+      "year": 2025,
+      "text": "Karstik arazilerde yer altı sularının mağara tavanından damlayarak oluşturduğu sarkıt ve dikitlerin temel oluşum süreci aşağıdakilerden hangisidir?",
+      "options": [
+            "Kimyasal çözünme ve yeniden birikim",
+            "Rüzgâr aşındırması",
+            "Buzul aşındırması",
+            "Dalga biriktirmesi",
+            "Volkanik püskürme"
+      ],
+      "correct": 0,
+      "explanation": "Karbondioksitli sular kireç taşını kimyasal olarak çözer (erime). Çözünmüş kireç, mağara içinde damlayan suyun buharlaşmasıyla yeniden çökelerek sarkıt, dikit ve sütunları oluşturur.",
+      "kaynak": "ozgun"
+}
   ]
 };
 
