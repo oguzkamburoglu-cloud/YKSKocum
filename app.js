@@ -319,7 +319,7 @@ const app = {
     targetDept: "Bilgisayar Mühendisliği",
     targetRank: null,
     targetUniversity: "",
-    streak: 1,
+    streak: 0,   // yeni kullanici henuz hicbir gun calismadi
     level: 3,
     studyRoute: "balanced",
     totalHoursTarget: 1400,
@@ -2344,7 +2344,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     this.state.targetDept = "";
     this.state.targetRank = null;
     this.state.targetUniversity = "";
-    this.state.streak = 1;
+    this.state.streak = 0;
     this.state.level = 3;
     this.state.studyRoute = "balanced";
     this.state.isGraduate = false;
@@ -9972,20 +9972,50 @@ normalizeClause: function(clause) {
     const kap = document.getElementById("insightCards");
     if (!kap) return;
 
-    const kart = (ikon, baslik, renk, govde) => `
-      <div class="glass-card" style="padding:1.1rem; margin-bottom:1rem; border-left:4px solid ${renk};">
-        <h4 style="margin:0 0 0.6rem; display:flex; align-items:center; gap:0.5rem; font-family:var(--font-header); font-weight:800; font-size:0.9rem;">
-          <i class="fa-solid ${ikon}" style="color:${renk};"></i> ${baslik}
-        </h4>
-        ${govde}
+    // Kartlar KATLANABILIR. Panel 7 kart + 6 grafige ciktiginda
+    // "ogrenciyi grafikle bogma" kurali cignenmis oluyordu. Ilk uc kart
+    // (ne yapmasi gerektigini soyleyenler) acik gelir, digerleri kapali.
+    // Ogrencinin actigi/kapattigi kartlar hatirlanir.
+    if (!this.state.acikAnalizKartlari) this.state.acikAnalizKartlari = {};
+
+    // kart() yalnizca VERI uretir; cizim, gosterim sirasi belli olunca
+    // yapilir. Aksi halde "ilk uc kart acik" kurali kartlarin KURULMA
+    // sirasina gore isliyor, gosterim sirasina gore islemiyordu.
+    const kart = (ikon, baslik, renk, govde) => ({
+      anahtar: baslik.replace(/[^\wçğıöşüÇĞİÖŞÜ]/g, "").substring(0, 24),
+      ikon: ikon, baslik: baslik, renk: renk, govde: govde
+    });
+
+    const kartCiz = (k, acikVarsayilan) => {
+      const kayitli = this.state.acikAnalizKartlari[k.anahtar];
+      const acik = kayitli === undefined ? !!acikVarsayilan : !!kayitli;
+      return `
+      <div class="glass-card analiz-kart" style="padding:0; margin-bottom:0.75rem; border-left:4px solid ${k.renk}; overflow:hidden;">
+        <button type="button" class="analiz-kart-basi" aria-expanded="${acik}"
+                onclick="app.analizKartiAcKapa('${k.anahtar}')"
+                style="width:100%; display:flex; align-items:center; gap:0.5rem; padding:0.9rem 1.1rem;
+                       background:none; border:none; cursor:pointer; text-align:left;
+                       font-family:var(--font-header); font-weight:800; font-size:0.9rem; color:var(--text-main);">
+          <i class="fa-solid ${k.ikon}" style="color:${k.renk};"></i>
+          <span style="flex:1;">${k.baslik}</span>
+          <i class="fa-solid fa-chevron-${acik ? "up" : "down"}" style="color:var(--text-muted); font-size:0.75rem;"></i>
+        </button>
+        <div class="analiz-kart-govde" style="display:${acik ? "block" : "none"}; padding:0 1.1rem 1.1rem;">
+          ${k.govde}
+        </div>
       </div>`;
+    };
 
     const satir = (sol, sag, renk) => `
       <div style="display:flex; justify-content:space-between; align-items:baseline; gap:0.75rem; padding:0.35rem 0; border-bottom:1px dashed var(--border-color); font-size:0.82rem;">
         <span>${sol}</span><span style="font-weight:800; color:${renk || 'var(--text-main)'}; white-space:nowrap;">${sag}</span>
       </div>`;
 
-    let html = "";
+    // Kartlar once adlandirilmis bir torbaya toplanir, sonra ONCELIK
+    // sirasina gore dizilir. Kod sirasi anlatim sirasidir; ogrencinin
+    // gormesi gereken sira bundan farkli: once "ne yapmaliyim", sonra
+    // "neden", en sonda uzun vadeli ilerleme.
+    const kartlar = {};
 
     // ── A) BOS / YANLIS DENGESI ──────────────────────────────
     const dersler = {};
@@ -10029,7 +10059,7 @@ normalizeClause: function(clause) {
           return satir(`<strong>${this.escapeHtml(x.ders)}</strong><br><span style="font-size:0.72rem; color:var(--text-muted);">${tani}</span>`,
                        `${x.toplam} soru`, renk);
         }).join("");
-        html += kart("fa-circle-half-stroke", "Boş mu Bırakıyorsun, Yanlış mı Yapıyorsun?", "var(--primary)",
+        kartlar.tani = kart("fa-circle-half-stroke", "Boş mu Bırakıyorsun, Yanlış mı Yapıyorsun?", "var(--primary)",
           govde + `<p style="font-size:0.7rem; color:var(--text-muted); margin:0.6rem 0 0; line-height:1.45;">
             Boş oranı yüksekse eksik olan <strong>konu bilgisi</strong>; yanlış oranı yüksekse sorun <strong>dikkat ya da acelecilik</strong>.
             İkisi farklı çalışma gerektirir.</p>`);
@@ -10061,7 +10091,7 @@ normalizeClause: function(clause) {
           ${this.escapeHtml(enKotu.ders)} dersine ayırdığın süre karşılığını vermiyor —
           çalışma yöntemini değiştirmen, süreyi artırmandan daha çok işe yarar.</p>`;
       }
-      html += kart("fa-gauge-high", "Harcadığın Zaman Karşılığını Veriyor mu?", "var(--primary)", govde + yorum);
+      kartlar.verim = kart("fa-gauge-high", "Harcadığın Zaman Karşılığını Veriyor mu?", "var(--primary)", govde + yorum);
     }
 
     // ── A2) KONU BAZLI "EN COK NET KACIRILAN" (hata isi haritasi) ──
@@ -10132,7 +10162,7 @@ normalizeClause: function(clause) {
           `${this.escapeHtml(kayipListe[0].ders)} — ${this.escapeHtml(kayipListe[0].konu)}`, "var(--danger)"));
       }
 
-      html += kart("fa-clipboard-user", "Haftalık Karnen", "var(--success)", satirlar.join(""));
+      kartlar.karne = kart("fa-clipboard-user", "Haftalık Karnen", "var(--success)", satirlar.join(""));
     }
 
     if (kayipListe.length) {
@@ -10156,7 +10186,7 @@ normalizeClause: function(clause) {
           </div>`;
       }).join("");
       const ilk = kayipListe[0];
-      html += kart("fa-fire", "En Çok Net Kaçırdığın Konular", "var(--danger)",
+      kartlar.isiHaritasi = kart("fa-fire", "En Çok Net Kaçırdığın Konular", "var(--danger)",
         govde + `<p style="font-size:0.78rem; margin:0.7rem 0 0; line-height:1.5;">
           <strong>${this.escapeHtml(ilk.konu)}</strong> konusundan ${ilk.kez} çalışmada toplam
           <strong>${ilk.kayip} soru</strong> kaçırdın. Önceliğin bu konu olmalı.</p>`);
@@ -10206,7 +10236,7 @@ normalizeClause: function(clause) {
         uyari += (uyari ? " " : "") +
           `<strong>${liste}</strong> ders${eksik.length > 1 ? "lerine" : "ine"} ise bu dönemde hiç vakit ayırmamışsın.`;
       }
-      html += kart("fa-scale-unbalanced", "Zamanını Nasıl Bölüştürdün?", "var(--primary)",
+      kartlar.denge = kart("fa-scale-unbalanced", "Zamanını Nasıl Bölüştürdün?", "var(--primary)",
         govde + (uyari ? `<p style="font-size:0.78rem; margin:0.7rem 0 0; line-height:1.5;">${uyari}</p>` : ""));
     }
 
@@ -10226,7 +10256,7 @@ normalizeClause: function(clause) {
             </div>
           </div>`;
       }).join("");
-      html += kart("fa-list-check", "Ders Bazlı Müfredat İlerlemen", "var(--primary)", govde);
+      kartlar.mufredat = kart("fa-list-check", "Ders Bazlı Müfredat İlerlemen", "var(--primary)", govde);
     }
 
     // ── C) MUFREDAT YETISME TAHMINI ──────────────────────────
@@ -10234,7 +10264,7 @@ normalizeClause: function(clause) {
     if (tahmin && tahmin.yetersizVeri) {
       // Tahmin yapilamiyor ama ilerleme yine de gosterilir; uydurma
       // bir bitis tarihi verilmez.
-      html += kart("fa-flag-checkered", "Müfredat İlerlemen", "var(--text-muted)",
+      kartlar.yetisme = kart("fa-flag-checkered", "Müfredat İlerlemen", "var(--text-muted)",
         satir("Tamamlanan konu", `${tahmin.biten} / ${tahmin.toplam} (%${tahmin.yuzde})`, "var(--text-main)") +
         `<p style="font-size:0.78rem; margin:0.7rem 0 0; line-height:1.5; color:var(--text-muted);">
           Yetişme tahmini için en az <strong>${tahmin.enAzGun} günlük</strong> çalışma geçmişi gerekiyor
@@ -10248,12 +10278,66 @@ normalizeClause: function(clause) {
         satir("Sınava kalan", `${tahmin.kalanGun} gün`, "var(--text-main)") +
         satir("Bu hızla biteceği tarih", tahmin.bitisMetni, renk) +
         `<p style="font-size:0.78rem; margin:0.7rem 0 0; line-height:1.5;">${tahmin.mesaj}</p>`;
-      html += kart("fa-flag-checkered", "Müfredatı Sınava Yetiştirebilecek misin?", renk, govde);
+      kartlar.yetisme = kart("fa-flag-checkered", "Müfredatı Sınava Yetiştirebilecek misin?", renk, govde);
     }
+
+    // ONCELIK SIRASI — musterinin iki temel sorusu once yanitlanir:
+    //   "Cok verim aldim mi?"  ve  "Tam olarak nereden net kaciriyorum?"
+    // Ilk UC kart varsayilan olarak acik gelir; gerisi kapali.
+    const sira = ["karne", "isiHaritasi", "tani", "verim", "denge", "mufredat", "yetisme"];
+    const mevcut = sira.filter(k => kartlar[k]);
+    const html = mevcut.map((k, i) => kartCiz(kartlar[k], i < 3)).join("");
 
     if (html === "") { kap.style.display = "none"; return; }
     kap.innerHTML = html;
     kap.style.display = "block";
+  },
+
+  // Grafik bolumunu acar/kapatir. Varsayilan KAPALI: ogrenci once
+  // metin kartlarini gormeli, isteyen grafige iner.
+  grafikBolumuAcKapa: function() {
+    const bolum = document.getElementById("grafikBolumu");
+    const btn = document.getElementById("grafikAcKapaBtn");
+    const ok = document.getElementById("grafikAcKapaOk");
+    if (!bolum) return;
+    const acik = bolum.style.display !== "none";
+    bolum.style.display = acik ? "none" : "block";
+    if (btn) btn.setAttribute("aria-expanded", String(!acik));
+    if (ok) {
+      ok.classList.toggle("fa-chevron-up", !acik);
+      ok.classList.toggle("fa-chevron-down", acik);
+    }
+    this.state.grafiklerAcik = !acik;
+    this.saveState();
+    // Chart.js gizliyken 0 boyutla cizilmis olabilir; acilista boyutlandir.
+    if (!acik) {
+      Object.keys(this.charts || {}).forEach(k => {
+        const c = this.charts[k];
+        if (c && typeof c.resize === "function") { try { c.resize(); } catch (e) {} }
+      });
+    }
+  },
+
+  // Analiz kartini acar/kapatir ve tercihi hatirlar.
+  analizKartiAcKapa: function(anahtar) {
+    if (!this.state.acikAnalizKartlari) this.state.acikAnalizKartlari = {};
+    const kap = document.getElementById("insightCards");
+    if (!kap) return;
+    const btn = kap.querySelector(`button[onclick*="'${anahtar}'"]`);
+    if (!btn) return;
+    const govde = btn.nextElementSibling;
+    const acik = govde && govde.style.display !== "none";
+    const yeniDurum = !acik;
+
+    if (govde) govde.style.display = yeniDurum ? "block" : "none";
+    btn.setAttribute("aria-expanded", String(yeniDurum));
+    const ok = btn.querySelector(".fa-chevron-up, .fa-chevron-down");
+    if (ok) {
+      ok.classList.toggle("fa-chevron-up", yeniDurum);
+      ok.classList.toggle("fa-chevron-down", !yeniDurum);
+    }
+    this.state.acikAnalizKartlari[anahtar] = yeniDurum;
+    this.saveState();
   },
 
   // Mufredat ilerlemesinin ders bazli ozeti. Tek dogruluk kaynagi
@@ -10714,6 +10798,20 @@ normalizeClause: function(clause) {
 
     // Metin tabanli analizler (bos/yanlis dengesi, verim, mufredat tahmini)
     this.renderInsightCards(records);
+
+    // Grafik bolumunun kayitli acik/kapali tercihini uygula
+    const gBolum = document.getElementById("grafikBolumu");
+    if (gBolum) {
+      const gAcik = !!this.state.grafiklerAcik;
+      gBolum.style.display = gAcik ? "block" : "none";
+      const gBtn = document.getElementById("grafikAcKapaBtn");
+      const gOk = document.getElementById("grafikAcKapaOk");
+      if (gBtn) gBtn.setAttribute("aria-expanded", String(gAcik));
+      if (gOk) {
+        gOk.classList.toggle("fa-chevron-up", gAcik);
+        gOk.classList.toggle("fa-chevron-down", !gAcik);
+      }
+    }
 
     // ── Chart 4 (yeni öneri): Zaman İçinde Gelişim Trendi ──
     // Diğer üç grafik birer anlık kesit; bu grafik test test doğruluk oranının
@@ -16473,7 +16571,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
           targetRank: parsed.targetRank !== undefined ? parsed.targetRank : null,
           targetUniversity: parsed.targetUniversity || "",
           levelSystemV: parsed.levelSystemV || 1,
-          streak: parsed.streak !== undefined ? parsed.streak : 1,
+          streak: parsed.streak !== undefined ? parsed.streak : 0,
           level: parsed.level !== undefined ? parsed.level : 3,
           studyRoute: parsed.studyRoute || "balanced",
           totalHoursTarget: parsed.totalHoursTarget || 1400,
@@ -16662,7 +16760,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
           targetDept: "",
           targetRank: null,
           targetUniversity: "",
-          streak: 1,
+          streak: 0,   // yeni kullanici henuz hicbir gun calismadi
           level: 3,
           isGraduate: false,
           weekdayHours: 4,

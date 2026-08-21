@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ykskocum-v79-koruma';
+const CACHE_NAME = 'ykskocum-v82-temiz-baslangic';
 const urlsToCache = [
   './',
   './index.html',

@@ -2463,12 +2463,21 @@ body.theme-dark .task-badge.tag-habit { color: #86EFAC; }
   justify-content: center;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  /* visibility SART: yalnizca opacity:0 ile modal yerlesimde kalir,
+     metni sayfa metnine ve ekran okuyucuya sizar, gecis takilirsa
+     ekranda parlar. Gecis suresi kadar geciktirilerek kapatilir ki
+     solma animasyonu korunsun. */
+  visibility: hidden;
+  transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              visibility 0s linear 0.28s;
 }
 
 .modal-overlay.active {
   opacity: 1;
   pointer-events: auto;
+  visibility: visible;
+  transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              visibility 0s linear 0s;
 }
 
 .modal-content {
