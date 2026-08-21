@@ -1,6 +1,6 @@
 <?php
 /**
- * DEFNE — Web Push (VAPID) imzalama
+ * YKSKoçum — Web Push (VAPID) imzalama
  * ---------------------------------------------------------------
  * Paylaşımlı hosting'de Composer çoğu zaman kullanılamadığı için
  * dışarıdan kütüphane kullanılmaz; yalnızca PHP'nin openssl ve curl

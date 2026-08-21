@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>DEFNE - Akıllı YKS Ders Çalışma Koçu</title>
+  <title>YKSKoçum - Akıllı YKS Ders Çalışma Koçu</title>
   <meta name="description" content="YKS sınavına hazırlanan öğrenciler için bilimsel verilerle desteklenen akıllı, dinamik ve kişiselleştirilmiş AI Ders Çalışma Koçu.">
   <meta name="theme-color" content="#6366f1">
   <link rel="manifest" href="manifest.json">
@@ -13,7 +13,7 @@
   <!-- iOS: ana ekrana eklendiginde tarayici cubugu olmadan, uygulama gibi acilir -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="DEFNE">
+  <meta name="apple-mobile-web-app-title" content="YKSKoçum">
   <meta name="mobile-web-app-capable" content="yes">
   <!-- CSS Stylesheet -->
   <link rel="stylesheet" href="styles.css?v=26">
@@ -50,7 +50,7 @@
        kimse bulmuyor; kurulum istemi uygulamanin icinden sunulur. -->
   <div id="installBar" style="display:none; align-items:center; gap:0.75rem; flex-wrap:wrap;
        background:var(--ai-tint); border-bottom:1px solid var(--ai-border); padding:0.6rem 1rem; font-size:0.82rem;">
-    <span style="font-weight:700; color:var(--primary);">📱 DEFNE'yi uygulama olarak kur</span>
+    <span style="font-weight:700; color:var(--primary);">📱 YKSKoçum'yi uygulama olarak kur</span>
     <span id="installHint" style="color:var(--text-muted); flex:1; min-width:180px;">Ana ekranından tek dokunuşla aç, çevrimdışı çalışsın.</span>
     <button id="installBtn" class="btn btn-primary" style="padding:0.35rem 0.9rem; font-size:0.78rem; font-weight:800;" onclick="app.promptInstall()">Kur</button>
     <button class="btn btn-secondary" style="padding:0.35rem 0.7rem; font-size:0.78rem;" onclick="app.dismissInstall()">Şimdi değil</button>
@@ -84,7 +84,7 @@
         </g>
       </svg>
       <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem;">
-        <span style="background: linear-gradient(135deg, var(--text-main) 40%, var(--primary) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">DEFNE</span>
+        <span style="background: linear-gradient(135deg, var(--text-main) 40%, var(--primary) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">YKSKoçum</span>
         <span id="roleBadge" style="display:none; align-items:center; gap:0.3rem; padding:0.2rem 0.55rem; font-size:0.68rem; font-weight:800; border-radius:99px; background:rgba(16,185,129,0.12); border:1px solid var(--success, #10b981); color:var(--success, #10b981); white-space:nowrap; margin-left:0.4rem;"></span>
         <button style="padding: 0.1rem 0.5rem; font-size: 0.58rem; line-height: 1.4; display: inline-flex; align-items: center; gap: 0.2rem; font-weight: 700; white-space: nowrap; border-radius: 4px; border: 1px solid rgba(245,158,11,0.4); background: rgba(245,158,11,0.08); color: #b45309; cursor: pointer; font-family: var(--font-header);" id="headerTierBtn" onclick="event.stopPropagation(); app.showSubscription()">
           <i class="fa-solid fa-bolt" style="font-size: 0.5rem;"></i> <span id="headerTierText">Paket Seç</span>
@@ -152,7 +152,7 @@
       <div class="hero-container">
         <div class="hero-text">
           <h1>Sıradışı Bir Sınav <br>Yolculuğuna Hazır Mısın, <span>Şampiyon?</span></h1>
-          <p>DEFNE sıradan ders programlarından değildir. Bilimsel veriler ve unutma eğrisine göre seni takip eder, alışkanlıklarını analiz eder, seviye tespit sınavlarıyla eksiklerini belirler ve anlık olarak programını revize eder. Hazırsan, taktik tahtasını çıkarıyoruz!</p>
+          <p>YKSKoçum sıradan ders programlarından değildir. Bilimsel veriler ve unutma eğrisine göre seni takip eder, alışkanlıklarını analiz eder, seviye tespit sınavlarıyla eksiklerini belirler ve anlık olarak programını revize eder. Hazırsan, taktik tahtasını çıkarıyoruz!</p>
           <!-- ROL SECIMI — sonraki her sey buna gore degisiyor.
                Ogrenci: hedef belirleme sihirbazi + gunluk program takibi.
                Koc: program hazirlama + metin olarak paylasma. -->
@@ -167,9 +167,11 @@
             </button>
 
             <button class="role-card" onclick="app.startAsCoach()"
-                    style="text-align:left; cursor:pointer; border:1.5px solid var(--success, #10b981); background:rgba(16,185,129,0.07); border-radius:14px; padding:1.1rem 1rem; font-family:inherit;">
+                    style="text-align:left; cursor:pointer; border:1.5px dashed var(--border-color); background:var(--bg-card); border-radius:14px; padding:1.1rem 1rem; font-family:inherit; opacity:.72;">
               <div style="font-size:1.5rem; line-height:1; margin-bottom:0.5rem;">🧭</div>
-              <div style="font-weight:800; font-size:0.98rem; color:var(--success, #10b981); font-family:var(--font-header); margin-bottom:0.2rem;">Koçum</div>
+              <div style="font-weight:800; font-size:0.98rem; color:var(--text-muted); font-family:var(--font-header); margin-bottom:0.2rem;">Koçum
+                <span style="font-size:.64rem; font-weight:800; background:rgba(180,83,9,.12); color:#b45309; border:1px solid #b45309; padding:.08rem .38rem; border-radius:5px; margin-left:.25rem; vertical-align:middle;">YAKINDA</span>
+              </div>
               <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.45;">Öğrencilerim için program hazırlayıp paylaşacağım</div>
             </button>
 
@@ -484,7 +486,7 @@
         <div class="coach-feedback-box" style="text-align: left; margin-bottom: 2.5rem; background: rgba(59, 130, 246, 0.03); border-color: rgba(59, 130, 246, 0.15);">
           <div class="coach-avatar" style="border-color: var(--secondary); background: rgba(59, 130, 246, 0.05);">✏️</div>
           <div class="coach-message">
-            <h4>DEFNE Maç Raporu</h4>
+            <h4>YKSKoçum Maç Raporu</h4>
             <p id="reportCoachAnalysis">Analiz yükleniyor...</p>
           </div>
         </div>
@@ -545,7 +547,7 @@
             <span>Akıllı Bildirimleri Aktifleştir</span>
             <input type="checkbox" id="notifEnabledToggle" style="transform: scale(1.2);" onchange="app.notificationManager.requestPermission().then(g => { if(g) { document.getElementById('notifEnabledToggle').checked = true; } else { document.getElementById('notifEnabledToggle').checked = false; } })">
           </label>
-          <small style="color: var(--text-muted);">DEFNE sana çalışma durumuna göre kritik hatırlatmalar yapacak.</small>
+          <small style="color: var(--text-muted);">YKSKoçum sana çalışma durumuna göre kritik hatırlatmalar yapacak.</small>
         </div>
 
         <h3 style="margin-top: 1.5rem;">Sessiz Saatler</h3>
@@ -624,7 +626,7 @@
             <!-- PRO Premium soft highlight widget -->
             <div id="sidebarProBanner" style="margin: 1rem 0 0; padding: 0.75rem; border-radius: 8px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(168, 85, 247, 0.1)); border: 1.5px solid rgba(139, 92, 246, 0.2); text-align: center;">
               <span style="font-size: 0.72rem; font-weight: 700; color: #a78bfa; display: block; margin-bottom: 0.35rem;">
-                <i class="fa-solid fa-crown text-warning"></i> DEFNE Üyeliği: <span id="dashSubTierText" style="text-transform: uppercase;">PRO</span>
+                <i class="fa-solid fa-crown text-warning"></i> YKSKoçum Üyeliği: <span id="dashSubTierText" style="text-transform: uppercase;">PRO</span>
               </span>
               <button id="dashSubActionButton" onclick="app.showSubscriptionModal()" style="border: none; background: #8b5cf6; color: white; padding: 0.25rem 0.6rem; font-size: 0.68rem; font-weight: 800; border-radius: 6px; cursor: pointer; transition: background 0.2s; width: 100%;" onmouseover="this.style.background='#a78bfa'" onmouseout="this.style.background='#8b5cf6'">
                 Planları Yönet
@@ -728,7 +730,7 @@
           <!-- AI ÇALIŞMA YARDIMCILARI GRID (no title/card wrapper) -->
           <div id="topHelpersCard" style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
             <div style="width: 100%;">
-              <!-- 3 AI merkezi + yüzen DEFNE = 4 giriş noktası.
+              <!-- 3 AI merkezi + yüzen YKSKoçum = 4 giriş noktası.
                    Rota Rehberi kaldırıldı; 4 fazlı müfredat haritası Program
                    Sihirbazı'nın içine taşındı. Alışkanlık Haritası, Gelişim
                    Analizi'nin altında kalır. Her kart öğrencinin zihnindeki
@@ -2010,7 +2012,7 @@
           </svg>
           <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem;">
             <div style="display: flex; align-items: center; gap: 0.35rem;">
-              <h4 style="margin: 0; font-size: 0.95rem; font-weight: 800; font-family: var(--font-header);">DEFNE</h4>
+              <h4 style="margin: 0; font-size: 0.95rem; font-weight: 800; font-family: var(--font-header);">YKSKoçum</h4>
               <span style="padding: 0.05rem 0.35rem; font-size: 0.55rem; font-weight: 700; background: #f59e0b; color: #fff; border-radius: 4px; display: inline-flex; align-items: center; gap: 2px;">
                 <i class="fa-solid fa-bolt" style="font-size: 0.45rem;"></i> Pro
               </span>
@@ -2218,22 +2220,14 @@
 
   <!-- Subscription Modal -->
   <div id="subscriptionModal" class="modal-overlay" style="display:none; align-items:center; justify-content:center;">
-    <div class="glass-card modal-content" style="max-width: 720px; padding: 2rem; position: relative;">
+    <div class="glass-card modal-content" style="max-width: 860px; padding: 2rem; position: relative;">
       <button class="close-btn" onclick="app.closeSubscriptionModal()" style="position:absolute; top:1rem; right:1rem; background:none; border:none; font-size:1.4rem; cursor:pointer; color:var(--text-muted);">&times;</button>
       <h2 style="text-align:center; margin-bottom:0.4rem; font-family:var(--font-header); font-weight:800;">Paketler</h2>
       <p style="text-align:center; color:var(--text-muted); font-size:0.9rem; margin-bottom:1.25rem;">
-        Öğrenci ve koç için ayrı paketler. Hepsi <strong>7 gün ücretsiz</strong>.
+        Hepsi <strong>7 gün ücretsiz</strong>. Kart bilgisi istenmez.
       </p>
 
-      <!-- Rol sekmeleri -->
-      <div style="display:flex; gap:0.5rem; justify-content:center; margin-bottom:1.5rem;">
-        <button class="btn btn-secondary" id="paketSekme-ogrenci" onclick="app.showPaketler('ogrenci')"
-                style="min-width:150px; font-weight:800; font-size:0.85rem;">🎓 Öğrenci</button>
-        <button class="btn btn-secondary" id="paketSekme-koc" onclick="app.showPaketler('koc')"
-                style="min-width:150px; font-weight:800; font-size:0.85rem;">🧭 Koç</button>
-      </div>
-
-      <div id="paketIcerik"><!-- JS: PAKETLER yapılandırmasından doldurulur --></div>
+      <div id="paketIcerik" style="display:flex; gap:1rem; flex-wrap:wrap;"><!-- JS: PAKETLER yapılandırmasından doldurulur --></div>
 
       <div style="text-align:center; margin-top:1.5rem; border-top:1px solid var(--border-color); padding-top:1.25rem;">
         <button class="btn btn-primary" style="width:100%; max-width:340px; font-weight:800;" onclick="app.upgradeToPro('trial')">
@@ -2330,6 +2324,6 @@
   <script src="curriculum.js?v=3"></script>
   <script src="questions.js"></script>
   <script src="quotes.js?v=1"></script>
-  <script src="app.js?v=106"></script>
+  <script src="app.js?v=108"></script>
 </body>
 </html>

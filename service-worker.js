@@ -1,4 +1,4 @@
-const CACHE_NAME = 'defne-v56-koc-alani';
+const CACHE_NAME = 'ykskocum-v56-paketler';
 const urlsToCache = [
   './',
   './index.html',
@@ -99,7 +99,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('push', event => {
   // Fallback if push comes from server
   const data = event.data ? event.data.json() : {};
-  const title = data.title || 'DEFNE';
+  const title = data.title || 'YKSKoçum';
   const options = {
     body: data.body || 'Yeni bir bildiriminiz var.',
     icon: './icon-192.png',

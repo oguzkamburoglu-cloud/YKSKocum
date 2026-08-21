@@ -1,6 +1,6 @@
 <?php
 /**
- * DEFNE — Sunucu Uygunluk Kontrolü
+ * YKSKoçum — Sunucu Uygunluk Kontrolü
  * ---------------------------------------------------------------
  * Bu dosyayı hosting'ine yükleyip tarayıcıdan aç:
  *     https://ALANADIN/sunucu/kontrol.php
@@ -74,7 +74,7 @@ ekle('PDO sürücüleri', class_exists('PDO') && in_array('mysql', PDO::getAvail
 $zorunluHata = count(array_filter($sonuc, fn($s) => $s['zorunlu'] && !$s['ok']));
 ?>
 <!doctype html><html lang="tr"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>DEFNE — Sunucu Kontrolü</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>YKSKoçum — Sunucu Kontrolü</title>
 <style>
 body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#f6f7fb;color:#16192b;margin:0;padding:2rem 1rem;line-height:1.6}
 .k{max-width:720px;margin:0 auto;background:#fff;border:1px solid #e4e1ec;border-radius:14px;padding:1.75rem}
@@ -91,7 +91,7 @@ h1{font-size:1.35rem;margin:0 0 .3rem}
 .kotu{background:#fdecec;color:#b91c1c;border:1px solid #b91c1c}
 code{background:#f1f0f6;padding:.1em .4em;border-radius:4px;font-size:.85em}
 </style></head><body><div class="k">
-<h1>DEFNE — Sunucu Uygunluk Kontrolü</h1>
+<h1>YKSKoçum — Sunucu Uygunluk Kontrolü</h1>
 <p class="alt">Bu sayfa sunucunda hiçbir değişiklik yapmaz. Sonucu ekran görüntüsüyle ilet.</p>
 <?php foreach ($sonuc as $s): ?>
   <div class="s">

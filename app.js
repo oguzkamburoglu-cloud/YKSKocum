@@ -121,7 +121,7 @@ const SafeStorage = {
 // layer when it persists a notification preference change.
 window.SafeStorage = SafeStorage;
 
-// DEFNE - Akıllı YKS Ders Çalışma Koçu
+// YKSKoçum - Akıllı YKS Ders Çalışma Koçu
 // Fallback YKS Question Bank initialization
 if (typeof window !== 'undefined' && !window.YKS_QUESTION_BANK) {
   window.YKS_QUESTION_BANK = {
@@ -181,7 +181,7 @@ const app = {
     // Zaten uygulama olarak acilmissa teklif etme
     const kurulu = window.matchMedia("(display-mode: standalone)").matches ||
                    window.navigator.standalone === true;
-    if (kurulu || localStorage.getItem("defne_install_dismissed") === "1") return;
+    if (kurulu || localStorage.getItem("ykskocum_install_dismissed") === "1") return;
 
     window.addEventListener("beforeinstallprompt", (e) => {
       e.preventDefault();
@@ -192,7 +192,7 @@ const app = {
     window.addEventListener("appinstalled", () => {
       cubuk.style.display = "none";
       this._installEvent = null;
-      this.showToast("DEFNE ana ekranına eklendi.", "success");
+      this.showToast("YKSKoçum ana ekranına eklendi.", "success");
     });
 
     // iOS: beforeinstallprompt yok, kullaniciya adimlar soylenir
@@ -222,7 +222,7 @@ const app = {
   dismissInstall: function() {
     const c = document.getElementById("installBar");
     if (c) c.style.display = "none";
-    try { localStorage.setItem("defne_install_dismissed", "1"); } catch (e) {}
+    try { localStorage.setItem("ykskocum_install_dismissed", "1"); } catch (e) {}
   },
 
   // Seviye hedeflerini programin gercek suresine olcekler
@@ -251,51 +251,59 @@ const app = {
   // bu tek kaynaktan beslenir.
   // ============================================================
   DENEME_GUN: 7,
-  PAKETLER: {
-    ogrenci: {
-      etiket: "Öğrenci",
-      ikon: "🎓",
-      ozet: "Kendi programını kur, takip et, hatalarını kapat.",
+
+  // Koc tarafi henuz yayinda degil: rol secimi ve koc paketleri
+  // "yakinda" olarak gosterilir. Sunucu ve senkronizasyon hazir olunca
+  // buradaki tek bayrak acilir.
+  KOC_AKTIF: false,
+
+  // ============================================================
+  // PAKETLER — 3 kademe (hepsi ogrenci icin)
+  // FIYATLAR ORNEKTIR. Gercek fiyatlarini burada degistir; abonelik
+  // penceresi bu tek kaynaktan beslenir.
+  // ============================================================
+  PAKETLER: [
+    {
+      id: "baslangic", ad: "Başlangıç", fiyat: 99, birim: "₺/ay",
+      ozet: "Programını kur ve takip et.",
       ozellikler: [
         "Sınava kalan güne göre kişisel program",
-        "Fotoğraf / PDF / sesle program aktarma",
-        "Hata defteri ve aralıklı tekrar",
-        "Deneme analizi ve net takibi",
-        "Kaynak kitap önerileri (ÖSYM verisiyle)"
-      ],
-      planlar: [
-        { id: "ogrenci_aylik", ad: "Aylık",  fiyat: 149, birim: "₺/ay" },
-        { id: "ogrenci_yillik", ad: "Yıllık", fiyat: 1190, birim: "₺/yıl", rozet: "2 ay hediye" }
+        "Günlük / haftalık / aylık görünüm",
+        "Müfredat haritası ve ilerleme takibi",
+        "Kendi programını elle kurma"
       ]
     },
-    koc: {
-      etiket: "Koç",
-      ikon: "🧭",
-      ozet: "Öğrencilerini tek ekrandan izle, program ver.",
+    {
+      id: "standart", ad: "Standart", fiyat: 199, birim: "₺/ay", vurgu: "En çok tercih edilen",
+      ozet: "Hatalarını kapat, denemeni analiz et.",
       ozellikler: [
-        "Sınırsız öğrenci takibi",
-        "Aciliyete göre sıralı öğrenci panosu",
-        "Öğrenciye program hazırlama ve gönderme",
-        "Deneme ve devamlılık raporları",
-        "Öğrenci başına ilerleme geçmişi"
-      ],
-      planlar: [
-        { id: "koc_aylik", ad: "Aylık",  fiyat: 399, birim: "₺/ay" },
-        { id: "koc_yillik", ad: "Yıllık", fiyat: 3190, birim: "₺/yıl", rozet: "2 ay hediye" }
+        "Başlangıç'taki her şey",
+        "Hata defteri ve aralıklı tekrar (ÖDT)",
+        "Deneme analizi ve net takibi",
+        "Kaynak kitap önerileri (ÖSYM verisiyle)",
+        "Veli raporu"
+      ]
+    },
+    {
+      id: "pro", ad: "Pro", fiyat: 349, birim: "₺/ay",
+      ozet: "Yapay zekâ desteğiyle tam donanım.",
+      ozellikler: [
+        "Standart'taki her şey",
+        "Fotoğraf / PDF ile program aktarma",
+        "Sesle program oluşturma",
+        "AI koç yorumları ve günlük taktikler",
+        "AI tercih motoru (ÖSYM taban verisi)"
       ]
     }
-  },
+  ],
 
   paketBilgisi: function(tier) {
     if (tier === "trial") return { ad: "Deneme", renk: "#f59e0b" };
-    if (tier === "free" || !tier || tier === "pending") return { ad: "Ücretsiz", renk: "var(--text-muted)" };
-    for (const rol of Object.keys(this.PAKETLER)) {
-      const p = this.PAKETLER[rol].planlar.find(x => x.id === tier);
-      if (p) return { ad: this.PAKETLER[rol].etiket + " · " + p.ad, renk: "#10b981" };
-    }
+    if (!tier || tier === "free" || tier === "pending") return { ad: "Ücretsiz", renk: "var(--text-muted)" };
+    const p = this.PAKETLER.find(x => x.id === tier);
+    if (p) return { ad: p.ad, renk: "#10b981" };
     // Eski surumlerden kalan degerler
-    if (tier === "pro_monthly") return { ad: "PRO Aylık", renk: "#10b981" };
-    if (tier === "pro_yearly") return { ad: "PRO Yıllık", renk: "#10b981" };
+    if (tier === "pro_monthly" || tier === "pro_yearly") return { ad: "Pro", renk: "#10b981" };
     return { ad: "Ücretsiz", renk: "var(--text-muted)" };
   },
 
@@ -925,7 +933,7 @@ const app = {
 
   showSubscriptionModal: function() {
     if (!this.MONETIZATION_ENABLED) return;
-    this.showPaketler(this.state.role === "koc" ? "koc" : "ogrenci");
+    this.showPaketler();
     const modal = document.getElementById("subscriptionModal");
     if (modal) {
       modal.style.display = "flex";
@@ -950,40 +958,24 @@ const app = {
     }
   },
 
-  // Paket kartlarini role gore render eder
-  showPaketler: function(rol) {
-    rol = this.PAKETLER[rol] ? rol : (this.state.role === "koc" ? "koc" : "ogrenci");
-    this._paketRol = rol;
+  // 3 kademeli paket kartlarini render eder
+  showPaketler: function() {
     const kutu = document.getElementById("paketIcerik");
     if (!kutu) return;
-
-    ["ogrenci", "koc"].forEach(r => {
-      const b = document.getElementById("paketSekme-" + r);
-      if (!b) return;
-      const aktif = r === rol;
-      b.style.borderColor = aktif ? "var(--primary)" : "var(--border-color)";
-      b.style.background  = aktif ? "var(--ai-tint)" : "var(--bg-card)";
-      b.style.color       = aktif ? "var(--primary)" : "var(--text-main)";
-    });
-
-    const p = this.PAKETLER[rol];
-    const planlar = p.planlar.map(pl => `
-      <div class="glass-card" role="button" tabindex="0" onclick="app.upgradeToPro('${pl.id}')"
-           style="flex:1; min-width:200px; text-align:center; border:2px solid var(--border-color); cursor:pointer; padding:1.25rem;">
-        ${pl.rozet ? `<div style="font-size:0.68rem; font-weight:800; color:var(--success,#10b981); text-transform:uppercase; letter-spacing:.05em; margin-bottom:.35rem;">${pl.rozet}</div>` : ""}
-        <div style="font-family:var(--font-header); font-weight:800; font-size:1rem; margin-bottom:.3rem;">${pl.ad}</div>
-        <div style="font-size:1.6rem; font-weight:900; color:var(--primary); font-variant-numeric:tabular-nums;">${pl.fiyat}<span style="font-size:.8rem; font-weight:700; color:var(--text-muted);"> ${pl.birim}</span></div>
+    kutu.innerHTML = this.PAKETLER.map(p => `
+      <div class="glass-card" role="button" tabindex="0" onclick="app.upgradeToPro('${p.id}')"
+           style="flex:1; min-width:210px; text-align:left; cursor:pointer; padding:1.25rem;
+                  border:2px solid ${p.vurgu ? "var(--primary)" : "var(--border-color)"};
+                  background:${p.vurgu ? "var(--ai-tint)" : "var(--bg-card)"};">
+        ${p.vurgu ? `<div style="font-size:.66rem; font-weight:800; color:var(--primary); text-transform:uppercase; letter-spacing:.05em; margin-bottom:.4rem;">${p.vurgu}</div>` : ""}
+        <div style="font-family:var(--font-header); font-weight:800; font-size:1.05rem;">${p.ad}</div>
+        <div style="font-size:.78rem; color:var(--text-muted); margin:.15rem 0 .7rem;">${p.ozet}</div>
+        <div style="font-size:1.55rem; font-weight:900; color:var(--primary); font-variant-numeric:tabular-nums; margin-bottom:.8rem;">
+          ${p.fiyat}<span style="font-size:.78rem; font-weight:700; color:var(--text-muted);"> ${p.birim}</span></div>
+        <ul style="list-style:none; padding:0; margin:0; display:grid; gap:.35rem;">
+          ${p.ozellikler.map(o => `<li style="font-size:.79rem; display:flex; gap:.4rem; align-items:flex-start;"><span style="color:var(--success,#10b981); font-weight:800;">✓</span><span>${o}</span></li>`).join("")}
+        </ul>
       </div>`).join("");
-
-    kutu.innerHTML = `
-      <div style="text-align:center; margin-bottom:1rem;">
-        <div style="font-size:1.6rem; line-height:1;">${p.ikon}</div>
-        <p style="font-size:0.86rem; color:var(--text-muted); margin:.4rem 0 0;">${p.ozet}</p>
-      </div>
-      <ul style="list-style:none; padding:0; margin:0 0 1.25rem; display:grid; gap:.4rem;">
-        ${p.ozellikler.map(o => `<li style="font-size:0.84rem; display:flex; gap:.5rem; align-items:flex-start;"><span style="color:var(--success,#10b981); font-weight:800;">✓</span><span>${o}</span></li>`).join("")}
-      </ul>
-      <div style="display:flex; gap:1rem; flex-wrap:wrap;">${planlar}</div>`;
   },
 
   upgradeToPro: function(plan) {
@@ -1600,7 +1592,7 @@ const app = {
     const apiKey = this.getLlmApiKey();
     if (!apiKey) throw new Error("No API key");
 
-    const systemPrompt = `Sen DEFNE'sun. (Kullanıcıya 'Koç Kalem' olarak da biliniyorsun). Sen zorlu ama destekleyici bir YKS mentorusun.
+    const systemPrompt = `Sen YKSKoçum'sun. (Kullanıcıya 'Koç Kalem' olarak da biliniyorsun). Sen zorlu ama destekleyici bir YKS mentorusun.
 Yanıtlarında Türkçe kullan. Cümlelerin kısa ve net olsun, <strong> gibi HTML etiketleriyle vurgular yapabilirsin. 
 Kullanıcının verileri (netler, çalışma süresi) hakkında yorum yaparken ASLA uydurma veri kullanma, sadece araçlardan gelen veriyi referans al.
 Gelişim analizini veya koç değerlendirmesini incelemek için getLastCoachCommentary aracını kullanıp öğrenciyle bu konuda sohbet edebilirsin.
@@ -1793,7 +1785,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
 
   init: function() {
     try {
-      console.log("DEFNE App Phase 3.5 Initialized");
+      console.log("YKSKoçum App Phase 3.5 Initialized");
 
       // Register Online/Offline handlers (H-004)
       window.addEventListener('online', () => {
@@ -2155,6 +2147,12 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
   },
 
   startAsCoach: function() {
+    if (!this.KOC_AKTIF) {
+      this.showCoachAlert("🧭 Koç paneli yakında",
+        "Koçların öğrencilerini takip edebilmesi için verilerin ortak bir sunucuda tutulması gerekiyor; " +
+        "o altyapı hazırlanıyor.<br><br>Şimdilik öğrenci olarak devam edebilirsin.");
+      return;
+    }
     this.state.role = "koc";
     this.state.isLoggedOut = false;
     // Koc icin hedef/seviye tespiti anlamsiz; program uretimi calissin diye
@@ -2209,7 +2207,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
 
     const roster = document.getElementById("coachStudentRoster");
     if (roster) roster.innerHTML = students.map(s => {
-      const source = s.source === "coach" ? "Koç programı" : s.source === "proposal" ? "Onay bekliyor" : "DEFNE AI programı";
+      const source = s.source === "coach" ? "Koç programı" : s.source === "proposal" ? "Onay bekliyor" : "YKSKoçum AI programı";
       const risk = s.risk === "good" ? "Rayında" : s.risk === "pending" ? "Onay bekliyor" : s.risk === "watch" ? "İzle" : "Takip et";
       return `<button class="coach-student-row ${s.id === selected?.id ? "is-selected" : ""}" onclick="app.selectCoachStudent('${s.id}')">
         <span class="coach-avatar">${this.escapeHtml(s.name.charAt(0))}</span>
@@ -2220,7 +2218,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
 
     const detail = document.getElementById("coachStudentDetail");
     if (!detail || !selected) return;
-    const sourceName = selected.source === "coach" ? "Koç programı aktif" : selected.source === "proposal" ? "Koç programı önerisi" : "DEFNE AI programı aktif";
+    const sourceName = selected.source === "coach" ? "Koç programı aktif" : selected.source === "proposal" ? "Koç programı önerisi" : "YKSKoçum AI programı aktif";
     const sourceCopy = selected.source === "coach" ? "Bu planı sen oluşturdun. Yeni değişiklikler öğrenciye sürüm olarak gönderilir." : selected.source === "proposal" ? "Öğrencinin kabulü bekleniyor. Onaylanmadan aktif program değişmez." : "Öğrenci kendi AI planıyla ilerliyor. Planı izleyebilir, not ve öneri gönderebilirsin.";
     detail.innerHTML = `<div class="coach-detail-head">
       <div><span class="coach-detail-eyebrow">ÖĞRENCİ GÖRÜNÜMÜ</span><h2>${this.escapeHtml(selected.name)}</h2><p>${this.escapeHtml(selected.track)} · Son etkinlik: ${this.escapeHtml(selected.lastActive)}</p></div>
@@ -3318,7 +3316,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       feedbackBox.innerHTML = `
         <div class="coach-avatar">${isWarning ? "🚨" : "✏️"}</div>
         <div class="coach-message">
-          <h4>DEFNE Yaşam Raporu</h4>
+          <h4>YKSKoçum Yaşam Raporu</h4>
           <p>${coachAdvice}</p>
         </div>
       `;
@@ -5605,7 +5603,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     if (totalCompletedTasksAllTime === 0) {
       const textEl = document.getElementById("dailyCoachBriefingText");
       if (textEl) {
-        textEl.innerHTML = `Merhaba ${name.split(" ")[0]}! DEFNE'a hoş geldin. YKS hedefine giden maratonda ilk adımını bugün atıyoruz. Program tipini seçtikten sonra bugünün ilk görevlerine göz atıp hemen sahaya çıkabilirsin. Sen dersleri tamamladıkça alışkanlıklarını analiz edip sana özel günlük taktikler ve çalışma tavsiyeleri hazırlayacağım. Başarılar, şampiyon! 🏆`;
+        textEl.innerHTML = `Merhaba ${name.split(" ")[0]}! YKSKoçum'a hoş geldin. YKS hedefine giden maratonda ilk adımını bugün atıyoruz. Program tipini seçtikten sonra bugünün ilk görevlerine göz atıp hemen sahaya çıkabilirsin. Sen dersleri tamamladıkça alışkanlıklarını analiz edip sana özel günlük taktikler ve çalışma tavsiyeleri hazırlayacağım. Başarılar, şampiyon! 🏆`;
       }
       return;
     }
@@ -5623,7 +5621,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
         yesterdayText = "Dün planında herhangi bir görev bulunmuyordu. ";
       }
     } else {
-      yesterdayText = "Bugün DEFNE ile 1. günün, harika bir başlangıç yapalım! ";
+      yesterdayText = "Bugün YKSKoçum ile 1. günün, harika bir başlangıç yapalım! ";
     }
 
     // 2. Scan completed subjects for progress
@@ -5847,7 +5845,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       return;
     }
     const text = document.getElementById("parentReportText").textContent;
-    const subject = encodeURIComponent("DEFNE · Günlük Çalışma Raporu");
+    const subject = encodeURIComponent("YKSKoçum · Günlük Çalışma Raporu");
     const body = encodeURIComponent(text);
     window.location.href = `mailto:${encodeURIComponent(contact)}?subject=${subject}&body=${body}`;
   },
@@ -6149,9 +6147,9 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       this.showToast("Önce profilinde veli iletişim bilgisi girmelisin.", "error");
       return;
     }
-    const text = `DEFNE · ${n.title}\n\n${n.body}`;
+    const text = `YKSKoçum · ${n.title}\n\n${n.body}`;
     if (contact.includes("@")) {
-      window.location.href = `mailto:${encodeURIComponent(contact)}?subject=${encodeURIComponent("DEFNE · " + n.title)}&body=${encodeURIComponent(text)}`;
+      window.location.href = `mailto:${encodeURIComponent(contact)}?subject=${encodeURIComponent("YKSKoçum · " + n.title)}&body=${encodeURIComponent(text)}`;
     } else {
       const phone = this.normalizePhoneForWhatsapp(contact);
       if (phone.length < 10) { this.showToast("Geçerli bir telefon numarası bulunamadı.", "error"); return; }
@@ -6288,7 +6286,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     if (ch.push && "Notification" in window && Notification.permission === "granted") {
       try {
         navigator.serviceWorker.ready.then(reg => {
-          reg.showNotification("DEFNE · " + title, {
+          reg.showNotification("YKSKoçum · " + title, {
             body: body,
             icon: "./icon-192.png",
             badge: "./icon-192.png",
@@ -7140,7 +7138,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
         ${this.getPencilLogoSvg('20px', '23px')}
       </div>
       <div id="aiTypingText" style="background: var(--bg-card); border: 1px solid var(--border-color); padding: 0.5rem 0.75rem; border-radius: 0 12px 12px 12px; font-size: 0.8rem; color: var(--text-muted);">
-        DEFNE yazıyor...
+        YKSKoçum yazıyor...
       </div>
     `;
     msgContainer.appendChild(typingIndicator);
@@ -12518,7 +12516,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
   // Subscription Sim
   showSubscription: function() {
     if (!this.MONETIZATION_ENABLED) return;
-    this.showPaketler(this.state.role === "koc" ? "koc" : "ogrenci");
+    this.showPaketler();
     this.openModal("subscriptionModal");
   },
 

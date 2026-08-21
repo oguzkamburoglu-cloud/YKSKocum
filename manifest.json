@@ -1,6 +1,6 @@
 {
-  "name": "DEFNE - YKS Asistanı",
-  "short_name": "DEFNE",
+  "name": "YKSKoçum - YKS Asistanı",
+  "short_name": "YKSKoçum",
   "description": "YKS Maratonunda Yapay Zeka Destekli Dijital Koçun",
   "start_url": "./index.html",
   "display": "standalone",

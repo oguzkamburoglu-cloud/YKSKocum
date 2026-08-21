@@ -1,4 +1,4 @@
-# DEFNE — Sunucu tarafı
+# YKSKoçum — Sunucu tarafı
 
 Bu klasör, koç–öğrenci senkronizasyonu ve çoklu cihaz bildirimi için
 gereken arka uç dosyalarını içerecek. Şu an yalnızca uygunluk kontrolü var.
