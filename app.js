@@ -16531,6 +16531,25 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
           this.state.wakeTime = "07:00";
         }
         
+        // GECIS TEMIZLIGI: eski surumler programi sormadan uretip
+        // kaydediyordu. "Oneri + kabul" akisina gecildiginde yeni uretim
+        // durdu ama ESKI kayit temizlenmedi: ogrenci hicbir sey secmedigi
+        // halde uygulama dolu programla aciliyor, asistan da o programin
+        // gecikmis gorevleri icin bildirim yagdiriyordu. Onaysiz standart
+        // program artik yuklemede atilir; ogrencinin kendi kaydettigi ozel
+        // programlar (savedPrograms) acikca olusturuldugu icin korunur.
+        if (!parsed.programAccepted && this.state.selectedProgramType === "standard") {
+          const gunler = this.state.daysData || {};
+          const doluydu = Object.keys(gunler).some(k => gunler[k] && Array.isArray(gunler[k].tasks) && gunler[k].tasks.length > 0);
+          if (doluydu) {
+            this.state.daysData = {};
+            this.state.standardDaysData = {};
+            this.state.uretilenToplamSaat = 0;
+            this.state.notifications = [];
+            this.saveState();
+          }
+        }
+
         // Auto-upgrade calendar data size and check for math routines presence
         const day2 = this.state.standardDaysData && (this.state.standardDaysData[2] || this.state.standardDaysData["2"]);
         const hasMathRoutine = day2 && day2.tasks && day2.tasks.some(t => t && t.id && t.id.includes("math_routine"));
@@ -16746,6 +16765,8 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
           
           // 3. Force switch program selection type to standard so it displays the newly generated plan
           this.state.selectedProgramType = "standard";
+          // Ogrenci bu programi kendisi istedi; geciste silinmesin.
+          this.state.programAccepted = true;
           this.syncProgramTypeUI("standard");
           
           // 4. Reset stats and refresh
