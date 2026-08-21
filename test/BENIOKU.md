@@ -18,6 +18,9 @@ Harici bağımlılık yoktur (npm/node gerekmez). Testler macOS'ta hazır gelen
 | `harness.js` | DOM/localStorage/Chart.js taklidi + `app.js` yükleyici + test çerçevesi (`T.esit`, `T.dogru`, `T.yakinEsit`) |
 | `01-hesaplama.js` | Grup 1 — veri hesaplama ve matematiksel doğruluk (31 test) |
 | `02-gorsellestirme-edge.js` | Grup 2 — sıfır veri, uç değerler, dönem filtreleri (42 test) |
+| `mock-veri.js` | Paylaşılan, **belirlenimci** mock öğrenci senaryosu |
+| `03-render-mock.js` | Grup 3 — mock data ile kart ve grafik render doğrulaması (44 test) |
+| `jest/` | Aynı testlerin Jest portu (isteğe bağlı, npm gerekir) |
 
 ## Harness neden gerekli
 
@@ -44,6 +47,8 @@ testleri yanlışlıkla "uygulama hatası" gibi görünür.
 | 2 | İki farklı net tanımı; 3 yer negatifi 0'a kırpıyordu | `netHesapla` ile birleştirildi |
 | 3 | YDT hiç tanınmıyordu; Dil öğrencisinin netleri "TYT" sayılıyordu | `sinavTuruBelirle` |
 | 4 | Günde 24 saati aşan toplam sessizce kabul ediliyordu | `submitTestScore` uyarısı |
+
+Toplam **117 test** (jsc) + **23 test** (Jest portu). Hepsi geçiyor.
 
 ## Kırılganlık notu (hata değil)
 
