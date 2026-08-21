@@ -8959,17 +8959,32 @@ normalizeClause: function(clause) {
       return;
     }
     
-    const correct = parseInt(document.getElementById('testScoreCorrect').value) || 0;
-    const wrong = parseInt(document.getElementById('testScoreWrong').value) || 0;
-    const timeSpent = parseInt(document.getElementById('testScoreTime').value) || 30;
+    // GIRDI SINIR DENETIMI (Katman A / BULGU A1). Eskiden hicbir sinir
+    // yoktu: 40 soruluk teste 400 dogru ya da negatif deger girilebiliyor,
+    // net soru sayisini asiyor ve karne/analiz/grafigi kirletiyordu.
+    // Negatifler 0'a cekilir; dogru+yanlis hedef soru sayisini asamaz.
+    let correct = parseInt(document.getElementById('testScoreCorrect').value, 10) || 0;
+    let wrong = parseInt(document.getElementById('testScoreWrong').value, 10) || 0;
+    const timeSpent = Math.max(1, parseInt(document.getElementById('testScoreTime').value, 10) || 30);
 
     const task = dayData.tasks[taskIdx];
+
+    correct = Math.max(0, correct);
+    wrong = Math.max(0, wrong);
+    const hedefSinir = parseInt(task.qCount, 10) || 0;
+    if (hedefSinir > 0 && (correct + wrong) > hedefSinir) {
+      // Hedefi asan girisi orantili kirpma yerine acikca uyarip iptal et:
+      // ogrencinin gercek niyetini tahmin etmek yanlis veri uretir.
+      alert(`Girdiğin doğru (${correct}) + yanlış (${wrong}) = ${correct + wrong}, ` +
+            `bu testin ${hedefSinir} soruluk hedefini aşıyor. Lütfen değerleri kontrol et.`);
+      return;
+    }
 
     // BOS SAYISI. Eskiden yalnizca dogru/yanlis kaydediliyordu; bu yuzden
     // "net kazanamiyor mu, yoksa yanlisla kaybediyor mu?" sorusu
     // yanitlanamiyordu. Girilmediyse hedef soru sayisindan turetilir.
     const blankEl = document.getElementById('testScoreBlank');
-    const hedefSoru = parseInt(task.qCount, 10) || 0;
+    const hedefSoru = hedefSinir;
     let blank = blankEl && blankEl.value !== "" ? (parseInt(blankEl.value, 10) || 0) : null;
     if (blank === null) blank = hedefSoru > 0 ? Math.max(0, hedefSoru - correct - wrong) : 0;
 
