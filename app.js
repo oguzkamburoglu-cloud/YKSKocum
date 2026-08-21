@@ -3118,7 +3118,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     const ileri = document.getElementById("wizardNextBtn");
     if (ileri) {
       ileri.innerHTML = adim === this.WIZARD_TOPLAM
-        ? '<i class="fa-solid fa-wand-magic-sparkles"></i> Programımı Oluştur'
+        ? '<i class="fa-solid fa-clipboard-question"></i> Seviye Tespitine Geç'
         : 'Devam <i class="fa-solid fa-arrow-right"></i>';
     }
     this.toggleWizardNextButton();
