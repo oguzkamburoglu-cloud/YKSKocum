@@ -3841,3 +3841,34 @@ a:focus-visible {
   }
   .taslak-gorev .taslak-sure { justify-self: start; }
 }
+
+
+/* ============================================================
+   MODUL BAGLANTI SERIDI
+   Moduller ayri yasar ama ayni veriyi paylasir. Bu serit iliskiyi
+   gorunur kilar; icerigi birbirine tasimadan.
+   ============================================================ */
+.modul-baglantilari {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--bg-sub);
+  border: 1px dashed var(--border-color);
+  border-radius: 10px;
+}
+.modul-baglanti-etiket {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-right: 0.15rem;
+}
+.modul-baglantilari .btn {
+  font-weight: 800;
+  font-size: 0.75rem;
+  padding: 0.35rem 0.7rem;
+}

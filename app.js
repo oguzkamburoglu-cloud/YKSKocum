@@ -8107,8 +8107,16 @@ normalizeClause: function(clause) {
         this.renderCharts();
       } else if (tabId === "habitMap") {
         this.renderHabitMap();
+        // MODUL BAGLANTISI: aliskanlik olcutleri (haftalik degerlendirme
+        // ve gunluk istikrar grafigi) artik bu modulde yasiyor; verileri
+        // Calisma Analizi ile ayni kaynaktan gelir.
+        this.renderWeeklyHabitCoachReview();
+        this.renderGunlukIstikrarGrafigi();
       } else if (tabId === "curriculum") {
         this.renderCurriculumMap();
+        // MODUL BAGLANTISI: mufredat kartlari (ders bazli ilerleme ve
+        // yetisme tahmini) bu modulde yasiyor.
+        this.renderInsightCards(this.state.chartData || []);
       } else if (tabId === "programCreator") {
         this.syncLevelSelectLabels();
         const levelSel = document.getElementById("creatorLevelSelect");
@@ -9972,8 +9980,8 @@ normalizeClause: function(clause) {
   },
 
   renderInsightCards: function(records) {
-    const kap = document.getElementById("insightCards");
-    if (!kap) return;
+    // Kartlar iki ayri modul kabina dagitilacak; biri yoksa digeri
+    // yine cizilmeli, bu yuzden burada erken cikis YOK.
 
     // Kartlar KATLANABILIR. Panel 7 kart + 6 grafige ciktiginda
     // "ogrenciyi grafikle bogma" kurali cignenmis oluyordu. Ilk uc kart
@@ -10286,14 +10294,26 @@ normalizeClause: function(clause) {
 
     // ONCELIK SIRASI — musterinin iki temel sorusu once yanitlanir:
     //   "Cok verim aldim mi?"  ve  "Tam olarak nereden net kaciriyorum?"
-    // Ilk UC kart varsayilan olarak acik gelir; gerisi kapali.
-    const sira = ["karne", "isiHaritasi", "tani", "verim", "denge", "mufredat", "yetisme"];
-    const mevcut = sira.filter(k => kartlar[k]);
-    const html = mevcut.map((k, i) => kartCiz(kartlar[k], i < 3)).join("");
+    // ── MODUL AYRIMI ─────────────────────────────────────────
+    // Kartlar konularina gore AYRI MODULLERE dagitilir:
+    //   AI Calisma Analizi  -> performans (net, konu, verim, zaman)
+    //   Mufredat Haritasi   -> kapsam (ders bazli ilerleme, yetisme)
+    // Ayni verinin uzerinde calisirlar ama her biri kendi modulunde
+    // yasar; ic ice gecmezler.
+    const ciz = (kapId, anahtarlar, acikSayisi) => {
+      const hedef = document.getElementById(kapId);
+      if (!hedef) return;
+      const mevcut = anahtarlar.filter(k => kartlar[k]);
+      const html = mevcut.map((k, i) => kartCiz(kartlar[k], i < (acikSayisi === undefined ? 3 : acikSayisi))).join("");
+      if (html === "") { hedef.style.display = "none"; return; }
+      hedef.innerHTML = html;
+      hedef.style.display = "block";
+    };
 
-    if (html === "") { kap.style.display = "none"; return; }
-    kap.innerHTML = html;
-    kap.style.display = "block";
+    // Performans: ilk uc kart acik gelir.
+    ciz("insightCards", ["karne", "isiHaritasi", "tani", "verim", "denge"], 3);
+    // Mufredat: iki kart var, ikisi de acik.
+    ciz("curriculumInsightCards", ["mufredat", "yetisme"], 2);
   },
 
   // Grafik bolumunu acar/kapatir. Varsayilan KAPALI: ogrenci once
@@ -10319,6 +10339,66 @@ normalizeClause: function(clause) {
         if (c && typeof c.resize === "function") { try { c.resize(); } catch (e) {} }
       });
     }
+  },
+
+  // GUNLUK CALISMA ISTIKRARI — Aliskanlik Haritasi modulu.
+  // records verilmezse dogrudan chartData kullanilir; boylece modul
+  // kendi sekmesinden de yenilenebilir.
+  renderGunlukIstikrarGrafigi: function(records) {
+    if (!Array.isArray(records)) records = this.state.chartData || [];
+    if (!this.charts) this.charts = {};
+      // Hangi gun kac saat calisildi. Bos gunler cubugu olmayan gunlerdir;
+      // istikrarin bozuldugu yer bakisla gorulur.
+      const gunSaat = {};
+      records.forEach(r => {
+        if (!r.ts) return;
+        const d = new Date(r.ts);
+        const anahtar = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        gunSaat[anahtar] = (gunSaat[anahtar] || 0) + (r.time || 0);
+      });
+      const gunAnahtarlari = Object.keys(gunSaat).sort();
+      if (gunAnahtarlari.length) {
+        // Ilk ve son kayit arasindaki TUM gunler cizilir; calisilmayan gun
+        // atlanmaz, sifir olarak gorunur — istikrar boslugu ancak boyle belli olur.
+        const ilk = new Date(gunAnahtarlari[0] + "T00:00:00");
+        const son = new Date(gunAnahtarlari[gunAnahtarlari.length - 1] + "T00:00:00");
+        const etiketler = [], degerler = [];
+        const aylar = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
+        const imlec = new Date(ilk);
+        let guvenlik = 0;
+        while (imlec <= son && guvenlik++ < 400) {
+          const a = `${imlec.getFullYear()}-${String(imlec.getMonth() + 1).padStart(2, "0")}-${String(imlec.getDate()).padStart(2, "0")}`;
+          etiketler.push(`${imlec.getDate()} ${aylar[imlec.getMonth()]}`);
+          degerler.push(Math.round(((gunSaat[a] || 0) / 60) * 10) / 10);
+          imlec.setDate(imlec.getDate() + 1);
+        }
+
+        if (this.charts.dailyStudy) this.charts.dailyStudy.destroy();
+        const gunCanvas = document.getElementById("dailyStudyChart");
+        if (gunCanvas) {
+          this.charts.dailyStudy = new Chart(gunCanvas.getContext("2d"), {
+            type: 'bar',
+            data: {
+              labels: etiketler,
+              datasets: [{
+                label: 'Çalışma (saat)',
+                data: degerler,
+                backgroundColor: degerler.map(v => v === 0 ? 'rgba(148,163,184,0.25)' : 'rgba(37,99,235,0.75)'),
+                borderRadius: 4
+              }]
+            },
+            options: {
+              responsive: true, maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { grid: { display: false }, ticks: { color: '#475569', font: { size: 9 }, maxRotation: 60 } },
+                y: { grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { color: '#475569' }, beginAtZero: true,
+                     title: { display: true, text: 'Saat', color: '#475569', font: { family: 'Outfit', weight: 'bold' } } }
+              }
+            }
+          });
+        }
+      }
   },
 
   // Analiz kartini acar/kapatir ve tercihi hatirlar.
@@ -10745,59 +10825,9 @@ normalizeClause: function(clause) {
       });
     }
 
-    // ── Chart 6: GUNLUK CALISMA ISTIKRARI ──
-    // Hangi gun kac saat calisildi. Bos gunler cubugu olmayan gunlerdir;
-    // istikrarin bozuldugu yer bakisla gorulur.
-    const gunSaat = {};
-    records.forEach(r => {
-      if (!r.ts) return;
-      const d = new Date(r.ts);
-      const anahtar = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      gunSaat[anahtar] = (gunSaat[anahtar] || 0) + (r.time || 0);
-    });
-    const gunAnahtarlari = Object.keys(gunSaat).sort();
-    if (gunAnahtarlari.length) {
-      // Ilk ve son kayit arasindaki TUM gunler cizilir; calisilmayan gun
-      // atlanmaz, sifir olarak gorunur — istikrar boslugu ancak boyle belli olur.
-      const ilk = new Date(gunAnahtarlari[0] + "T00:00:00");
-      const son = new Date(gunAnahtarlari[gunAnahtarlari.length - 1] + "T00:00:00");
-      const etiketler = [], degerler = [];
-      const aylar = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
-      const imlec = new Date(ilk);
-      let guvenlik = 0;
-      while (imlec <= son && guvenlik++ < 400) {
-        const a = `${imlec.getFullYear()}-${String(imlec.getMonth() + 1).padStart(2, "0")}-${String(imlec.getDate()).padStart(2, "0")}`;
-        etiketler.push(`${imlec.getDate()} ${aylar[imlec.getMonth()]}`);
-        degerler.push(Math.round(((gunSaat[a] || 0) / 60) * 10) / 10);
-        imlec.setDate(imlec.getDate() + 1);
-      }
-
-      if (this.charts.dailyStudy) this.charts.dailyStudy.destroy();
-      const gunCanvas = document.getElementById("dailyStudyChart");
-      if (gunCanvas) {
-        this.charts.dailyStudy = new Chart(gunCanvas.getContext("2d"), {
-          type: 'bar',
-          data: {
-            labels: etiketler,
-            datasets: [{
-              label: 'Çalışma (saat)',
-              data: degerler,
-              backgroundColor: degerler.map(v => v === 0 ? 'rgba(148,163,184,0.25)' : 'rgba(37,99,235,0.75)'),
-              borderRadius: 4
-            }]
-          },
-          options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-              x: { grid: { display: false }, ticks: { color: '#475569', font: { size: 9 }, maxRotation: 60 } },
-              y: { grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { color: '#475569' }, beginAtZero: true,
-                   title: { display: true, text: 'Saat', color: '#475569', font: { family: 'Outfit', weight: 'bold' } } }
-            }
-          }
-        });
-      }
-    }
+    // Gunluk istikrar grafigi ARTIK ALISKANLIK HARITASI modulunde.
+    // renderCharts yine cizer ki iki modul de guncel kalsin.
+    this.renderGunlukIstikrarGrafigi(records);
 
     // Metin tabanli analizler (bos/yanlis dengesi, verim, mufredat tahmini)
     this.renderInsightCards(records);

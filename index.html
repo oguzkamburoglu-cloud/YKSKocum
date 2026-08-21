@@ -20,7 +20,7 @@
        render edilmesin. styles.css gecikirse tum modal metinleri
        ekranda ust uste parliyordu. -->
   <style>.modal-overlay:not(.active){visibility:hidden;opacity:0;pointer-events:none;}</style>
-  <link rel="stylesheet" href="styles.css?v=28">
+  <link rel="stylesheet" href="styles.css?v=29">
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
   <!-- Chart.js CDN -->
@@ -1179,22 +1179,17 @@
 
               <!-- AI ÇALIŞMA ANALİZİ (birleşik: AI yorumu, Neredeyim, Risk Radarı, Günün En İyi Hamlesi, Grafik Özeti) -->
               <!-- ALT ÖZELLİK: davranışsal performans da bu merkezde -->
-              <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.25rem;">
-                <button class="btn btn-secondary" onclick="app.switchTab('habitMap')" style="font-weight:800; font-size:0.78rem;">
-                  <i class="fa-solid fa-dna"></i> Alışkanlık Haritası (çalışma istikrarı)
+              <div class="modul-baglantilari">
+                <span class="modul-baglanti-etiket">İlgili modüller</span>
+                <button class="btn btn-secondary" onclick="app.switchTab('habitMap')">
+                  <i class="fa-solid fa-dna"></i> Alışkanlık Haritası
                 </button>
-              </div>
-
-              <!-- HAFTALIK DEĞERLENDİRME — tek kaynak.
-                   Önceden aynı soruyu ("haftam nasıl geçti?") iki ayrı yerde iki
-                   ayrı metin cevaplıyordu: burada AI Çalışma Analizi, Alışkanlık
-                   Haritası'nda ise ayrı bir haftalık değerlendirme. Birleştirildi. -->
-              <div id="habitWeeklyReviewCard" class="glass-card" style="display:none; padding:1.25rem; margin-bottom:1.5rem; border-color:var(--ai-border); background:var(--ai-tint);">
-                <h4 style="margin:0 0 0.5rem; display:flex; align-items:center; gap:0.5rem; font-family:var(--font-header); font-weight:800; font-size:0.9rem;">
-                  <span class="ai-helper-icon" style="width:26px; height:26px; border-radius:8px; font-size:0.7rem;"><i class="fa-solid fa-comment-dots"></i></span>
-                  AI Koç — Haftalık Değerlendirme
-                </h4>
-                <p id="habitWeeklyReviewText" style="font-size:0.82rem; color:var(--text-main); line-height:1.5; margin:0;"></p>
+                <button class="btn btn-secondary" onclick="app.switchTab('curriculum')">
+                  <i class="fa-solid fa-map"></i> Müfredat Haritası
+                </button>
+                <button class="btn btn-secondary" onclick="app.switchTab('vault')">
+                  <i class="fa-solid fa-book-skull"></i> Hata Zindanı
+                </button>
               </div>
 
               <div id="aiCoachCommentaryCardContainer" style="margin-bottom: 2rem;"></div>
@@ -1270,18 +1265,7 @@
                   </div>
                 </div>
 
-                <div class="premium-chart-card">
-                  <div class="premium-chart-head">
-                    <h4 style="margin:0; display:flex; align-items:center; gap:0.5rem; font-family:var(--font-header); font-weight:800; font-size:0.9rem;">
-                      <i class="fa-solid fa-calendar-check text-primary"></i> Günlük Çalışma İstikrarın
-                    </h4>
-                    <p class="panel-intro" style="margin:0.25rem 0 0; font-size:0.72rem;">Hangi gün kaç saat çalıştın. Boşluklar istikrarın bozulduğu günlerdir.</p>
-                  </div>
-                  <div class="premium-chart-body">
-                    <div class="premium-chart-canvas-wrap"><canvas id="dailyStudyChart"></canvas></div>
-                  </div>
-                </div>
-              </div>
+                              </div>
 
               <!-- Empty state card when no test data exists -->
               <div id="chartsEmptyState" style="display: none; text-align: center; padding: 4rem 1.5rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; margin-top: 1rem;">
@@ -1448,6 +1432,22 @@
                 </div>
               </div>
 
+              <!-- MODUL: mufredat olcutleri burada yasar. Ders bazli
+                   ilerleme ve "sinava yetisir mi?" tahmini birer MUFREDAT
+                   olcutudur; AI Calisma Analizi'nde durmalari modul
+                   sinirini bulaniklastiriyordu. -->
+              <div class="modul-baglantilari">
+                <span class="modul-baglanti-etiket">İlgili modüller</span>
+                <button class="btn btn-secondary" onclick="app.switchTab('charts')">
+                  <i class="fa-solid fa-chart-line"></i> Çalışma Analizi
+                </button>
+                <button class="btn btn-secondary" onclick="app.switchTab('habitMap')">
+                  <i class="fa-solid fa-dna"></i> Alışkanlık Haritası
+                </button>
+              </div>
+
+              <div id="curriculumInsightCards" style="display:none; margin-bottom:1.5rem;"></div>
+
               <div id="phasesContainer" style="display: flex; flex-direction: column; gap: 1rem;">
                 <!-- Dynamically populated by JS (4 phases with TYT/AYT roadmaps) -->
               </div>
@@ -1473,7 +1473,38 @@
               </div>
 
               <!-- AI Habit Suggestions (Feature 1) -->
+              <div class="modul-baglantilari">
+                <span class="modul-baglanti-etiket">İlgili modüller</span>
+                <button class="btn btn-secondary" onclick="app.switchTab('charts')">
+                  <i class="fa-solid fa-chart-line"></i> Çalışma Analizi
+                </button>
+                <button class="btn btn-secondary" onclick="app.switchTab('curriculum')">
+                  <i class="fa-solid fa-map"></i> Müfredat Haritası
+                </button>
+              </div>
+
               <div id="habitSuggestionsContainer" style="display:none; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;"></div>
+
+              <!-- MODUL: davranissal olcutler burada yasar.
+                   Haftalik degerlendirme (gorev tamamlama, seri) ve gunluk
+                   calisma istikrari birer ALISKANLIK olcutudur; net ve konu
+                   analizi degildir. Onceden AI Calisma Analizi'ne
+                   tasinmislardi, modul sinirini bulaniklastiriyordu. -->
+<div id="habitWeeklyReviewCard" class="glass-card" style="display:none; padding:1.25rem; margin-bottom:1.5rem; border-color:var(--ai-border); background:var(--ai-tint);">
+                <h4 style="margin:0 0 0.5rem; display:flex; align-items:center; gap:0.5rem; font-family:var(--font-header); font-weight:800; font-size:0.9rem;">
+                  <span class="ai-helper-icon" style="width:26px; height:26px; border-radius:8px; font-size:0.7rem;"><i class="fa-solid fa-comment-dots"></i></span>
+                  AI Koç — Haftalık Değerlendirme
+                </h4>
+                <p id="habitWeeklyReviewText" style="font-size:0.82rem; color:var(--text-main); line-height:1.5; margin:0;"></p>
+              </div>
+
+              <div class="glass-card" style="padding:1.25rem; margin-bottom:1.5rem;">
+                <h4 style="margin:0 0 0.25rem; display:flex; align-items:center; gap:0.5rem; font-family:var(--font-header); font-weight:800; font-size:0.9rem;">
+                  <i class="fa-solid fa-calendar-check text-primary"></i> Günlük Çalışma İstikrarın
+                </h4>
+                <p class="panel-intro" style="margin:0 0 0.75rem; font-size:0.72rem;">Hangi gün kaç saat çalıştın. Boşluklar istikrarın bozulduğu günlerdir.</p>
+                <div class="premium-chart-canvas-wrap" style="height:220px;"><canvas id="dailyStudyChart"></canvas></div>
+              </div>
 
               <!-- Calibration progress card -->
               <div style="background:rgba(37,99,235,0.02); border:1px solid rgba(37,99,235,0.1); border-radius:12px; padding:1.25rem; margin-bottom:2rem; display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap;">
@@ -2417,6 +2448,6 @@
   <script src="curriculum.js?v=3"></script>
   <script src="questions.js?v=2"></script>
   <script src="quotes.js?v=1"></script>
-  <script src="app.js?v=143"></script>
+  <script src="app.js?v=144"></script>
 </body>
 </html>

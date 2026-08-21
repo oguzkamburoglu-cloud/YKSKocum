@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ykskocum-v83-takvim';
+const CACHE_NAME = 'ykskocum-v84-moduller';
 const urlsToCache = [
   './',
   './index.html',

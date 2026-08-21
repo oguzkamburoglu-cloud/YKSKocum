@@ -10,7 +10,7 @@ const GEREKLI_ELEMANLAR = [
   "accuracyTrendChart","aiCoachCommentaryCardContainer","balanceRadarChart",
   "balanceRecommendation","chartExamTypeFilter","chartRangeFilter",
   "chartsContentArea","chartsEmptyState","dailyStudyChart","netTrendChart",
-  "netsLineChart","speedLineChart","insightCards","sectionAnalysisCard",
+  "netsLineChart","speedLineChart","insightCards","curriculumInsightCards","sectionAnalysisCard",
   "habitWeeklyReviewText","habitWeeklyReviewCard",
   "sumTodayTime","sumTodayTimeSub","sumProgress","sumProgressSub",
   "sumLastNet","sumLastNetSub"
@@ -38,7 +38,13 @@ function senaryoKur(ek) {
   return mk;
 }
 
-const kartHtml = () => document.getElementById("insightCards").innerHTML || "";
+// Kartlar MODULLERE dagitildi: performans kartlari AI Calisma
+// Analizi'nde, mufredat kartlari Mufredat Haritasi'nda yasar.
+const kartHtml = () =>
+  (document.getElementById("insightCards").innerHTML || "") +
+  (document.getElementById("curriculumInsightCards").innerHTML || "");
+const perfHtml = () => document.getElementById("insightCards").innerHTML || "";
+const mufHtml  = () => document.getElementById("curriculumInsightCards").innerHTML || "";
 const grafik = (etiket) => _grafikler.filter(g =>
   (g.data && g.data.datasets || []).some(d => d.label === etiket))[0];
 // Belirli bir kartin govdesini adiyla ceker
@@ -69,7 +75,14 @@ T.grup("3.1  Tum analiz kartlari mock veriyle ciziliyor");
     "Müfredatı Sınava Yetiştirebilecek misin?"
   ];
   beklenen.forEach(b => T.dogru("kart var: " + b, kartHtml().indexOf(b) !== -1, false));
-  T.esit("kart alanı görünür", document.getElementById("insightCards").style.display, "block");
+  T.esit("performans kart alanı görünür", document.getElementById("insightCards").style.display, "block");
+  T.esit("müfredat kart alanı görünür", document.getElementById("curriculumInsightCards").style.display, "block");
+
+  // MODUL AYRIMI: mufredat kartlari performans kabinda OLMAMALI
+  T.dogru("müfredat kartları performans modülüne sızmıyor",
+          perfHtml().indexOf("Ders Bazlı Müfredat") === -1, true);
+  T.dogru("performans kartları müfredat modülüne sızmıyor",
+          mufHtml().indexOf("En Çok Net Kaçırdığın") === -1, true);
 })();
 
 // ────────────────────────────────────────────────────────────
