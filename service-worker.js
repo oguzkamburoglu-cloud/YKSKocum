@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ykskocum-v101-kayit-sifirlama';
+const CACHE_NAME = 'ykskocum-v102-tam-sifirlama';
 const urlsToCache = [
   './',
   './index.html',

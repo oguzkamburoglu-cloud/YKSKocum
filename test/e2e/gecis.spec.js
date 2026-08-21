@@ -89,3 +89,36 @@ test("yeniden kayitta eski kabul damgasi program uretmiyor", async ({ page }) =>
   expect(r.doluGun).toBe(0);     // hicbir sey secmeden program DOLU GELMEMELI
   expect(r.bildirim).toBe(0);    // brifing bildirimi de olmamali
 });
+
+test("yeniden kayit eski calisma verisini tasimiyor ama denemeyi sifirlamiyor", async ({ page }) => {
+  await page.goto("http://localhost:8791/");
+  const eskiDeneme = "2026-08-15T10:00:00.000Z";
+  await page.evaluate((eskiDeneme) => {
+    localStorage.setItem("slamdunk_yks_state", JSON.stringify({
+      name: "Eski", email: "e@o.com", subscriptionTier: "trial", trialStartDate: eskiDeneme,
+      selectedProgramType: "standard", programAccepted: true,
+      mockExams: [{ id: 1, tyt: { correct: 80, wrong: 20 } }],
+      pomodoroKayitlari: [{ gun: 1, dakika: 25 }],
+      topicStatuses: { "Matematik|Limit": "done" },
+      unlockedBadges: ["ilk_gorev"],
+      startDate: "2026-07-01"
+    }));
+  }, eskiDeneme);
+  await page.goto("http://localhost:8791/");
+  const r = await page.evaluate((eskiDeneme) => {
+    app.startAsStudent();
+    return {
+      deneme: (app.state.mockExams || []).length,
+      pomo: (app.state.pomodoroKayitlari || []).length,
+      konular: Object.keys(app.state.topicStatuses || {}).length,
+      rozet: (app.state.unlockedBadges || []).length,
+      // deneme tarihi KORUNMALI: yeniden kayit deneme suresini sifirlamamali
+      denemeTarihiKorundu: app.state.trialStartDate === eskiDeneme
+    };
+  }, eskiDeneme);
+  expect(r.deneme).toBe(0);
+  expect(r.pomo).toBe(0);
+  expect(r.konular).toBe(0);
+  expect(r.rozet).toBe(0);
+  expect(r.denemeTarihiKorundu).toBe(true);
+});

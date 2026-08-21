@@ -2689,6 +2689,37 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     this.state.uretilenToplamSaat = 0;
     this.state.notifications = [];
     this.state.generatedForLevel = null;
+    // Eski ogrencinin CALISMA VERISI de yeni kayda sizmasin: deneme
+    // netleri, konu durumlari, pomodoro gecmisi, rozetler ve seviye
+    // tespit cevaplari onceki kullanicidan kalirsa karne/analiz ilk
+    // gunden kirli baslar. (Paket/deneme tarihi, veli bilgisi, tema ve
+    // bildirim ayarlari BILEREK korunur - deneme suresi kayitla
+    // sifirlanamamali.)
+    this.state.mockExams = [];
+    this.state.pomodoroKayitlari = [];
+    this.state.topicStatuses = {};
+    this.state.scheduledRepetitions = [];
+    this.state.unlockedBadges = [];
+    this.state.lastStudyLogDate = null;
+    this.state.focusScore = 0;
+    this.state.burnoutAlertActive = false;
+    this.state.overdueAlerted = false;
+    this.state.overdueAlertedDate = null;
+    this.state.summaryShown = {};
+    this.state.activeDay = 1;
+    this.state.testSubjects = [];
+    this.state.testQuestions = {};
+    this.state.testAnswers = {};
+    this.state.testSecondsRemaining = 3600;
+    this.state.currentTestSubject = "";
+    this.state.currentTestQuestionIdx = 0;
+    this.state.currentPositionRank = null;
+    this.state.currentNetTYT = null;
+    this.state.currentNetAYT = null;
+    this.state.currentNetDil = null;
+    this.state.currentPositionSource = null;
+    this.state.parentReportDueTime = null;
+    this.state.parentReportShownDate = null;
     this.state.daysData = {};
     this.state.standardDaysData = {};
     this.state.customDaysData = {};
