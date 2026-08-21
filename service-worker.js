@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ykskocum-v95-aktarim-onay';
+const CACHE_NAME = 'ykskocum-v96-pomodoro-ozet';
 const urlsToCache = [
   './',
   './index.html',

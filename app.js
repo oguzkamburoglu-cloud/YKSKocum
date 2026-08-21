@@ -425,13 +425,9 @@ const app = {
     return Math.max(99, y > tutar ? y - 100 : y);
   },
 
-  // %60 indirim, sonra bir ust x999'a yuvarla.
-  yillikFiyatHesapla: function(aylikFiyat) {
-    const ham = aylikFiyat * 12 * (1 - this.YILLIK_INDIRIM);
-    let yuvarlanmis = Math.floor(ham / 1000) * 1000 + 999;
-    if (yuvarlanmis < ham) yuvarlanmis += 1000;
-    return yuvarlanmis;
-  },
+  // NOT: yillikFiyatHesapla() burada duruyordu. Fiyatlar artik
+  // hesaplanmiyor, SINAVA_KADAR_TAM icinde sabit veriliyor
+  // (1999 / 2999 / 3999); kullanilmayan hesap kaldirildi.
 
   faturaDonemi: function() {
     return this.state && this.state.faturaDonemi === "sinavaKadar" ? "sinavaKadar" : "aylik";
@@ -10284,9 +10280,18 @@ normalizeClause: function(clause) {
     bitenGorev.forEach(t => {
       dakika += t.timeSpent ? parseInt(t.timeSpent, 10) : (this.parseDurationMinutes(t.duration) || 0);
     });
+    // Zamanlayiciyla gecirilen sure de calismadir. pomodoroDakikasi()
+    // yazilmis ama hicbir yerden cagrilmiyordu: 25 dakikalik seans
+    // bitiren ogrenci kartta yine "0 dk" goruyordu.
+    const pomoDk = this.pomodoroDakikasi(bugun);
+    dakika += pomoDk;
+
     const saat = Math.floor(dakika / 60), dk = dakika % 60;
+    const gorevNotu = gorevler.length
+      ? `${bitenGorev.length}/${gorevler.length} görev tamam`
+      : "bugün görev yok";
     yaz("sumTodayTime", saat > 0 ? `${saat} sa ${dk} dk` : `${dakika} dk`,
-        gorevler.length ? `${bitenGorev.length}/${gorevler.length} görev tamam` : "bugün görev yok");
+        pomoDk > 0 ? `${gorevNotu} · ${pomoDk} dk pomodoro` : gorevNotu);
 
     // 2) Toplam ilerleme — programdaki tamamlanan gorev orani
     let toplamGorev = 0, toplamBiten = 0;
@@ -15747,45 +15752,12 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     };
   },
 
-  // Metinden programa — ayristirmayi parseProgramTextToDays yapar,
-  // burasi yalnizca sonucu planlayici tamponuna yazar.
-  // Basarili olursa ozet dondurur, aksi halde null.
-  importProgramTextIntoPlanner: function(text) {
-    if (!text || String(text).trim() === "") {
-      this.showToast("Aktarılacak metin boş.", "error");
-      return null;
-    }
+  // NOT: importProgramTextIntoPlanner() burada duruyordu. Metni dogrudan
+  // planlayici tamponuna yazip "Kendi Programimi Olustur" ekranini
+  // aciyordu. Metin/ses/foto aktarimlarinin tamami artik once taslak
+  // gosteriyor (showImportDraft -> confirmImportDraft), o yuzden bu yol
+  // erisilemez kalmisti; geri donmemesi icin kaldirildi.
 
-    const cozum = this.parseProgramTextToDays(text);
-    if (!cozum) {
-      this.showToast("Metinden görev çıkarılamadı. Satırları 'Gün 1:' ve '- Matematik: Limit 30 soru' biçiminde düzenleyip tekrar dene.", "error");
-      return null;
-    }
-
-    // Aktarim baslarken planlayici henuz kurulmamis olabilir.
-    if (!this.isPlanning) {
-      this.plannerCreateNewProgramFromScratch();
-    }
-    if (!this.plannerBuffer) this.plannerBuffer = {};
-
-    // YALNIZCA metinde gecen gunler temizlenir; digerleri korunur.
-    const importedDays = Object.keys(cozum.gunler).map(Number).sort((a, b) => a - b);
-    importedDays.forEach(g => {
-      this.plannerBuffer[g] = { completed: false, tasks: cozum.gunler[g], schedule: [] };
-    });
-
-    const firstDay = importedDays[0] || 1;
-    const daySelect = document.getElementById("plannerDaySelect");
-    if (daySelect) daySelect.value = String(firstDay);
-    this.plannerSelectDay(firstDay);
-
-    return {
-      taskCount: cozum.taskCount,
-      importedDays: importedDays,
-      sureliGorev: cozum.sureliGorev,
-      suresizGorev: cozum.suresizGorev
-    };
-  },
 
   // ============================================================
   // AKTARIM TASLAGI — programa yazmadan once goster / duzenle / onayla
