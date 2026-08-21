@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ykskocum-v86-ozet';
+const CACHE_NAME = 'ykskocum-v87-paket';
 const urlsToCache = [
   './',
   './index.html',

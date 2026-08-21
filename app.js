@@ -297,6 +297,133 @@ const app = {
     }
   ],
 
+  // ============================================================
+  // PAKET KISITLAMA
+  // ------------------------------------------------------------
+  // Paketler tanimliydi ama HICBIR SEYI kisitlamiyordu: 7 gun dolunca
+  // tier "free" oluyor, yalnizca bir etiket degisiyordu. Odeme
+  // baglandiginda satin alan ile almayan arasinda fark olmayacakti.
+  //
+  // Seviye sirasi: free < baslangic < standart < pro
+  // "trial" 7 gun boyunca Pro seviyesindedir.
+  // ============================================================
+  PAKET_SEVIYE: { free: 0, pending: 0, baslangic: 1, standart: 2, pro: 3, trial: 3, pro_monthly: 3, pro_yearly: 3 },
+
+  // Hangi ozellik en az hangi paketi gerektirir?
+  // Kaynak: PAKETLER listesindeki ozellik metinleri.
+  OZELLIK_PAKETI: {
+    programOlustur: "baslangic",   // AI olustursun + kendim yapayim
+    gunlukHaftalik: "baslangic",
+    aylikYillik:    "baslangic",   // yalnizca takvim gorunumu
+    mufredat:       "standart",    // AI Mufredat Haritasi
+    hataZindani:    "standart",    // hata defteri + ODT
+    analiz:         "standart",    // AI Calisma Analizi, net takibi
+    kaynakKitap:    "standart",
+    veliRaporu:     "standart",
+    fotoPdf:        "pro",
+    sesliGiris:     "pro",
+    aiKoc:          "pro",
+    tercihMotoru:   "pro",
+    aliskanlik:     "pro"          // AI Aliskanlik Haritasi
+  },
+
+  OZELLIK_ADI: {
+    programOlustur: "Program oluşturma",
+    gunlukHaftalik: "Günlük ve haftalık görünüm",
+    aylikYillik:    "Aylık ve yıllık görünüm",
+    mufredat:       "AI Müfredat Haritası",
+    hataZindani:    "AI Hata Zindanı",
+    analiz:         "AI Çalışma Analizi",
+    kaynakKitap:    "Kaynak kitap önerileri",
+    veliRaporu:     "Veli raporu",
+    fotoPdf:        "Fotoğraf / PDF ile program aktarma",
+    sesliGiris:     "Sesle program oluşturma",
+    aiKoc:          "AI koç yorumları",
+    tercihMotoru:   "AI tercih motoru",
+    aliskanlik:     "AI Alışkanlık Haritası"
+  },
+
+  // Menu kartlarina ve sekme dugmelerine kilit rozeti isler.
+  paketKilitleriniUygula: function() {
+    if (!this.MONETIZATION_ENABLED) return;
+    Object.keys(this.SEKME_OZELLIGI).forEach(sekme => {
+      const btn = document.getElementById("tabBtn-" + sekme);
+      if (!btn) return;
+      const acik = this.ozellikAcikMi(this.SEKME_OZELLIGI[sekme]);
+      btn.classList.toggle("paket-kilitli", !acik);
+      let rozet = btn.querySelector(".paket-kilit-rozeti");
+      if (!acik) {
+        if (!rozet) {
+          rozet = document.createElement("span");
+          rozet.className = "paket-kilit-rozeti";
+          rozet.innerHTML = '<i class="fa-solid fa-lock"></i>';
+          const gereken = this.OZELLIK_PAKETI[this.SEKME_OZELLIGI[sekme]];
+          const paket = (this.PAKETLER || []).filter(p => p.id === gereken)[0];
+          rozet.title = (paket ? paket.ad : "Üst") + " paketi gerekiyor";
+          btn.appendChild(rozet);
+        }
+      } else if (rozet) {
+        rozet.remove();
+      }
+    });
+
+    // Salt okunur modda uyari seridi
+    const serit = document.getElementById("saltOkunurSerit");
+    if (serit) serit.style.display = this.saltOkunurMu() ? "flex" : "none";
+  },
+
+  aktifPaketSeviyesi: function() {
+    if (!this.MONETIZATION_ENABLED) return 99;         // paket sistemi kapaliysa her sey acik
+    const tier = (this.state && this.state.subscriptionTier) || "pending";
+    const sv = this.PAKET_SEVIYE[tier];
+    return typeof sv === "number" ? sv : 0;
+  },
+
+  // Deneme suresi bitmis, odeme yapilmamis kullanici.
+  // Karar: program GORUNUR kalir, DUZENLEME kapalidir. Ogrencinin
+  // emegi kaybolmaz ama kullanmaya devam etmek icin odeme gerekir.
+  saltOkunurMu: function() {
+    if (!this.MONETIZATION_ENABLED) return false;
+    return this.aktifPaketSeviyesi() === 0 && this.state.subscriptionTier !== "pending";
+  },
+
+  ozellikAcikMi: function(anahtar) {
+    if (!this.MONETIZATION_ENABLED) return true;
+    const gereken = this.OZELLIK_PAKETI[anahtar];
+    if (!gereken) return true;                          // tanimsiz ozellik kisitlanmaz
+    return this.aktifPaketSeviyesi() >= this.PAKET_SEVIYE[gereken];
+  },
+
+  // Kilitli ozellige erisilmeye calisildiginda: hangi pakette oldugunu
+  // soyler ve yukseltme sunar.
+  ozellikKilidiUyar: function(anahtar) {
+    const gereken = this.OZELLIK_PAKETI[anahtar] || "standart";
+    const paket = (this.PAKETLER || []).filter(p => p.id === gereken)[0];
+    const ad = this.OZELLIK_ADI[anahtar] || "Bu özellik";
+    const saltOkunur = this.saltOkunurMu();
+
+    const govde = saltOkunur
+      ? `<strong>Deneme sürenin bitti.</strong> Programın ve görevlerin duruyor — hiçbir şey silinmedi — ` +
+        `ama düzenleme ve analiz özellikleri kapalı.<br><br>` +
+        `<strong>${ad}</strong> için <strong>${paket ? paket.ad : gereken}</strong> paketi gerekiyor` +
+        (paket ? ` (${paket.fiyat} ${paket.birim})` : "") + `.`
+      : `<strong>${ad}</strong> senin paketinde yok.<br><br>` +
+        `Bu özellik <strong>${paket ? paket.ad : gereken}</strong> paketiyle geliyor` +
+        (paket ? ` (${paket.fiyat} ${paket.birim})` : "") + `.`;
+
+    this.showCoachAlert("🔒 " + (paket ? paket.ad + " paketi gerekiyor" : "Paket yükseltmesi gerekiyor"),
+      govde + `<br><br><button class="btn btn-primary" style="width:100%; font-weight:800;" ` +
+      `onclick="app.closeModal('coachModal'); app.showSubscriptionModal();">Paketleri Gör</button>`);
+  },
+
+  // Kilitliyse uyarir ve false doner; acikakta true doner.
+  // Cagri: if (!app.ozellikGerekli("analiz")) return;
+  ozellikGerekli: function(anahtar) {
+    if (this.ozellikAcikMi(anahtar)) return true;
+    this.ozellikKilidiUyar(anahtar);
+    return false;
+  },
+
   paketBilgisi: function(tier) {
     if (tier === "trial") return { ad: "Deneme", renk: "#f59e0b" };
     if (!tier || tier === "free" || tier === "pending") return { ad: "Ücretsiz", renk: "var(--text-muted)" };
@@ -4007,6 +4134,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
   },
 
   acceptProgramSuggestion: function() {
+    if (!this.ozellikGerekli("programOlustur")) return;
     this.state.daysData = {};
     this.generateWeeklyCalendarData();
     this.state.standardDaysData = JSON.parse(JSON.stringify(this.state.daysData));
@@ -5192,6 +5320,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     var _el_aiKey = document.getElementById("aiCoachApiKey"); if (_el_aiKey) _el_aiKey.value = this.getLlmApiKey();
     this.updateAiConnectionStatus();
     this.updateRetakeDiagnosticUI();
+    this.paketKilitleriniUygula();
     this.checkWeeklyRenewalReminder();
     this.renderDashboardSummary();
 
@@ -5467,6 +5596,12 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
   },
 
   toggleTaskCompleted: function(taskId, checkbox) {
+    // Salt okunur mod: program gorunur ama isaretlenemez.
+    if (this.saltOkunurMu()) {
+      if (checkbox) checkbox.checked = !checkbox.checked;   // isareti geri al
+      this.ozellikKilidiUyar("programOlustur");
+      return;
+    }
     const activeDayData = this.state.daysData[this.state.activeDay];
     const task = activeDayData.tasks.find(t => t.id === taskId);
 
@@ -8045,7 +8180,23 @@ normalizeClause: function(clause) {
 
 
   // Tab controller
+  // Sekme -> ozellik esleme. Kilitli sekmeye gecilmez.
+  SEKME_OZELLIGI: {
+    charts: "analiz",
+    vault: "hataZindani",
+    curriculum: "mufredat",
+    habitMap: "aliskanlik",
+    programCreator: "programOlustur",
+    monthly: "aylikYillik",
+    year: "aylikYillik"
+  },
+
   switchTab: function(tabId) {
+    const gerekenOzellik = this.SEKME_OZELLIGI[tabId];
+    if (gerekenOzellik && !this.ozellikAcikMi(gerekenOzellik)) {
+      this.ozellikKilidiUyar(gerekenOzellik);
+      return;
+    }
     this.state.activeTab = tabId;
     
     document.querySelectorAll(".tab-btn").forEach(btn => {
@@ -14586,6 +14737,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
   //             2) yoksa/başarısızsa Tesseract (yalnızca basılı yazı)
   //   Hiçbiri olmazsa elle yazma alanı açık kalır.
   plannerUploadOCRImage: function(input) {
+    if (!this.ozellikGerekli("fotoPdf")) { if (input) input.value = ""; return; }
     const statusDiv = document.getElementById("ocrStatus");
     const resultArea = document.getElementById("ocrResultArea");
     const resultText = document.getElementById("ocrResultText");
@@ -16202,6 +16354,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
   },
 
   plannerToggleVoiceInput: function() {
+    if (!this.ozellikGerekli("sesliGiris")) return;
     // Zaten dinliyorsa durdur
     if (this._voiceRec) {
       try { this._voiceRec.stop(); } catch (e) { /* zaten durmus */ }

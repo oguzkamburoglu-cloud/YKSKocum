@@ -3872,3 +3872,32 @@ a:focus-visible {
   font-size: 0.75rem;
   padding: 0.35rem 0.7rem;
 }
+
+
+/* ============================================================
+   PAKET KILIDI
+   Kilitli ozellik menude GORUNUR kalir; ustunde kilit rozeti tasir.
+   Ogrenci ne kacirdigini gorur, tiklayinca yukseltme ekrani acilir.
+   ============================================================ */
+.tab-btn.paket-kilitli {
+  position: relative;
+  opacity: 0.62;
+}
+.tab-btn.paket-kilitli .ai-helper-icon {
+  filter: grayscale(0.8);
+}
+.paket-kilit-rozeti {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.6rem;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--text-muted);
+  color: #fff;
+  font-size: 0.62rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
