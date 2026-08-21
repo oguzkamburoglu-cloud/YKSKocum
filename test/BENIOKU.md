@@ -24,6 +24,7 @@ Harici bağımlılık yoktur (npm/node gerekmez). Testler macOS'ta hazır gelen
 | `05-taslak-siralama.js` | Grup 5 — taslak sıralama ve mobil destek (17 test) |
 | `06-paket-kisitlama.js` | Grup 6 — paket kısıtlamaları ve yıllık plan (61 test) |
 | `07-asama1-is-mantigi.js` | Master plan Aşama 1 — iş mantığı ve hesaplama doğruluğu (39 test) |
+| `08-asama2-kenar-durumlar.js` | Master plan Aşama 2 — kenar durumlar ve veri sınırları (41 test) |
 | `rapor.html` | Paylaşılabilir QA raporu (tarayıcıda aç) |
 | `jest/` | Aynı testlerin Jest portu (isteğe bağlı, npm gerekir) |
 

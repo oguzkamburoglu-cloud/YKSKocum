@@ -7,10 +7,24 @@
 function sahteEleman(id) {
   const el = {
     id: id, value: "", textContent: "", innerHTML: "", hidden: false,
-    dataset: {}, style: {}, classList: {
-      _s: {}, add(c){this._s[c]=1;}, remove(c){delete this._s[c];},
-      contains(c){return !!this._s[c];}
-    },
+    dataset: {}, style: {},
+    classList: (function () {
+      const kume = {};
+      return {
+        add(c) { kume[c] = 1; },
+        remove(c) { delete kume[c]; },
+        contains(c) { return !!kume[c]; },
+        // toggle EKSIKTI: uygulama kodu classList.toggle kullaniyor,
+        // harness'te olmayinca "not a function" hatasi uygulama hatasi
+        // gibi gorunuyordu.
+        toggle(c, zorla) {
+          const varMi = !!kume[c];
+          const olsun = zorla === undefined ? !varMi : !!zorla;
+          if (olsun) kume[c] = 1; else delete kume[c];
+          return olsun;
+        }
+      };
+    })(),
     children: [], options: [],
     appendChild(c){ this.children.push(c); return c; },
     querySelector(){ return null; }, querySelectorAll(){ return []; },
@@ -135,8 +149,13 @@ function appYukle() {
   const fn = new Function(
     "document","window","localStorage","navigator","Chart","alert","confirm",
     "setTimeout","clearTimeout","setInterval","clearInterval","fetch","console",
-    src + "\n; return typeof app !== 'undefined' ? app : null;"
+    // app.js icindeki modul-ici sabitler (SafeStorage gibi) disaridan
+    // gorunmez; testlerin erisebilmesi icin window'a baglanir.
+    src + "\n; try { window.SafeStorage = SafeStorage; } catch (e) {}" +
+          "\n; return typeof app !== 'undefined' ? app : null;"
   );
-  return fn(document, window, localStorage, navigator, Chart, alert, confirm,
-            setTimeout, clearTimeout, setInterval, clearInterval, fetch, console);
+  const app = fn(document, window, localStorage, navigator, Chart, alert, confirm,
+                 setTimeout, clearTimeout, setInterval, clearInterval, fetch, console);
+  if (window.SafeStorage) globalThis.SafeStorage = window.SafeStorage;
+  return app;
 }
