@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ykskocum-v84-moduller';
+const CACHE_NAME = 'ykskocum-v85-ad';
 const urlsToCache = [
   './',
   './index.html',

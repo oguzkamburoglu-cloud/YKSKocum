@@ -2,7 +2,7 @@
    YKS MÜFREDAT BİLGİ GRAFİĞİ (Knowledge Graph)
    ------------------------------------------------------------
    Uygulamadaki TEK müfredat kaynağı. Program üretici, AI Rota
-   Rehberi, Müfredat Haritası, AI Analiz, AI Koç ve Hata Zindanı
+   Rehberi, AI Müfredat Haritası, AI Analiz, AI Koç ve Hata Zindanı
    kendi listelerini tutmaz; hepsi buradan okur.
 
    Yapı:

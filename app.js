@@ -416,7 +416,7 @@ const app = {
   // Eskiden iki ayrı müfredat listesi vardı: burada düz bir
   // `curriculumData` ve program üreticisinin içinde gömülü ~30
   // konuluk ikinci bir liste. İkisi de kaldırıldı; Program Üretici,
-  // Program Sihirbazı, Müfredat Haritası, AI Analiz, AI Koç ve Hata
+  // Program Sihirbazı, AI Müfredat Haritası, AI Analiz, AI Koç ve Hata
   // Zindanı artık aynı grafikten okuyor.
   // ==========================================================
   curriculum: {
@@ -7683,7 +7683,7 @@ normalizeClause: function(clause) {
                `• <strong>Yapay Zeka Seviyen:</strong> ${levelDesc}<br>` +
                `• <strong>En Yüksek Deneme Netin:</strong> ${highestNet > 0 ? highestNet + " Net" : "Henüz deneme kaydı girilmedi."}<br>` +
                `• <strong>Program Ritim Skoru:</strong> %${Math.round(this.state.streak * 8 + 60)}<br><br>` +
-               `Dilersen seviyeni Müfredat Haritası sayfasından manuel olarak da değiştirebilirsin!`,
+               `Dilersen seviyeni AI Müfredat Haritası sayfasından manuel olarak da değiştirebilirsin!`,
         revised: false
       };
     }
@@ -8088,7 +8088,7 @@ normalizeClause: function(clause) {
       "monthly": ["Aylık Bakış", "30 günlük projeksiyonunuz oluşturuluyor..."],
       "year": ["Yıllık Projeksiyon", "360 günlük yol haritası taranıyor..."],
       "programCreator": ["Program Sihirbazı", "Çalışma programınız hazırlanıyor..."],
-      "curriculum": ["Müfredat Haritası", "Konu ilerlemeniz faz faz hesaplanıyor..."],
+      "curriculum": ["AI Müfredat Haritası", "Konu ilerlemeniz faz faz hesaplanıyor..."],
       "vault": ["Hata Zindanı", "Eksik konularınız ve hatalarınız taranıyor..."],
       "badges": ["AI Motivasyon", "Ödül sistemi ve günlük alıntılar güncelleniyor..."]
     };
@@ -11224,7 +11224,7 @@ Değerlendirmeyi Türkçe olarak tam bir JSON formatında döndür. JSON yapıs�
   },
   "explainWhy": "Neden bu konunun seçildiğinin denemelere, zayıf derslere ve Hata Zindanı verilerine dayanan bilimsel açıklaması.",
   "nextBestAction": {
-    "label": "Buton üzerinde yazacak net aksiyon eylemi (Örn: Çalışmaya Başla, Hata Zindanını Aç, Müfredat Haritasını Aç, Deneme Çöz)",
+    "label": "Buton üzerinde yazacak net aksiyon eylemi (Örn: Çalışmaya Başla, Hata Zindanını Aç, AI Müfredat Haritasını Aç, Deneme Çöz)",
     "actionType": "Butona tıklandığında yönlendirilecek tab panel ismi: 'today', 'vault', 'programCreator', or 'test'"
   },
   "coachMessage": "${ilkAd} için özel, dürüst ve teşvik edici kişisel koç mesajı."
