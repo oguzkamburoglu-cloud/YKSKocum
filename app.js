@@ -6754,7 +6754,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
         <div class="notif-item">
           <div class="notif-icon-dot ${n.kind}"><i class="fa-solid ${icons[n.kind] || "fa-bell"}"></i></div>
           <div class="notif-body">
-            <strong>${n.title}</strong><span>${n.body}</span>
+            <strong>${app.escapeHtml(n.title)}</strong><span>${app.escapeHtml(n.body)}</span>
             ${canSendToParent ? `<button class="btn btn-secondary" style="margin-top:0.4rem; padding:0.25rem 0.6rem; font-size:0.68rem; font-weight:800;" onclick="app.sendNotificationToParent('${n.id}')"><i class="fa-solid fa-paper-plane"></i> Veliye Gönder</button>` : ""}
           </div>
           <div class="notif-time">${time}</div>
@@ -14354,7 +14354,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
       item.innerHTML = `
         <div style="display:flex; flex-direction:column; gap:0.15rem; text-align:left;">
           <span style="font-weight:700; color:var(--text-main);">${app.escapeHtml(task.label)}</span>
-          <span style="font-size:0.65rem; color:var(--text-muted); font-variant-numeric:tabular-nums;">${task.topic} (${timeRange})</span>
+          <span style="font-size:0.65rem; color:var(--text-muted); font-variant-numeric:tabular-nums;">${app.escapeHtml(task.topic)} (${app.escapeHtml(timeRange)})</span>
           ${app.getTaskSourceHTML(task, "0.65rem")}
           ${aiBadges ? `<div style="margin-top:0.1rem;">${aiBadges}</div>` : ""}
         </div>
@@ -15903,8 +15903,8 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
           </span>
           <span class="taslak-metin">
             <span class="taslak-saat">${saatler[i].bas}–${saatler[i].bit}</span>
-            <span class="taslak-ad">${g.label}</span>
-            ${g.topic ? `<span class="taslak-konu">${g.topic}</span>` : ""}
+            <span class="taslak-ad">${this.escapeHtml(g.label)}</span>
+            ${g.topic ? `<span class="taslak-konu">${this.escapeHtml(g.topic)}</span>` : ""}
           </span>
           <span class="taslak-sure" style="display:inline-flex; align-items:center; gap:0.3rem;">
             <input type="number" min="10" max="240" step="5" aria-label="Süre (dakika)"

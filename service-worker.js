@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ykskocum-v92-pomodoro';
+const CACHE_NAME = 'ykskocum-v93-xss';
 const urlsToCache = [
   './',
   './index.html',
