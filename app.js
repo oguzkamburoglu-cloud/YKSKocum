@@ -3657,6 +3657,70 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     }
   },
 
+  // Sinavi sonradan cozme / tekrar cozme. Profil kartindan cagrilir;
+  // "Sinavi Gec" secenegi bu sayede geri alinabilir bir karar olur.
+  retakeDiagnosticTest: function() {
+    if (this.state.isGraduate) {
+      this.showGraduatePositionView();
+      return;
+    }
+    if (typeof this.state.diagnosticAccuracy === "number") {
+      const onay = confirm(
+        "Seviye tespit sınavını yeniden çözmek istiyor musun?\n\n" +
+        "Önceki sonucun (%" + this.state.diagnosticAccuracy + ") yerini yeni sonuç alacak."
+      );
+      if (!onay) return;
+    }
+    this.state.testAnswers = {};
+    this.showView("testView");
+    this.generateDiagnosticQuestions();
+    this.startTestTimer();
+    this.renderTestUI();
+  },
+
+  // Profil kartindaki sinav butonunun yazisini duruma gore gunceller.
+  updateRetakeDiagnosticUI: function() {
+    const lbl = document.getElementById("retakeDiagnosticLabel");
+    const note = document.getElementById("retakeDiagnosticNote");
+    if (!lbl) return;
+    const acc = this.state.diagnosticAccuracy;
+    if (this.state.isGraduate) {
+      lbl.textContent = "Mevcut Konumumu Güncelle";
+      if (note) note.textContent = "Güncel sıralaman ve netlerin programını yeniden ölçekler.";
+    } else if (typeof acc === "number") {
+      lbl.textContent = "Seviye Tespit Sınavını Tekrar Çöz";
+      if (note) note.textContent = "Son sonucun: %" + acc + ".";
+    } else {
+      lbl.textContent = "Seviye Tespit Sınavını Çöz";
+      if (note) note.textContent = "Sınavı henüz çözmedin; programın yalnızca hedef sıralamana göre hazırlandı.";
+    }
+  },
+
+  // Seviye tespit sinavi zorunlu degildir. Gecildiginde sinav skoru
+  // uretilmez; seviye, hedef siralamadan hesaplanan degerde kalir ve
+  // program onerisi yalnizca hedefe dayanir. Ogrenci sinavi sonradan
+  // Profil bolumunden cozebilir.
+  skipDiagnosticTest: function() {
+    const onay = confirm(
+      "Seviye tespit sınavını geçmek istediğine emin misin?\n\n" +
+      "Programın yalnızca hedef sıralamana göre hazırlanacak. " +
+      "Sınavı sonradan Profil bölümünden çözebilirsin."
+    );
+    if (!onay) return;
+
+    if (this.state.testTimer) { clearInterval(this.state.testTimer); this.state.testTimer = null; }
+
+    this.state.diagnosticAccuracy = null;
+    this.state.currentPositionSource = "skipped";
+    this.state.testSkipped = true;
+    this.state.testQuestions = {};
+    this.state.testAnswers = {};
+    this.saveState();
+
+    this.showToast("Seviye tespit sınavı geçildi. Program önerisi hedefine göre hazırlanacak.", "info");
+    this.startMainDashboard();
+  },
+
   submitTest: function() {
     if (this.state.testTimer) clearInterval(this.state.testTimer);
     
@@ -3693,6 +3757,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     this.state.level = assessedLevel;
     this.state.diagnosticAccuracy = overallAccuracy;
     this.state.currentPositionSource = "diagnostic_test";
+    this.state.testSkipped = false;
 
     const rAccEl = document.getElementById("reportAccuracy");
     if (rAccEl) rAccEl.textContent = `${overallAccuracy}%`;
@@ -4876,6 +4941,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     var _el_dashParentContact = document.getElementById("dashParentContact"); if (_el_dashParentContact) _el_dashParentContact.textContent = this.state.parentContact || "-";
     var _el_aiKey = document.getElementById("aiCoachApiKey"); if (_el_aiKey) _el_aiKey.value = this.getLlmApiKey();
     this.updateAiConnectionStatus();
+    this.updateRetakeDiagnosticUI();
 
     // Update dashboard subscription status
     const subTier = this.state.subscriptionTier || "free";
