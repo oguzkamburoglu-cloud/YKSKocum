@@ -8595,8 +8595,8 @@ normalizeClause: function(clause) {
       }
 
       card.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%;">
-          <div style="display:flex; align-items:center; gap:0.75rem; text-align:left;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%; flex-wrap:wrap; gap:0.5rem 0.75rem;">
+          <div style="display:flex; align-items:center; gap:0.75rem; text-align:left; flex:1 1 200px; min-width:0;">
             <input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="app.toggleTodayTaskCompleted(${activeDay}, ${idx})" style="width:22px; height:22px; min-width:22px; flex-shrink:0; cursor:pointer;">
             <div>
               <span style="font-weight:700; color:var(--text-main); font-size:0.9rem; text-decoration:${isCompleted ? 'line-through' : 'none'};">${app.escapeHtml(task.label || task.subject)}</span>
@@ -8605,7 +8605,7 @@ normalizeClause: function(clause) {
               ${aiBadges ? `<div style="margin-top:0.35rem;">${aiBadges}</div>` : ""}
             </div>
           </div>
-          <div style="display:flex; align-items:center; gap:0.5rem; flex-shrink:0;">
+          <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; justify-content:flex-end; margin-left:auto;">
             ${testBtn}
             ${showBadge ? `<span class="task-badge ${badgeClass}">${badgeLabel}</span>` : ""}
             <span style="font-size:0.8rem; color:var(--text-muted); font-variant-numeric:tabular-nums; white-space:nowrap;" title="${app.escapeHtml(cleanDuration)}"><i class="fa-regular fa-clock"></i> ${timeRange}</span>

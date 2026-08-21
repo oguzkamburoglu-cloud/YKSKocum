@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ykskocum-v103-geri-sayim';
+const CACHE_NAME = 'ykskocum-v104-gorev-karti';
 const urlsToCache = [
   './',
   './index.html',
