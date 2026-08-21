@@ -785,32 +785,6 @@
                  öğrenci kabul ederse uygulanır. -->
             <div id="programSuggestionCard" style="display:none; margin-bottom:1.25rem;"></div>
 
-            <!-- ILK EKRAN OZETI — grafik yok, uc sayi. Ogrenci uygulamayi
-                 actiginda once bunlari gormeli. -->
-            <div id="dashSummaryCards" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:0.85rem; margin-bottom:1.25rem;">
-              <div class="glass-card" style="padding:1rem; text-align:center;">
-                <div style="font-size:0.7rem; font-weight:800; color:var(--text-muted); letter-spacing:0.02em;">
-                  <i class="fa-solid fa-clock"></i> BUGÜNKÜ ÇALIŞMA
-                </div>
-                <div id="sumTodayTime" style="font-family:var(--font-header); font-weight:800; font-size:1.7rem; color:var(--text-main); margin-top:0.3rem;">0 dk</div>
-                <div id="sumTodayTimeSub" style="font-size:0.68rem; color:var(--text-muted);">&nbsp;</div>
-              </div>
-              <div class="glass-card" style="padding:1rem; text-align:center;">
-                <div style="font-size:0.7rem; font-weight:800; color:var(--text-muted); letter-spacing:0.02em;">
-                  <i class="fa-solid fa-chart-pie"></i> TOPLAM İLERLEME
-                </div>
-                <div id="sumProgress" style="font-family:var(--font-header); font-weight:800; font-size:1.7rem; color:var(--text-main); margin-top:0.3rem;">%0</div>
-                <div id="sumProgressSub" style="font-size:0.68rem; color:var(--text-muted);">&nbsp;</div>
-              </div>
-              <div class="glass-card" style="padding:1rem; text-align:center;">
-                <div style="font-size:0.7rem; font-weight:800; color:var(--text-muted); letter-spacing:0.02em;">
-                  <i class="fa-solid fa-bullseye"></i> SON DENEME NETİ
-                </div>
-                <div id="sumLastNet" style="font-family:var(--font-header); font-weight:800; font-size:1.7rem; color:var(--text-main); margin-top:0.3rem;">—</div>
-                <div id="sumLastNetSub" style="font-size:0.68rem; color:var(--text-muted);">&nbsp;</div>
-              </div>
-            </div>
-
             <!-- Hedef ile programin gercek yuku ortusmuyorsa burada soylenir -->
             <div id="kapasiteNotu" style="display:none; margin-bottom:1.25rem;"></div>
             <div class="glass-card" style="padding: 1.5rem; background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 12px; position: relative;">
@@ -1176,6 +1150,33 @@
                 </div>
               </div>
               <p class="panel-intro">AI Çalışma Analizi; güncel durumunu, risklerini ve önerdiği en iyi hamleyi tek panelde özetleyip deneme netlerini ve gelişimini YKS hedeflerinle karşılaştırır.</p>
+
+              <!-- OZET SERIDI — modulun en ustunde uc sayi. Onceden
+                   program ekranindaydi; analiz olcutu oldugu icin
+                   AI Calisma Analizi modulune tasindi. -->
+<div id="dashSummaryCards" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:0.85rem; margin-bottom:1.25rem;">
+              <div class="glass-card" style="padding:1rem; text-align:center;">
+                <div style="font-size:0.7rem; font-weight:800; color:var(--text-muted); letter-spacing:0.02em;">
+                  <i class="fa-solid fa-clock"></i> BUGÜNKÜ ÇALIŞMA
+                </div>
+                <div id="sumTodayTime" style="font-family:var(--font-header); font-weight:800; font-size:1.7rem; color:var(--text-main); margin-top:0.3rem;">0 dk</div>
+                <div id="sumTodayTimeSub" style="font-size:0.68rem; color:var(--text-muted);">&nbsp;</div>
+              </div>
+              <div class="glass-card" style="padding:1rem; text-align:center;">
+                <div style="font-size:0.7rem; font-weight:800; color:var(--text-muted); letter-spacing:0.02em;">
+                  <i class="fa-solid fa-chart-pie"></i> TOPLAM İLERLEME
+                </div>
+                <div id="sumProgress" style="font-family:var(--font-header); font-weight:800; font-size:1.7rem; color:var(--text-main); margin-top:0.3rem;">%0</div>
+                <div id="sumProgressSub" style="font-size:0.68rem; color:var(--text-muted);">&nbsp;</div>
+              </div>
+              <div class="glass-card" style="padding:1rem; text-align:center;">
+                <div style="font-size:0.7rem; font-weight:800; color:var(--text-muted); letter-spacing:0.02em;">
+                  <i class="fa-solid fa-bullseye"></i> SON DENEME NETİ
+                </div>
+                <div id="sumLastNet" style="font-family:var(--font-header); font-weight:800; font-size:1.7rem; color:var(--text-main); margin-top:0.3rem;">—</div>
+                <div id="sumLastNetSub" style="font-size:0.68rem; color:var(--text-muted);">&nbsp;</div>
+              </div>
+            </div>
 
               <!-- AI ÇALIŞMA ANALİZİ (birleşik: AI yorumu, Neredeyim, Risk Radarı, Günün En İyi Hamlesi, Grafik Özeti) -->
               <!-- ALT ÖZELLİK: davranışsal performans da bu merkezde -->
@@ -2448,6 +2449,6 @@
   <script src="curriculum.js?v=4"></script>
   <script src="questions.js?v=2"></script>
   <script src="quotes.js?v=1"></script>
-  <script src="app.js?v=146"></script>
+  <script src="app.js?v=147"></script>
 </body>
 </html>

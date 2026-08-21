@@ -10829,6 +10829,9 @@ normalizeClause: function(clause) {
     // renderCharts yine cizer ki iki modul de guncel kalsin.
     this.renderGunlukIstikrarGrafigi(records);
 
+    // Ozet seridi bu modulun en ustunde; modul acilinca tazelensin.
+    this.renderDashboardSummary();
+
     // Metin tabanli analizler (bos/yanlis dengesi, verim, mufredat tahmini)
     this.renderInsightCards(records);
 
