@@ -2389,7 +2389,6 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     const rankIn = document.getElementById("targetRank");
     const parentEmailIn = document.getElementById("parentEmail");
     const parentPhoneIn = document.getElementById("parentPhone");
-    const acceptPlanCh = document.getElementById("acceptPlanCheck");
 
     if (nameIn) nameIn.value = "";
     if (emailIn) emailIn.value = "";
@@ -2399,7 +2398,6 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     if (parentEmailIn) parentEmailIn.value = this.state.parentEmail || "";
     if (parentPhoneIn) parentPhoneIn.value = this.state.parentPhone || "";
     this.applyParentContactLock();
-    if (acceptPlanCh) acceptPlanCh.checked = false;
 
     const previewBox = document.getElementById("goalPlanPreviewBox");
     if (previewBox) previewBox.style.display = "none";
@@ -3101,16 +3099,11 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     this.toggleWizardNextButton();
   },
 
-  // Onay kutusu yalnizca hedef adiminda (3) ilerlemeyi kilitler; diger
-  // adimlarda dugme her zaman aciktir.
+  // Onay kutusu kaldirildi; ilerleme artik hicbir adimda kilitlenmiyor.
+  // Fonksiyon cagri noktalari korunsun diye duruyor.
   toggleWizardNextButton: function() {
     const btn = document.getElementById("wizardNextBtn");
-    const chk = document.getElementById("acceptPlanCheck");
-    if (!btn) return;
-    if (this.wizardStep !== 3) { btn.disabled = false; return; }
-    const kutu = document.getElementById("goalPlanPreviewBox");
-    const onizlemeAcik = kutu && kutu.style.display !== "none";
-    btn.disabled = onizlemeAcik ? !(chk && chk.checked) : false;
+    if (btn) btn.disabled = false;
   },
 
   // ============================================================
@@ -3185,17 +3178,6 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     if (adim === 2) { this.wizardGo(3); return; }
 
     if (adim === 3) {
-      // Onizleme aciksa onay kutusu isaretlenmeden ilerlenemez.
-      // Dugmenin disabled olmasi tek basina yeterli degil: klavye veya
-      // programatik cagrilar bu korumayi asabiliyordu.
-      const kutu = document.getElementById("goalPlanPreviewBox");
-      const chk = document.getElementById("acceptPlanCheck");
-      if (kutu && kutu.style.display !== "none" && chk && !chk.checked) {
-        this.showToast("Devam etmek için hedefleri kabul etmen gerekiyor.", "warning");
-        chk.focus();
-        return;
-      }
-
       // Mevcut dogrulayici: ad, e-posta ve hedef siralama kontrolu +
       // sayfa gecisi. Basarili olursa 4. adima geciyoruz.
       const oncekiSayfa = document.getElementById("wizardPage2").style.display;
