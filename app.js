@@ -2399,8 +2399,6 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     if (parentPhoneIn) parentPhoneIn.value = this.state.parentPhone || "";
     this.applyParentContactLock();
 
-    const previewBox = document.getElementById("goalPlanPreviewBox");
-    if (previewBox) previewBox.style.display = "none";
 
     // Akis her zaman 1. adimdan baslar
     this.wizardGo(1);
@@ -3016,9 +3014,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     this.runTercihMotoru(rank, uni, deptText);
 
     if (!rank) {
-      // Sıralama yoksa plan öngörüsü gösterme
-      const previewBox = document.getElementById("goalPlanPreviewBox");
-      if (previewBox) previewBox.style.display = "none";
+      // Siralama yoksa seviye hesaplanamaz; state'e dokunmadan cikilir.
       this.toggleWizardNextButton();
       return;
     }
@@ -3073,29 +3069,17 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     this.state.targetNetTYT = netTYT;
     this.state.targetNetAYT = netAYT;
     this.state.level = level;
+    // Aciklama artik ekranda gosterilmiyor ama kaybolmasin: program onerisi
+    // ve seviye kartlari bu metni kullanabiliyor.
+    this.state.levelDescription = description;
+    this.state.targetRankAuto = autoSuggested;
     // LEVEL_META degerleri tam hazirlik yili (360 gun) icindir; program
     // sinava kalan sureye gore kisaysa hedefler orantili kisilir.
     this.applyLevelTargets(hours, questions, mocks);
 
-    document.getElementById("previewLevel").textContent = level;
-    document.getElementById("previewLevelDesc").textContent = description;
-    const rankEquivEl = document.getElementById("previewRankEquiv");
-    if (rankEquivEl) {
-      let equivTxt = `🎯 Hedefin: Türkiye geneli ilk <strong>${fmt(rank)}</strong> (${this.state.track})`;
-      if (autoSuggested) equivTxt += ` — seçtiğin üniversite/bölümün 2025 taban sıralamasından otomatik belirlendi`;
-      rankEquivEl.innerHTML = equivTxt;
-    }
-    const netTargetsEl = document.getElementById("previewNetTargets");
-    if (netTargetsEl) {
-      netTargetsEl.innerHTML = level === 8
-        ? `🏆 Kriter: <strong>TÜM soruların doğru çözülmesi</strong> — TYT 120/120 · AYT 80/80`
-        : `📈 Bu hedef için yaklaşık netler: <strong>TYT ${netTYT}</strong> · <strong>AYT ${netAYT}</strong> <span style="font-weight:600; color:var(--text-muted);">(2025 YKS yerleştirme verilerine göre tahmini)</span>`;
-    }
-    document.getElementById("previewHours").textContent = hours.toLocaleString();
-    document.getElementById("previewQuestions").textContent = questions.toLocaleString();
-    document.getElementById("previewMocks").textContent = mocks;
-
-    document.getElementById("goalPlanPreviewBox").style.display = "block";
+    // AI Calisma Ongorusu kutusu ilk ekrandan kaldirildi. Seviye, netler ve
+    // hedefler yukarida hesaplanip state'e yazilir; kullaniciya program
+    // onerisi ekraninda gosterilir.
     this.toggleWizardNextButton();
   },
 
