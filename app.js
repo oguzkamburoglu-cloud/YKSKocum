@@ -8369,6 +8369,19 @@ normalizeClause: function(clause) {
     let blank = blankEl && blankEl.value !== "" ? (parseInt(blankEl.value, 10) || 0) : null;
     if (blank === null) blank = hedefSoru > 0 ? Math.max(0, hedefSoru - correct - wrong) : 0;
 
+    // MANTIK DENETIMI — bir gunun toplam calisma suresi 24 saati asamaz.
+    // Veri sessizce degistirilmez (ogrencinin kaydi onundur), ama imkansiz
+    // bir toplam net/saat verim analizini ve istikrar grafigini bozdugu
+    // icin uyarilir.
+    const gunToplamDk = (dayData.tasks || []).reduce((a, t, i) => {
+      if (i === taskIdx) return a + timeSpent;
+      return a + (t.logged && t.timeSpent ? parseInt(t.timeSpent, 10) || 0 : 0);
+    }, 0);
+    if (gunToplamDk > 24 * 60) {
+      const sa = Math.round((gunToplamDk / 60) * 10) / 10;
+      this.showToast(`Bu güne toplam ${sa} saat çalışma kaydedildi — 24 saati aşıyor. Süreleri kontrol et.`, "warning");
+    }
+
     task.completed = true;
     task.correct = correct;
     task.incorrect = wrong;
@@ -8411,7 +8424,7 @@ normalizeClause: function(clause) {
       // Eski kayitlarda yoktur; filtre onlari "tum zamanlar"da gosterir.
       ts: Date.now(),
       dayNum: dayNum,
-      examType: task.examType || (task.label && task.label.includes("AYT") || task.subject === "Edebiyat" ? "AYT" : "TYT")
+      examType: task.examType || this.sinavTuruBelirle(task)
     });
     this.state.totalQuestionsSolved = (this.state.totalQuestionsSolved || 0) + (correct + wrong);
     if (task.subject === "Edebiyat") {
@@ -10370,7 +10383,11 @@ normalizeClause: function(clause) {
     const netLabels = records.map(r => r.label);
     // TYT ve AYT AYRI cizilir: ikisi farkli olceklerde ilerler, tek cizgide
     // birlestirilince ogrenci hangisinde ilerledigini goremez.
-    const turBul = (r) => r.examType === "AYT" ? "AYT" : r.examType === "ÖDT" ? "ÖDT" : "TYT";
+    const turBul = (r) => {
+      const t = r.examType;
+      if (t === "AYT" || t === "YDT" || t === "ÖDT") return t;
+      return "TYT";
+    };
     const seri = (tur) => records.map(r => turBul(r) === tur ? netHesapla(r) : null);
     const netVarMi = (tur) => records.some(r => turBul(r) === tur);
 
@@ -10382,6 +10399,10 @@ normalizeClause: function(clause) {
     if (netVarMi("AYT")) veriSetleri.push({
       label: 'AYT Net', data: seri("AYT"), borderColor: '#8b5cf6',
       backgroundColor: 'rgba(139,92,246,0.10)', tension: 0.3, pointRadius: 3, spanGaps: true
+    });
+    if (netVarMi("YDT")) veriSetleri.push({
+      label: 'YDT Net', data: seri("YDT"), borderColor: '#10b981',
+      backgroundColor: 'rgba(16,185,129,0.10)', tension: 0.3, pointRadius: 3, spanGaps: true
     });
     if (netVarMi("ÖDT")) veriSetleri.push({
       label: 'ÖDT Net', data: seri("ÖDT"), borderColor: '#f59e0b',
@@ -15472,6 +15493,19 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
       yapilanlar.length ? "Uygulandı: " + yapilanlar.join(", ") + "." : "Değişiklik yapılmadı.",
       "success"
     );
+  },
+
+  // Bir gorevin hangi sinava ait oldugunu belirler.
+  // YDT (Yabanci Dil Testi) eskiden hic taninmiyordu: Dil alanindaki
+  // ogrencinin YDT netleri "TYT Net" olarak etiketleniyordu.
+  sinavTuruBelirle: function(task) {
+    if (!task) return "TYT";
+    const etiket = String(task.label || "");
+    const ders = String(task.subject || "");
+    if (/YDT|Yabancı Dil|İngilizce|Almanca|Fransızca/i.test(etiket) ||
+        /Yabancı Dil|İngilizce|Almanca|Fransızca/i.test(ders)) return "YDT";
+    if (etiket.indexOf("AYT") !== -1 || ders === "Edebiyat") return "AYT";
+    return "TYT";
   },
 
   // ============================================================
