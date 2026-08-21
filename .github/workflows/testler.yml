@@ -1,0 +1,70 @@
+# ============================================================
+# YKSKoçum — otomatik test koşumu
+# Her push ve pull request'te çalışır.
+#
+# NOT: Asıl test paketi macOS'ta `jsc` ile koşar (bağımlılıksız).
+# CI Linux olduğu için aynı test dosyaları `test/node-kosum.js`
+# kabuğuyla Node altında koşulur — testler değişmez.
+# ============================================================
+name: Testler
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  birim-testleri:
+    name: Birim ve entegrasyon (383 test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Testleri koş
+        run: node test/node-kosum.js
+
+  e2e:
+    name: E2E — gerçek tarayıcı (7 test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Playwright kur
+        run: |
+          npm init -y >/dev/null
+          npm i -D @playwright/test
+          npx playwright install --with-deps chromium
+      - name: E2E koş
+        run: npx playwright test --config=test/e2e/playwright.config.js
+      - name: Başarısızsa çıktıları yükle
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-raporu
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+
+  sozdizimi:
+    name: Sözdizimi denetimi
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: JS dosyalarını denetle
+        run: |
+          for f in app.js curriculum.js questions.js quotes.js service-worker.js osym-data.js; do
+            [ -f "$f" ] || continue
+            node --check "$f" && echo "  $f: TAMAM"
+          done

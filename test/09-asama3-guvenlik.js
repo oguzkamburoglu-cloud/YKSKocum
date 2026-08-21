@@ -28,7 +28,7 @@ function kur(ek) {
   app.state = Object.assign({
     track: "Sayısal", examFocus: "both", chartData: [], daysData: {},
     topicStatuses: {}, pomodoroKayitlari: [], notifications: [],
-    startDate: new Date().toISOString().slice(0, 10), activeDay: 1,
+    startDate: new Date().toLocaleDateString("sv-SE"), activeDay: 1,
     subscriptionTier: "pro", role: "ogrenci", parentContact: ""
   }, ek || {});
   app._programDaysCache = null;

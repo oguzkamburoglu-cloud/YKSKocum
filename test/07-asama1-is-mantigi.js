@@ -14,7 +14,7 @@ function kur(gecenGun, ek) {
   bas.setDate(bas.getDate() - (gecenGun || 0));
   app.state = Object.assign({
     track: "Sayısal", examFocus: "both", level: 5,
-    startDate: bas.toISOString().slice(0, 10),
+    startDate: bas.toLocaleDateString("sv-SE"),
     activeDay: 1, daysData: {}, chartData: [], topicStatuses: {},
     streak: 0, isGraduate: false, wakeTime: "08:00", sleepTime: "23:00",
     weekdayHours: 4, weekendHours: 6, subscriptionTier: "pro"
@@ -109,6 +109,35 @@ T.grup("1.2  Gun sayaci (streak) ve zaman");
   kur(1);
   const yarin = app.bugunkuProgramGunu();
   T.esit("bir gün geçince program günü 1 artıyor", yarin - bugun, 1);
+})();
+
+(function () {
+  // REGRESYON: "bugun"un tarihi UTC'den aliniyordu.
+  // new Date().toISOString().split("T")[0] Turkiye'de (UTC+3) gece
+  // 00:00-03:00 arasinda DUNUN tarihini veriyordu. Gece 01:00'de kayit
+  // olan ogrencinin program baslangici bir gun geri kayiyordu.
+  const simdi = new Date();
+  const yerelBeklenen = simdi.getFullYear() + "-" +
+    String(simdi.getMonth() + 1).padStart(2, "0") + "-" +
+    String(simdi.getDate()).padStart(2, "0");
+  T.esit("yerelTarih() yerel günü veriyor", app.yerelTarih(), yerelBeklenen);
+  T.dogru("UTC'ye göre kaymıyor",
+          app.yerelTarih() === yerelBeklenen, "UTC: " + simdi.toISOString().split("T")[0]);
+
+  // Gece yarisindan hemen sonra bile dogru olmali
+  const gece = new Date(); gece.setHours(0, 30, 0, 0);
+  const geceBeklenen = gece.getFullYear() + "-" +
+    String(gece.getMonth() + 1).padStart(2, "0") + "-" +
+    String(gece.getDate()).padStart(2, "0");
+  T.esit("00:30'da doğru gün", app.yerelTarih(gece), geceBeklenen);
+
+  // Gecersiz tarih
+  T.esit("geçersiz tarihte boş dönüyor", app.yerelTarih(new Date("olmayan")), "");
+
+  // Kaynak denetimi: tarih icin toISOString kalmamali
+  const src = readFile("app.js");
+  T.esit("kaynakta 'toISOString().split(\"T\")[0]' kalmadı",
+         (src.match(/toISOString\(\)\.split\("T"\)\[0\]/g) || []).length, 0);
 })();
 
 (function () {

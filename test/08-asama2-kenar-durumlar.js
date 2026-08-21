@@ -29,7 +29,7 @@ function kur(ek) {
   f.value = "all"; f.dataset.initialized = "true";
   app.state = Object.assign({
     track: "Sayısal", examFocus: "both", level: 5, chartData: [], daysData: {},
-    topicStatuses: {}, pomodoroKayitlari: [], startDate: new Date().toISOString().slice(0, 10),
+    topicStatuses: {}, pomodoroKayitlari: [], startDate: new Date().toLocaleDateString("sv-SE"),
     activeDay: 1, isGraduate: false, wakeTime: "08:00", sleepTime: "23:00",
     weekdayHours: 4, weekendHours: 6, subscriptionTier: "pro", streak: 0,
     uploadedQuestions: []

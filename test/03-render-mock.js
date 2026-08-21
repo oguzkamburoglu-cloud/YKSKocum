@@ -30,7 +30,7 @@ function senaryoKur(ek) {
     track: "Sayısal", examFocus: "both",
     chartData: mockKayitlar(), daysData: mockGunler(),
     topicStatuses: mk.durum,
-    startDate: bas.toISOString().slice(0, 10),
+    startDate: bas.toLocaleDateString("sv-SE"),
     activeDay: 60, isGraduate: false, wakeTime: "08:00", sleepTime: "23:00",
     uploadedQuestions: []
   }, ek || {});

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ykskocum-v93-xss';
+const CACHE_NAME = 'ykskocum-v94-yereltarih';
 const urlsToCache = [
   './',
   './index.html',

@@ -2703,7 +2703,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     this.state.savedPrograms = [{
       id: 'default_custom',
       name: 'Varsayılan Özel Program',
-      startDate: new Date().toISOString().split("T")[0],
+      startDate: app.yerelTarih(),
       repetition: 'none',
       daysData: emptyDays
     }];
@@ -4419,7 +4419,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     }
 
     // 3. Initialize savedPrograms custom list if missing
-    const todayStr = new Date().toISOString().split("T")[0];
+    const todayStr = app.yerelTarih();
     if (!this.state.startDate) {
       this.state.startDate = todayStr;
     }
@@ -5963,7 +5963,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
 
       // Start 2-hour visual countdown for parent report auto-notification
       // (bugün için rapor ekranı gün sonu tetikleyicisiyle zaten gösterildiyse tekrar başlatma)
-      const todayKey = new Date().toISOString().split("T")[0];
+      const todayKey = app.yerelTarih();
       if (!this.state.parentReportDueTime && this.state.parentReportShownDate !== todayKey) {
         this.state.parentReportDueTime = Date.now() + 2 * 60 * 60 * 1000;
         this.startParentNotificationTimer();
@@ -6419,7 +6419,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     // Bugün için rapor ekranı zaten gösterildi işaretle — hem "program
     // tamamlandı" hem "gün sonu saati geldi" tetikleyicisi aynı gün içinde
     // birbirini tekrar etmesin.
-    this.state.parentReportShownDate = new Date().toISOString().split("T")[0];
+    this.state.parentReportShownDate = app.yerelTarih();
     this.saveState();
 
     this.openModal("parentModal");
@@ -6852,7 +6852,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
 
   checkEndOfDayParentReport: function() {
     const now = new Date();
-    const todayKey = now.toISOString().split("T")[0];
+    const todayKey = app.yerelTarih(now);
     if (this.state.parentReportShownDate === todayKey) return; // bugün zaten gösterildi
 
     const sleepMinutes = this.timeStrToMinutes(this.state.sleepTime || "23:00");
@@ -6871,7 +6871,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
 
     const now = new Date();
     const nowMin = now.getHours() * 60 + now.getMinutes();
-    const todayKey = now.toISOString().split("T")[0];
+    const todayKey = app.yerelTarih(now);
 
     if (!this.state.overdueAlerted) this.state.overdueAlerted = {};
     if (this.state.overdueAlertedDate !== todayKey) {
@@ -14231,7 +14231,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     this.updateHeaderStats();
 
     if (allDone && dayNum === this.state.activeDay) {
-      const todayKey = new Date().toISOString().split("T")[0];
+      const todayKey = app.yerelTarih();
       if (!this.state.parentReportDueTime && this.state.parentReportShownDate !== todayKey) {
         this.state.parentReportDueTime = Date.now() + 2 * 60 * 60 * 1000;
         this.startParentNotificationTimer();
@@ -14772,7 +14772,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     this.plannerEditingProgramId = activeProg.id;
 
     document.getElementById("plannerProgName").value = activeProg.name || "Özel Çalışma Programı";
-    document.getElementById("plannerProgStartDate").value = activeProg.startDate || new Date().toISOString().split("T")[0];
+    document.getElementById("plannerProgStartDate").value = activeProg.startDate || app.yerelTarih();
     document.getElementById("plannerProgRep").value = activeProg.repetition || "none";
 
     this.plannerUpdateDaySelectDates();
@@ -14809,7 +14809,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
   // planlayıcıya kopyalar; öğrenci üzerinde ekleme/çıkarma yapıp kaydeder. Kaydedince YENİ
   // bir özel program olarak eklenir ve aktif hale gelir — bkz. plannerSaveProgram.
   plannerCreateNewProgramFromScratch: function() {
-    const todayStr = new Date().toISOString().split("T")[0];
+    const todayStr = app.yerelTarih();
     this.isPlanning = true;
     this.plannerEditingProgramId = null;
 
@@ -16513,6 +16513,24 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     return m;
   },
 
+  // ============================================================
+  // YEREL TARIH — "bugun" hangi gun?
+  // ------------------------------------------------------------
+  // Kodun 10 yerinde app.yerelTarih()
+  // kullaniliyordu. toISOString UTC dondurur: Turkiye UTC+3 oldugu
+  // icin gece 00:00-03:00 arasinda DUNUN tarihini veriyordu.
+  // Etkisi: gece 01:00'de kayit olan ogrencinin program baslangici
+  // bir gun geri kayiyor ve tum gun numaralari sasiyordu; "bugun
+  // gosterildi" bayraklari da yanlis gune yazilıyordu.
+  // ============================================================
+  yerelTarih: function(tarih) {
+    const d = tarih instanceof Date ? tarih : new Date();
+    if (isNaN(d)) return "";
+    return d.getFullYear() + "-" +
+           String(d.getMonth() + 1).padStart(2, "0") + "-" +
+           String(d.getDate()).padStart(2, "0");
+  },
+
   // Bugun programin kacinci gunu? activeDay kullanicinin BAKTIGI gundur,
   // bugun degildir; hatirlatma icin gercek takvim gunu gerekir.
   bugunkuProgramGunu: function() {
@@ -17143,7 +17161,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
           this.saveState();
         }
 
-        const todayStr = new Date().toISOString().split("T")[0];
+        const todayStr = app.yerelTarih();
         if (!this.state.startDate) this.state.startDate = todayStr;
         if (!this.state.activeWeek) this.state.activeWeek = 1;
         if (!this.state.savedPrograms || this.state.savedPrograms.length === 0) {

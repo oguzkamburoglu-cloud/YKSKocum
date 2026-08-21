@@ -6,7 +6,8 @@ Harici bağımlılık yoktur (npm/node gerekmez). Testler macOS'ta hazır gelen
 ## Koşum
 
 ```bash
-./test/calistir.sh
+./test/calistir.sh          # macOS — jsc ile, bağımlılıksız
+node test/node-kosum.js     # her yerde — aynı testler, Node ile
 ```
 
 Çıkış kodu: tüm testler geçerse `0`, en az bir test kalırsa `1` (CI'ye uygun).
@@ -15,6 +16,7 @@ Harici bağımlılık yoktur (npm/node gerekmez). Testler macOS'ta hazır gelen
 
 | Dosya | İçerik |
 |---|---|
+| `node-kosum.js` | Node kabuğu — aynı testleri `jsc` olmadan koşar (CI için) |
 | `harness.js` | DOM/localStorage/Chart.js taklidi + `app.js` yükleyici + test çerçevesi (`T.esit`, `T.dogru`, `T.yakinEsit`) |
 | `01-hesaplama.js` | Grup 1 — veri hesaplama ve matematiksel doğruluk (31 test) |
 | `02-gorsellestirme-edge.js` | Grup 2 — sıfır veri, uç değerler, dönem filtreleri (42 test) |
