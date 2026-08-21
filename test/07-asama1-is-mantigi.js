@@ -132,6 +132,79 @@ T.grup("1.2  Gun sayaci (streak) ve zaman");
   T.dogru("gelecek tarihli başlangıçta gün 1'in altına düşmüyor", d >= 1, d);
 })();
 
+T.grup("1.2b  Pomodoro — duvar saati ve kayit");
+
+function pomoKur() {
+  kur(0);
+  ["sidebarPomoTimer", "miniPomoTimer", "sidebarPomoBtn"].forEach(elemanEkle);
+  elemanEkle("sidebarPomoMinutes").value = "25";
+  app.state.pomodoroKayitlari = [];
+  app.saveState = function () {};
+  app.playPomoAlarmSound = function () {};
+  app.renderDashboardSummary = function () {};
+  app.resetSidebarPomo();
+}
+
+(function () {
+  // REGRESYON: zamanlayici TIK sayiyordu. Tarayici arka plandaki
+  // sekmede setInterval'i kistiginda 25 dakikalik seans gercek zamanda
+  // cok daha uzun suruyordu. Artik duvar saatinden hesaplaniyor.
+  pomoKur();
+  T.esit("başlangıç 25 dk", app.sidebarPomoRemainingSeconds, 1500);
+
+  app.toggleSidebarPomo();
+  T.dogru("çalışıyor", app.sidebarPomoIsRunning, true);
+  T.dogru("bitiş zaman damgası kuruldu", typeof app.sidebarPomoBitisTs === "number", app.sidebarPomoBitisTs);
+
+  // Arka plan: hic tik gelmedi ama 10 dakika gecti
+  app.sidebarPomoBitisTs = Date.now() + (25 * 60 - 600) * 1000;
+  T.yakinEsit("hiç tik gelmeden 10 dk sonra kalan süre doğru", app.pomoKalanSaniye(), 900, 3);
+
+  // Cihaz uyudu: bitis ani gecti
+  app.sidebarPomoBitisTs = Date.now() - 5000;
+  T.esit("bitiş geçmişse kalan 0", app.pomoKalanSaniye(), 0);
+  T.dogru("kalan süre negatife düşmüyor", app.pomoKalanSaniye() >= 0, true);
+})();
+
+(function () {
+  // REGRESYON: seans hicbir yere kaydedilmiyordu; "pomodoro verisi"
+  // diye bir sey yoktu ve calisma suresi analizine katkisi sifirdi.
+  pomoKur();
+  T.dogru("pomodoroSeansKaydet var", typeof app.pomodoroSeansKaydet === "function", true);
+  app.pomodoroSeansKaydet(25, true);
+  app.pomodoroSeansKaydet(12, false);
+  T.esit("iki seans kaydedildi", app.state.pomodoroKayitlari.length, 2);
+  T.esit("bugünkü toplam pomodoro dakikası", app.pomodoroDakikasi(app.bugunkuProgramGunu()), 37);
+  T.dogru("kayıtta zaman damgası var", !!app.state.pomodoroKayitlari[0].ts, true);
+  T.dogru("tamamlanma durumu kaydediliyor",
+          app.state.pomodoroKayitlari[0].tamamlandi === true &&
+          app.state.pomodoroKayitlari[1].tamamlandi === false, true);
+  T.esit("başka güne ait dakika 0", app.pomodoroDakikasi(999), 0);
+})();
+
+(function () {
+  // localStorage kotasi dolmasin: kayit sayisi sinirli
+  pomoKur();
+  for (let i = 0; i < 2100; i++) app.state.pomodoroKayitlari.push({ ts: Date.now(), dakika: 1, gun: 1 });
+  app.pomodoroSeansKaydet(5, true);
+  T.dogru("kayıt sayısı 2000 ile sınırlı", app.state.pomodoroKayitlari.length <= 2000,
+          app.state.pomodoroKayitlari.length);
+})();
+
+(function () {
+  // Duraklatinca gecen sure kaydedilmeli
+  pomoKur();
+  app.toggleSidebarPomo();                                  // baslat
+  app.sidebarPomoBitisTs = Date.now() + (25 * 60 - 300) * 1000;  // 5 dk gecti
+  app.toggleSidebarPomo();                                  // durdur
+  T.dogru("duraklatınca geçen süre kaydedildi", app.state.pomodoroKayitlari.length === 1,
+          app.state.pomodoroKayitlari.length);
+  if (app.state.pomodoroKayitlari.length) {
+    T.yakinEsit("kaydedilen süre ~5 dk", app.state.pomodoroKayitlari[0].dakika, 5, 1);
+  }
+  T.dogru("durdurunca çalışmıyor", !app.sidebarPomoIsRunning, true);
+})();
+
 T.grup("1.3  Konu yetisme tahmini algoritmasi");
 
 (function () {

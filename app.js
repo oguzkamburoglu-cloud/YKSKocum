@@ -597,7 +597,8 @@ const app = {
     // Subscription & Marketing
     subscriptionTier: "pending", // 'pending', 'free', 'trial', 'pro_monthly', 'pro_yearly'
     trialStartDate: null,
-    faturaDonemi: "aylik",   // "aylik" | "yillik"
+    faturaDonemi: "aylik",   // "aylik" | "sinavaKadar"
+    pomodoroKayitlari: [],
     theme: "classic",
     
     // Diagnostics Test State
@@ -10701,11 +10702,21 @@ normalizeClause: function(clause) {
       // Hangi gun kac saat calisildi. Bos gunler cubugu olmayan gunlerdir;
       // istikrarin bozuldugu yer bakisla gorulur.
       const gunSaat = {};
+      const anahtarla = (ts) => {
+        const d = new Date(ts);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      };
       records.forEach(r => {
         if (!r.ts) return;
-        const d = new Date(r.ts);
-        const anahtar = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        const anahtar = anahtarla(r.ts);
         gunSaat[anahtar] = (gunSaat[anahtar] || 0) + (r.time || 0);
+      });
+      // Pomodoro seanslari da istikrar grafigine girer: zamanlayiciyla
+      // gecirilen sure de calismadir.
+      (this.state.pomodoroKayitlari || []).forEach(k => {
+        if (!k.ts) return;
+        const anahtar = anahtarla(k.ts);
+        gunSaat[anahtar] = (gunSaat[anahtar] || 0) + (k.dakika || 0);
       });
       const gunAnahtarlari = Object.keys(gunSaat).sort();
       if (gunAnahtarlari.length) {
@@ -13689,58 +13700,125 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     });
   },
 
+  // ============================================================
+  // POMODORO
+  // ------------------------------------------------------------
+  // Eskiden setInterval her tik'te sayaci 1 azaltiyordu. Tarayicilar
+  // arka plandaki sekmede setInterval'i saniyede birden dakikada bire
+  // kadar kisar; ogrenci sekmeyi arkaya alinca 25 dakikalik seans
+  // gercek zamanda cok daha uzun suruyordu. Artik BASLANGIC ZAMAN
+  // DAMGASI tutulur ve kalan sure Date.now() farkindan hesaplanir —
+  // sekme arkada olsa da, cihaz uyusa da dogru kalir.
+  //
+  // Ayrica tamamlanan seanslar KAYDEDILIR. Eskiden zamanlayici yalnizca
+  // alarm calip aliyordu; hicbir yere yazmadigi icin "pomodoro verisi"
+  // diye bir sey yoktu ve calisma suresi analizine katkisi sifirdi.
+  // ============================================================
   sidebarPomoTimerInterval: null,
   sidebarPomoRemainingSeconds: 25 * 60,
   sidebarPomoIsRunning: false,
+  sidebarPomoBitisTs: null,      // seansin bitecegi an (ms)
+  sidebarPomoHedefDk: 25,        // secili seans uzunlugu
+
+  pomoKalanSaniye: function() {
+    if (!this.sidebarPomoBitisTs) return this.sidebarPomoRemainingSeconds;
+    return Math.max(0, Math.round((this.sidebarPomoBitisTs - Date.now()) / 1000));
+  },
 
   toggleSidebarPomo: function() {
     const btn = document.getElementById("sidebarPomoBtn");
     if (this.sidebarPomoIsRunning) {
+      // DURDUR — kalan sureyi dondur, gecen sureyi kaydet
       clearInterval(this.sidebarPomoTimerInterval);
+      const kalan = this.pomoKalanSaniye();
+      const gecenDk = Math.round((this.sidebarPomoHedefDk * 60 - kalan) / 60);
+      this.sidebarPomoRemainingSeconds = kalan;
+      this.sidebarPomoBitisTs = null;
       this.sidebarPomoIsRunning = false;
       if (btn) btn.textContent = "Başlat";
-    } else {
-      this.sidebarPomoIsRunning = true;
-      if (btn) btn.textContent = "Durdur";
-      
-      this.sidebarPomoTimerInterval = setInterval(() => {
-        if (this.sidebarPomoRemainingSeconds > 0) {
-          this.sidebarPomoRemainingSeconds--;
-          this.updateSidebarPomoDisplay();
-        } else {
-          clearInterval(this.sidebarPomoTimerInterval);
-          this.sidebarPomoIsRunning = false;
-          if (btn) btn.textContent = "Başlat";
-          this.playPomoAlarmSound();
-          setTimeout(() => {
-            alert("Odaklanma Süresi Tamamlandı! Harika İş Çıkardın.");
-          }, 100);
-        }
-      }, 1000);
+      if (gecenDk >= 1) this.pomodoroSeansKaydet(gecenDk, false);
+      this.updateSidebarPomoDisplay();
+      return;
     }
+
+    // BASLAT — bitis anini duvar saatine gore sabitle
+    this.sidebarPomoIsRunning = true;
+    this.sidebarPomoBitisTs = Date.now() + this.sidebarPomoRemainingSeconds * 1000;
+    if (btn) btn.textContent = "Durdur";
+
+    const tik = () => {
+      const kalan = this.pomoKalanSaniye();
+      this.sidebarPomoRemainingSeconds = kalan;
+      this.updateSidebarPomoDisplay();
+      if (kalan > 0) return;
+
+      clearInterval(this.sidebarPomoTimerInterval);
+      this.sidebarPomoIsRunning = false;
+      this.sidebarPomoBitisTs = null;
+      const b = document.getElementById("sidebarPomoBtn");
+      if (b) b.textContent = "Başlat";
+      this.pomodoroSeansKaydet(this.sidebarPomoHedefDk, true);
+      this.playPomoAlarmSound();
+      setTimeout(() => {
+        alert("Odaklanma Süresi Tamamlandı! " + this.sidebarPomoHedefDk +
+              " dakika çalışma kaydedildi.");
+      }, 100);
+    };
+
+    this.sidebarPomoTimerInterval = setInterval(tik, 1000);
+    tik();
+  },
+
+  // Tamamlanan (veya yarida birakilan) seansi kaydeder.
+  // Bu kayitlar gunluk calisma suresine ve istikrar grafigine girer.
+  pomodoroSeansKaydet: function(dakika, tamamlandiMi) {
+    const dk = Math.max(1, Math.round(dakika || 0));
+    if (!Array.isArray(this.state.pomodoroKayitlari)) this.state.pomodoroKayitlari = [];
+    this.state.pomodoroKayitlari.push({
+      ts: Date.now(),
+      dakika: dk,
+      gun: this.bugunkuProgramGunu(),
+      tamamlandi: !!tamamlandiMi
+    });
+    // Kayit sayisini sinirla: localStorage kotasi dolmasin.
+    if (this.state.pomodoroKayitlari.length > 2000) {
+      this.state.pomodoroKayitlari = this.state.pomodoroKayitlari.slice(-2000);
+    }
+    this.saveState();
+    if (typeof this.renderDashboardSummary === "function") this.renderDashboardSummary();
+  },
+
+  // Bir program gununde pomodoro ile gecirilen toplam dakika
+  pomodoroDakikasi: function(gunNo) {
+    const kayitlar = this.state.pomodoroKayitlari || [];
+    return kayitlar.reduce((a, k) => a + (k.gun === gunNo ? (k.dakika || 0) : 0), 0);
   },
 
   resetSidebarPomo: function() {
     clearInterval(this.sidebarPomoTimerInterval);
     this.sidebarPomoIsRunning = false;
-    
+    this.sidebarPomoBitisTs = null;
+
     const selectMins = document.getElementById("sidebarPomoMinutes")?.value || 25;
-    this.sidebarPomoRemainingSeconds = parseInt(selectMins) * 60;
-    
+    this.sidebarPomoHedefDk = parseInt(selectMins, 10) || 25;
+    this.sidebarPomoRemainingSeconds = this.sidebarPomoHedefDk * 60;
+
     const btn = document.getElementById("sidebarPomoBtn");
     if (btn) btn.textContent = "Başlat";
-    
+
     this.updateSidebarPomoDisplay();
   },
 
   changeSidebarPomoMinutes: function(mins) {
     clearInterval(this.sidebarPomoTimerInterval);
     this.sidebarPomoIsRunning = false;
-    this.sidebarPomoRemainingSeconds = parseInt(mins) * 60;
-    
+    this.sidebarPomoBitisTs = null;
+    this.sidebarPomoHedefDk = parseInt(mins, 10) || 25;
+    this.sidebarPomoRemainingSeconds = this.sidebarPomoHedefDk * 60;
+
     const btn = document.getElementById("sidebarPomoBtn");
     if (btn) btn.textContent = "Başlat";
-    
+
     this.updateSidebarPomoDisplay();
   },
 
@@ -16992,6 +17070,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
           summaryShown: parsed.summaryShown && typeof parsed.summaryShown === "object" ? parsed.summaryShown : {},
           subscriptionTier: parsed.subscriptionTier || "pending",
           trialStartDate: parsed.trialStartDate || null,
+          pomodoroKayitlari: Array.isArray(parsed.pomodoroKayitlari) ? parsed.pomodoroKayitlari : [],
           theme: parsed.theme || "classic",
           diagnosticAccuracy: parsed.diagnosticAccuracy !== undefined ? parsed.diagnosticAccuracy : null,
           currentPositionRank: parsed.currentPositionRank !== undefined ? parsed.currentPositionRank : null,
