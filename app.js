@@ -1,10 +1,9 @@
 // APP CONFIG (H-001 / H-002)
 const APP_CONFIG = {
-  ENV: (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') ? 'development' : 'production',
+  // NOT: ENV alani kaldirildi — hicbir yerde okunmuyordu.
   LOGGING_ENDPOINT: '',
-  setLoggingEndpoint: function(url) {
-    this.LOGGING_ENDPOINT = url;
-  }
+  // NOT: setLoggingEndpoint() kaldirildi — uzak telemetri kapali,
+  // uc nokta hicbir yerden atanmiyordu.
 };
 // Uzak hata telemetrisi VARSAYILAN OLARAK KAPALIDIR.
 // Eskiden uygulama localhost disinda calisir calismaz hata mesajlarini,
@@ -2799,9 +2798,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     this.checkHabitsFeedback(false);
   },
 
-  prevWizardPage: function() {
-    this.showWizardPage(1);
-  },
+  // NOT: prevWizardPage() kaldirildi — showWizardPage(1) dogrudan cagriliyor.
 
   // 2025 YKS (ÖSYM): puan türüne göre sıralamaya giren aday sayıları
   OSYM_2025_RANKED: {
@@ -5792,42 +5789,8 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     }
   },
 
-  toggleTaskCompleted: function(taskId, checkbox) {
-    // Salt okunur mod: program gorunur ama isaretlenemez.
-    if (this.saltOkunurMu()) {
-      if (checkbox) checkbox.checked = !checkbox.checked;   // isareti geri al
-      this.ozellikKilidiUyar("programOlustur");
-      return;
-    }
-    const activeDayData = this.state.daysData[this.state.activeDay];
-    const task = activeDayData.tasks.find(t => t.id === taskId);
-
-    if (checkbox.checked) {
-      const isQuiz = task.type === "quiz" || 
-                     task.type === "common" || 
-                     task.type === "retest" || 
-                     task.type === 'question' || 
-                     (task.qCount && task.qCount > 0) || 
-                     (task.questionCount && task.questionCount > 0) || 
-                     (task.label && task.label.toLowerCase().includes('test')) || 
-                     (task.desc && task.desc.toLowerCase().includes('test')) ||
-                     (task.label && task.label.toLowerCase().includes('soru')) ||
-                     (task.desc && task.desc.toLowerCase().includes('soru'));
-      if (isQuiz) {
-        task.isLogging = true;
-        checkbox.checked = false;
-        this.renderDashboard();
-      } else {
-        task.completed = true;
-        this.checkDayCompletedState();
-        this.renderDashboard();
-        
-        this.checkBadgeAwardsOnLog(task);
-        this.calculateFocusScore();
-        this.saveState();
-      }
-    }
-  },
+  // NOT: toggleTaskCompleted() kaldirildi — gorev isaretleme artik
+  // toggleTodayTaskCompleted(gun, index) uzerinden yurur.
 
   // ==========================================================
   // ARALIKLI TEKRAR (SPACED REPETITION) — AKTİF
@@ -6309,8 +6272,14 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     }
   },
 
-  triggerEndDayCheck: function() {
-    const activeDayData = this.state.daysData[this.state.activeDay];
+  // Gunun tum gorevleri bitince kutlama + veli raporu onerisi.
+  // NOT: bu fonksiyon yazilmis ama hicbir yerden cagrilmiyordu; gun sonu
+  // ekrani hic gorunmuyordu. Artik gorev isaretleme akislarinin ikisinden
+  // de tetikleniyor (normal gorev ve deneme/test puani girisi).
+  triggerEndDayCheck: function(gunNo) {
+    const gun = (typeof gunNo === "number") ? gunNo : this.state.activeDay;
+    const activeDayData = this.state.daysData && this.state.daysData[gun];
+    if (!activeDayData || !Array.isArray(activeDayData.tasks) || activeDayData.tasks.length === 0) return;
     const isCompleted = activeDayData.tasks.every(t => t.completed);
 
     if (isCompleted) {
@@ -8572,6 +8541,20 @@ normalizeClause: function(clause) {
       const timeRange = task.startTime && task.endTime ? `${task.startTime}–${task.endTime}` : cleanDuration;
       const aiBadges = this.getTaskAIBadgesHTML(task, activeDay);
 
+      // Dogrulanmis soru bankasindan mini test. openOdtTest() yazilmis ama
+      // hicbir yerden cagrilmiyordu: odtModal ve 400 soruluk banka
+      // erisilemez duruyordu. Dugme yalnizca o konu/ders icin gercekten
+      // dogrulanmis soru varsa cikar; bos bir test ekrani acilmaz.
+      let testBtn = "";
+      if (!isCompleted && task.subject && task.topic && !this.saltOkunurMu()) {
+        const banka = this.getOdtQuestions(task.subject, task.topic);
+        if (banka.questions.length >= 5) {
+          const g = app.escapeHtml(String(task.subject)).replace(/'/g, "&#39;");
+          const k = app.escapeHtml(String(task.topic)).replace(/'/g, "&#39;");
+          testBtn = `<button class="btn btn-secondary" style="padding:0.25rem 0.55rem; font-size:0.7rem; font-weight:800; white-space:nowrap;" onclick="event.stopPropagation(); app.openOdtTest(${activeDay}, '${app.escapeHtml(String(task.id)).replace(/'/g, "&#39;")}', '${g}', '${k}')"><i class="fa-solid fa-list-check"></i> Teste Başla</button>`;
+        }
+      }
+
       card.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%;">
           <div style="display:flex; align-items:center; gap:0.75rem; text-align:left;">
@@ -8584,6 +8567,7 @@ normalizeClause: function(clause) {
             </div>
           </div>
           <div style="display:flex; align-items:center; gap:0.5rem; flex-shrink:0;">
+            ${testBtn}
             ${showBadge ? `<span class="task-badge ${badgeClass}">${badgeLabel}</span>` : ""}
             <span style="font-size:0.8rem; color:var(--text-muted); font-variant-numeric:tabular-nums; white-space:nowrap;" title="${app.escapeHtml(cleanDuration)}"><i class="fa-regular fa-clock"></i> ${timeRange}</span>
             ${this.state.selectedProgramType === "custom" ? `
@@ -8604,6 +8588,17 @@ normalizeClause: function(clause) {
   },
 
   toggleTodayTaskCompleted: function(dayNum, taskIdx) {
+    // Salt okunur mod (deneme suresi bitti): program gorunur ama
+    // isaretlenemez. Bu denetim yalnizca artik kaldirilmis olan eski
+    // toggleTaskCompleted() icinde duruyordu; canli yol olan bu fonksiyonda
+    // hic yoktu — yani suresi dolmus kullanici gorev isaretlemeye devam
+    // edebiliyordu.
+    if (this.saltOkunurMu()) {
+      this.ozellikKilidiUyar("programOlustur");
+      this.renderTodayPanel();
+      return;
+    }
+
     const dayData = this.state.daysData[dayNum];
     if (dayData && dayData.tasks[taskIdx]) {
       const task = dayData.tasks[taskIdx];
@@ -8668,6 +8663,8 @@ normalizeClause: function(clause) {
       this.renderDashboard();
       this.renderTodayPanel();
       this.saveState();
+
+      if (allDone && task.completed) this.triggerEndDayCheck(dayNum);
     }
   },
 
@@ -9040,12 +9037,12 @@ normalizeClause: function(clause) {
     this.renderVaultQuestions();
     this.triggerCoachCommentary("Deneme Sınavı Tamamlandı");
     this.saveState();
+
+    if (allDone) this.triggerEndDayCheck(dayNum);
   },
 
-  // Alias for backwards compatibility
-  showAddCustomTaskModal: function() {
-    this.openAddCustomTaskModal();
-  },
+  // NOT: showAddCustomTaskModal() kaldirildi — openAddCustomTaskModal()
+  // icin cagrilmayan bir takma addi.
 
   // ============================================================
   // ÇALIŞMA TEMPOSU — tempo profilleri, program farkı ve
@@ -9434,26 +9431,8 @@ normalizeClause: function(clause) {
   },
 
   // TAB 2: Curriculum Map (Specific MEB Kazanım haritası)
-  isCurriculumTopicDone: function(subjectCategory, topic) {
-    if (!this.state.topicStatuses) this.state.topicStatuses = {};
-    
-    // Clean prefix like 'TYT Matematik' or 'AYT Matematik' to 'Matematik'
-    let cleanSubj = "";
-    const lower = subjectCategory.toLowerCase();
-    if (lower.includes("matematik")) cleanSubj = "Matematik";
-    else if (lower.includes("türkçe") || lower.includes("türkce")) cleanSubj = "Türkçe";
-    else if (lower.includes("edebiyat")) cleanSubj = "Edebiyat";
-    else if (lower.includes("fizik")) cleanSubj = "Fizik";
-    else if (lower.includes("kimya")) cleanSubj = "Kimya";
-    else if (lower.includes("biyoloji")) cleanSubj = "Biyoloji";
-    else if (lower.includes("tarih")) cleanSubj = "Tarih";
-    else if (lower.includes("coğrafya") || lower.includes("cografya")) cleanSubj = "Coğrafya";
-    else cleanSubj = subjectCategory;
-
-    const topicKey = `${cleanSubj} - ${topic}`;
-    const entry = this.state.topicStatuses[topicKey];
-    return entry && entry.status === "Ogrenildi";
-  },
+  // NOT: isCurriculumTopicDone() kaldirildi — konu durumu artik dogrudan
+  // state.topicStatuses uzerinden okunuyor.
 
   renderCurriculumMap: function() {
     const phasesContainer = document.getElementById("phasesContainer");
@@ -9714,10 +9693,8 @@ normalizeClause: function(clause) {
     if (currProgressBarEl) currProgressBarEl.style.width = `${combinedPct}%`;
   },
 
-  changeCurriculumSubject: function(sub) {
-    this.state.activeCurriculumSubject = sub;
-    this.renderCurriculumMap();
-  },
+  // NOT: changeCurriculumSubject() kaldirildi — mufredat haritasi ders
+  // secimini renderCurriculumMap icinden kendisi yonetiyor.
 
   // Department-based target net data (approximate YKS placement targets)
   getDeptTargetNets: function() {
@@ -12467,654 +12444,10 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     });
   },
 
-  cleanQueryToTopicName: function(query) {
-    // Remove common user action phrases and clean query to extract clean topic title
-    let cleaned = query.toLowerCase()
-      .replace(/(yazdım|yazdim|anlamadım|anlamadim|yapamadım|yapamiyorum|karıştırıyorum|karistiriyorum|nedir|nasıl|nasil|sorusu|konusu|hakkında|hakkinda|çözümü|cozumu|yardım|yardim|öneri|önerisi|taktik|taktikleri|özeti|ozeti)/g, "")
-      .replace(/[.,\/#!$%\^&\*;:{}=\-_\x60~()?]/g, "")
-      .trim();
-    
-    if (!cleaned) return "YKS Genel Başarı";
-    // Capitalize first letter
-    return cleaned.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-  },
+  // NOT: cleanQueryToTopicName() kaldirildi — cagrilmayan bir yardimciydi.
 
-  generate50SentenceSummary: function(topic, subject) {
-    const sentences = [];
-    
-    // Normalize topic for exact matching of pre-defined DB
-    const cleanTopic = topic.trim();
-
-    // 1. Pre-defined database for core YKS topics (Trigonometri, Logaritma, Limit, Türev, İntegral, Polinomlar, Optik, Mol, Hücre)
-    if (cleanTopic === "Logaritma") {
-      sentences.push(
-        "Logaritma fonksiyonu, üstel fonksiyon olan \\(f(x) = a^x\\) fonksiyonunun tersidir.",
-        "Logaritma tabanı olan \\(a\\) sayısı daima sıfırdan büyük ve 1'den farklı olmak zorundadır.",
-        "Logaritması alınan sayı daima pozitif gerçek sayı olmak zorundadır; aksi takdirde fonksiyon tanımsızdır.",
-        "\\(\\log_a x = y\\) ifadesi, üstel olarak \\(a^y = x\\) şeklinde yazılır.",
-        "Tabanı 10 olan logaritmaya onluk (adi) logaritma denir ve taban genellikle yazılmaz (\\(\\log x\\)).",
-        "Tabanı Euler sayısı \\(e \\approx 2.718\\) olan logaritmaya doğal logaritma denir ve \\(\\ln x\\) ile gösterilir.",
-        "Bir çarpımın logaritması, çarpanların logaritmalarının toplamına eşittir: \\(\\log_a (x \\cdot y) = \\log_a x + \\log_a y\\).",
-        "Bir bölümün logaritması, pay ile paydanın logaritmalarının farkına eşittir: \\(\\log_a (x / y) = \\log_a x - \\log_a y\\).",
-        "Logaritması alınan sayının üssü başa katsayı olarak çarpım durumunda geçer: \\(\\log_a x^n = n \\cdot \\log_a x\\).",
-        "Logaritma tabanının üssü başa katsayı olarak bölüm durumunda geçer: \\(\\log_{a^m} x = \\frac{1}{m} \\cdot \\log_a x\\).",
-        "Taban değiştirme kuralı en sık sorulan YKS konusudur ve \\(\\log_a b = \\frac{\\log_c b}{\\log_c a}\\) olarak ifade edilir.",
-        "Bir logaritma ifadesinin çarpmaya göre tersi alınırsa taban ve sayı yer değiştirir: \\(\\log_a b = \\frac{1}{\\log_b a}\\\. ",
-        "Zincir kuralı gereğince ardışık çarpımlarda sadeleştirme yapılabilir: \\(\\log_a b \\cdot \\log_b c \\cdot \\log_c d = \\log_a d\\).",
-        "Logaritmanın tabanı ile tabanının üzerindeki logaritmanın sayısının tabanı aynı ise sonuç doğrudan sayıdır: \\(a^{\\log_a x} = x\\).",
-        "Herhangi bir tabanda 1'in logaritması daima sıfırdır: \\(\\log_a 1 = 0\\).",
-        "Logaritmik denklemler çözülürken elde edilen köklerin tanım aralığını sağlaması zorunludur.",
-        "Logaritmik eşitsizliklerde taban 1'den büyükse eşitsizlik yönü aynen korunur.",
-        "Logaritmik eşitsizliklerde taban 0 ile 1 arasındaysa eşitsizlik yön değiştirmek zorundadır.",
-        "Üstel fonksiyon \\(f(x) = a^x\\), taban \\(a > 1\\) ise artan bir grafik belirtir.",
-        "Üstel fonksiyon \\(f(x) = a^x\\), taban \\(0 < a < 1\\) ise azalan bir grafiktir.",
-        "Logaritma fonksiyonunun grafiği, düşey asimptot olan \\(x=0\\) doğrusuna yaklaşır ancak kesmez.",
-        "Logaritma grafikleri, üstel grafiklerin \\(y=x\\) doğrusuna göre simetriğidir.",
-        "Logaritma fonksiyonu birebir ve örten olduğu için daima ters fonksiyonu alınabilir.",
-        "\\(f(x) = \\log_a (g(x))\\) fonksiyonunun tanımlı olması için \\(g(x) > 0\\) olmalıdır.",
-        "Onluk tabandaki logaritma değerleri, bir sayının kaç basamaklı olduğunu bulmada kullanılır.",
-        "Basamak sayısı hesaplanırken sayının 10 tabanındaki logaritmasının tam kısmına 1 eklenir.",
-        "Doğal logaritma \\(\\ln x\\), türev ve integral işlemlerinde temel teşkil eder.",
-        "pH dereceleri, deprem şiddeti ve ses düzeyi logaritmik ölçekle hesaplanır.",
-        "Üstel denklemlerde değişken değiştirme (örn: \\(a^x = t\\)) yöntemi sıklıkla kullanılır.",
-        "Logaritmada iki farklı taban varsa en küçük ortak tabana geçiş yapılmalıdır.",
-        "Grafik sorularında eksenleri kesen noktalar denklemi doğrulamak zorundadır.",
-        "Köklü sayı içeren logaritma sorularında kök, rasyonel üs olarak başa taşınır.",
-        "Ardışık logaritma içeren ifadelerde en dıştaki logaritmadan başlanarak çözülür.",
-        "Logaritma fonksiyonunun tanım kümesindeki şartların hepsi ortak kesiştirilerek çözüm kümesi bulunur.",
-        "\\(\\log 2 = a\\) ise \\(\\log 5 = 1 - a\\) kuralı sınavda en sık kullanılan pratik bilgidir.",
-        "Logaritma çarpanı içeren denklemlerde kökler toplamı veya çarpımı sorulabilir.",
-        "Üssü logaritmalı denklemlerde her iki tarafın logaritması alınarak çözüm yapılır.",
-        "Yeni nesil logaritma sorularında cetvel uzunlukları veya geometrik şekiller kullanılır.",
-        "Soru bankalarındaki logaritma sorularını çözmeden önce üslü sayı kurallarını iyice tekrar etmelisin.",
-        "Logaritma konusu AYT sınavında her yıl en az 2 adet doğrudan soru getirmektedir."
-      );
-    } else if (cleanTopic === "Limit ve Süreklilik" || cleanTopic === "Limit") {
-      sentences.push(
-        "Limit, bir değişkenin bir sayıya yaklaşırken fonksiyonun ulaştığı veya yaklaştığı sınır değerdir.",
-        "Bir fonksiyonun bir noktada limitinin olması için sağdan ve soldan limitlerinin eşit olması gerekir.",
-        "Sağdan limit \\(x \\to a^+\\) ve soldan limit \\(x \\to a^-\\) şeklinde sembolize edilir.",
-        "Süreklilik için fonksiyonun o noktada tanımlı olması, limitinin olması ve limitinin o noktadaki değerine eşit olması şarttır.",
-        "Eğer limit değeri fonksiyonun o noktadaki görüntüsüne eşit değilse fonksiyon o noktada süreksizdir.",
-        "Limit hesaplarında en sık karşılaşılan belirsizlik durumu \\(\\frac{0}{0}\\) belirsizliğidir.",
-        "\\(\\frac{0}{0}\\) belirsizliğini gidermek için çarpanlara ayırma, eşlenikle çarpma veya sadeleştirme metotları uygulanır.",
-        "Süreklilik grafiklerinde kopma veya sıçrama olan noktalarda fonksiyon süreksiz ve limitsizdir.",
-        "Grafikte sadece içi boş bir nokta (delik) varsa, o noktada limit vardır ancak süreklilik yoktur.",
-        "Polinom fonksiyonlar tüm gerçek sayılar kümesinde daima limitli ve süreklidir.",
-        "Rasyonel fonksiyonlar, paydayı sıfır yapan noktalarda süreksizdir ve genellikle tanımsızdır.",
-        "Kök derecesi çift olan köklü fonksiyonlar, kök içi negatif olduğunda tanımsız ve süreksizdir.",
-        "Mutlak değerli fonksiyonlarda limit alınırken mutlak değerin içini sıfır yapan kritik noktalara dikkat edilmelidir.",
-        "Limit işlemlerinde sabit sayının limiti kendisidir ve limit toplama/çıkarma/çarpma işlemlerine dağılabilir.",
-        "Süreklilik ile limit arasındaki temel fark, sürekliliğin o noktadaki tanımlılığı ve eşitliği şart koşmasıdır.",
-        "Bileşke fonksiyon limitlerinde içteki limitin yönü dıştaki fonksiyon için önemlidir.",
-        "Trigonometrik limit sorularında sadeleştirme formülleri kullanılır.",
-        "Bir fonksiyon sürekli olduğu bir aralıkta limiti de daima mevcuttur.",
-        "Grafikte sıçrama noktalarında sağ ve sol limitler farklı olduğundan limit yoktur.",
-        "Grafikte içi boş delik noktalarında limit vardır ancak süreklilik yoktur.",
-        "Süreklilik fonksiyonun grafiğini kalemi kaldırmadan çizebilme durumudur.",
-        "Tanımsız olan noktalarda fonksiyon sürekliliğinden bahsedilemez.",
-        "Belirli bir aralıkta sürekli fonksiyonlar o aralıkta sınırlıdır.",
-        "Ara Değer Teoremi, sürekli fonksiyonların aldığı değerler arasındaki tüm değerleri alacağını söyler.",
-        "Ekstremum değer teoremi sürekli fonksiyonların mutlak maks/min değerlerine ulaşacağını söyler.",
-        "Limit limit kuralları yardımıyla belirsiz durumları sayısal sonuçlara bağlar.",
-        "Logaritmik fonksiyonlarda limit alınırken tanım kümesi dışına çıkılmamalıdır.",
-        "Üstel fonksiyonlarda limit tabana göre doğrudan hesaplanabilir.",
-        "Sonsuza giden limitler müfredatta sadeleştirilmiş olup belirsizlik durumları kaldırılmıştır.",
-        "Limit sorularında grafik okurken x eksenindeki yaklaşım yönünü parmakla takip etmek hatayı azaltır.",
-        "Rasyonel ifadelerde pay ve paydanın ortak çarpanları sadeleştirildikten sonra limit değeri yazılır.",
-        "Süreksizlik noktalarının kümesini bulmak için paydanın kökleri incelenir.",
-        "Tanımlı ve sürekli fonksiyonlarda limit değeri doğrudan görüntüdür.",
-        "Sandviç (Sıkıştırma) Teoremi, bir fonksiyonu iki bilinen fonksiyon arasına alarak limit bulmayı sağlar.",
-        "Limit sıfıra yaklaşırken sinüs ve tanjant oranları pratik yolla çözülebilir.",
-        "Süreklilik için tek bir şartın bile ihlal edilmesi süreksizlik için yeterlidir.",
-        "Fonksiyonun grafiğinde asimptotların olduğu dikey doğrularda limit sonsuza gider (limit yoktur).",
-        "Limit hesaplarken değişken dönüşümleri yapmak işleri kolaylaştırabilir.",
-        "Yeni nesil limit sorularında grafik yorumları ve öncüllü sorular sıklıkla karşımıza çıkar.",
-        "YKS'de limit ve süreklilik konusu türevin temelini oluşturduğu için tam öğrenilmelidir."
-      );
-    } else if (cleanTopic === "Türev") {
-      sentences.push(
-        "Türev, bir fonksiyonun bir noktadaki anlık değişim oranı ve geometrik olarak teğetinin eğimidir.",
-        "Bir fonksiyonun \\(x_0\\) noktasındaki türevi \\(f'(x_0) = \\lim_{h \\to 0} \\frac{f(x_0+h) - f(x_0)}{h}\\) limitidir.",
-        "Türevin olabilmesi için fonksiyonun o noktada kesinlikle sürekli olması şarttır; süreksiz noktada türev alınamaz.",
-        "Süreklilik türev için gerekli şarttır fakat yeterli değildir; kırılma noktalarında (sivri uçlarda) türev yoktur.",
-        "Teğet denklemi yazılırken teğetin eğimi türev yardımıyla bulunur: \\(m = f'(x_0)\\).",
-        "Normal doğrusu teğet doğrusuna diktir ve eğimleri çarpımı -1'dir: \\(m_{te\\u011fet} \\cdot m_{normal} = -1\\).",
-        "Bir fonksiyonun türevinin pozitif olduğu aralıklarda fonksiyon artan, negatif olduğu aralıklarda azalandır.",
-        "Artanlıktan azalanlığa geçilen yerel maksimum noktalarında ve azalanlığa geçilen yerel minimum noktalarında türev sıfırdır.",
-        "Türevin sıfır olduğu her nokta ekstremum noktası olmak zorunda değildir; çift katlı köklerde yön değişimi olmaz.",
-        "Maksimum-minimum problemleri çözülürken istenen ifade tek değişkene indirgenip türevi alınarak sıfıra eşitlenir.",
-        "Çarpımın türevi: \\((f \\cdot g)' = f' \\cdot g + f \\cdot g'\\) formülü ile hesaplanır.",
-        "Bölümün türevi: \\((f / g)' = \\frac{f' \cdot g - f \\cdot g'}{g^2}\\) formülü ile hesaplanır.",
-        "Bileşke fonksiyonun türevinde zincir kuralı uygulanır: \\((f(g(x)))' = f'(g(x)) \\cdot g'(x)\\).",
-        "Sabit fonksiyonun türevi daima sıfırdır ve dereceli terimlerin türevinde derece başa çarpım olarak gelip 1 azalır.",
-        "Türevin fiziksel anlamı, yolun zamana göre türevinin hızı, hızın zamana göre türevinin ise ivmeyi vermesidir.",
-        "Teğet denklemi \\(y - y_0 = m_t \\cdot (x - x_0)\\) formülüyle kurulur.",
-        "Rolles Teoremi ve Ortalama Değer Teoremi, türevlenebilir fonksiyonların eğim ilişkilerini açıklar.",
-        "Bir fonksiyonun ikinci türevi büküm (dönüm) noktaları ve konkavlık hakkında bilgi verir.",
-        "Grafik sorularında eksenlerin \\(f(x)\\) mi yoksa \\(f'(x)\\) mi olduğuna mutlaka bakılmalıdır.",
-        "\\(f'(x)\\) grafiğinde işaretin artıdan eksiye geçtiği yer yerel maksimumdur.",
-        "\\(f'(x)\\) grafiğinde işaretin eksiden artıya geçtiği yer yerel minimumdur.",
-        "Sabit sayıyla çarpılan fonksiyonun türevinde sabit sayı dışarı alınabilir.",
-        "Toplam ve farkın türevi ayrı ayrı türevlerin toplamı ve farkıdır.",
-        "Mutlak değer fonksiyonunun türevinde kritik noktalarda sağ ve sol türev incelenir.",
-        "Kritik nokta dışındaki mutlak değer türevinde işaret belirlenip normal türev alınır.",
-        "Parametrik türevde zincir kuralı yardımıyla türev değişkenleri birbirine oranlanır.",
-        "Teğet doğrusu x eksenine paralel ise teğet eğimi sıfırdır, yani o noktada türev sıfırdır.",
-        "Teğet doğrusu y eksenine paralel ise türev tanımsızdır.",
-        "Türevlenebilir bir fonksiyonun yerel ekstremum noktalarında çizilen teğetler x eksenine paraleldir.",
-        "Bir fonksiyonun artan olduğu aralıkta grafiği yukarı yönlü bir eğri çizer.",
-        "Bir fonksiyonun azalan olduğu aralıkta grafiği aşağı yönlü bir eğri çizer.",
-        "İkinci türevin pozitif olduğu yerde fonksiyon dışbükey (kolları yukarı), negatifse içbükeydir.",
-        "Maks-min sorularında çevre, alan veya hacim formüllerinden yararlanılarak bağıntı kurulur.",
-        "Türevin geometrik yorumu YKS'de en çok soru getiren kısımlardan biridir.",
-        "Diferansiyel kavramı, türevin değişkenin değişimiyle çarpımıdır: \\(dy = f'(x)dx\\).",
-        "Trigonometrik fonksiyonların türevleri müfredat dışı bırakılmıştır.",
-        "Logaritmik ve üstel fonksiyonların türevleri YKS müfredatında yer almamaktadır.",
-        "Limit sorularının çözümünde bazen türev tanımından yararlanmak pratiklik sağlar.",
-        "Türev grafiği çizerken kritik noktaların eğimlerini ve yönlerini doğru işaretlemelisin.",
-        "YKS'de türev konusundan ortalama 3-4 soru çıkmaktadır ve integralin temelidir."
-      );
-    } else if (cleanTopic === "İntegral") {
-      sentences.push(
-        "İntegral, türevi bilinen bir fonksiyonun kendisini bulma (belirsiz) veya eğri altındaki alanı hesaplama (belirli) işlemidir.",
-        "Belirsiz integral hesaplanırken sonucun sonuna daima bir integral sabiti olan \\(+c\\) eklenmelidir.",
-        "İntegral alma işlemi, türev alma işleminin tam tersi olarak derecenin 1 artırılıp yeni dereceye bölünmesidir.",
-        "Değişken değiştirme yöntemi, karmaşık integral ifadelerini \\(u\\) ve \\(du\\) dönüşümleriyle basitleştirme metodudur.",
-        "Belirli integral geometrik olarak, fonksiyon eğrisi ile x ekseni arasında kalan yönlü alanları temsil eder.",
-        "Belirli integralde sınırlar yer değiştirdiğinde integralin işareti değişir: \\(\\int_a^b f(x)dx = -\\int_b^a f(x)dx\\).",
-        "İntegral toplama ve çıkarma işlemleri üzerine dağılabilir fakat çarpma ve bölme işlemleri üzerine dağılamaz.",
-        "Eğrinin x ekseninin altında kaldığı bölgelerde belirli integralin sonucu negatif çıkar, ancak alan daima pozitiftir.",
-        "İki eğri arasında kalan alan üstteki fonksiyondan alttaki fonksiyon çıkarılarak hesaplanır: \\(\\int [f(x) - g(x)]dx\\).",
-        "Tek fonksiyonların simetrik sınırlardaki belirli integrali sıfırır: \\(\\int_{-a}^a tek(x)dx = 0\\).",
-        "Çift fonksiyonların simetrik sınırlardaki belirli integrali yarısının iki katıdır: \\(\\int_{-a}^a cift(x)dx = 2\\int_0^a cift(x)dx\\).",
-        "Türevi alınan bir ifadenin integrali kendisini verir: \\(\\int f'(x)dx = f(x) + c\\).",
-        "İntegral sembolünün dışındaki diferansiyel işlemi integrali yok eder: \\(d(\\int f(x)dx) = f(x)dx\\).",
-        "Riemann toplamı, belirli integrali dikdörtgenlerin alanları toplamı limitine dayandırarak tanımlayan yaklaşımdır.",
-        "Parçalı fonksiyonların integrali alınırken sınırlar kritik noktalara göre parçalanarak ayrı ayrı hesaplanmalıdır.",
-        "Değişken değiştirmede türevi olan ifadenin yanına dx getirilerek du yazılması unutulmamalıdır.",
-        "Belirli integralde sınırların da değişken dönüşümüne göre güncellenmesi zorunludur.",
-        "İntegral alan hesaplarında eksenlerin yönü ve kesişim sınırları grafik üzerinden belirlenir.",
-        "Yatay doğrulara göre alan hesaplarken fonksiyonu y cinsinden yazmak kolaylık sağlayabilir.",
-        "Riemann toplamı üstten ve alttan Riemann toplamları olarak iki farklı yaklaşımla hesaplanır.",
-        "Alt Riemann toplamı daima gerçek alandan küçük, üst Riemann toplamı ise gerçek alandan büyüktür.",
-        "İntegral alma kurallarında üslü ve köklü ifadelerin üs formatına çevrilmesi işlemi hızlandırır.",
-        "Bölüm durumundaki rasyonel integrallerde payda tek terimliyse terim terim bölme yapılır.",
-        "İntegral sembolü dışındaki sabit sayılar integralin dışına çarpan olarak alınabilir.",
-        "Belirli integralin türevi daima sıfırdır çünkü belirli integralin sonucu sabit bir sayıdır.",
-        "Belirsiz integralin türevi ise içerideki fonksiyonun kendisine eşittir.",
-        "Diferansiyel sembolü olan d ve integral sembolünün sırası işleme etki eder.",
-        "Eğrinin y ekseniyle arasında kalan alan hesaplanırken integral y değişkenine göre kurulur.",
-        "İntegral sınırları arasında fonksiyonun süreksiz olduğu bir nokta varsa integral parçalanarak çözülür.",
-        "Trigonometrik fonksiyonların integral alma kuralları YKS müfredatında yer almamaktadır.",
-        "Logaritmik ve üstel integral alma kuralları müfredattan kaldırılmıştır.",
-        "Riemann integrali, YKS'de genellikle şekilli veya grafik yorumu olarak sorulmaktadır.",
-        "Alan sorularında integral almadan pratik olarak üçgen veya yamuk alanı hesaplanabilen durumlar kontrol edilmelidir.",
-        "Simetrik aralıklarda integral alırken tek/çift fonksiyon özelliklerini kontrol etmek zaman kazandırır.",
-        "Değişken değiştirme yaparken u olarak seçilecek kısım genellikle derecesi büyük olan ifadedir.",
-        "Diferansiyel alma işleminde türev aldıktan sonra yanına dx eklemeyi unutmamalısın.",
-        "Belirli integral alan hesaplarında grafik çizimi yapmak sınırları görmeyi kolaylaştırır.",
-        "İntegral hesabı bittiğinde belirsiz integral için sabit sayı olan c'yi eklemeyi unutma.",
-        "Konuyu pekiştirmek için türev ile integral arasındaki geçiş bağıntılarını çok iyi kavramalısın.",
-        "YKS AYT sınavında integral konusundan her yıl 3 adet soru sorulmaktadır."
-      );
-    } else if (cleanTopic === "Trigonometri") {
-      sentences.push(
-        "Trigonometri, bir dik üçgenin açıları ile kenar uzunlukları arasındaki oranları inceleyen matematik dalıdır.",
-        "Birim çember, merkezi başlangıç noktası ve yarıçapı 1 birim olan çemberdir; denklemi \\(x^2 + y^2 = 1\\)'dir.",
-        "Birim çember üzerindeki herhangi bir noktanın x koordinatı kosinüs, y koordinatı ise sinüs değerini verir.",
-        "Her açı için sinüs ve kosinüs değerleri daima \\([-1, 1]\\) kapalı aralığında olmak zorundadır.",
-        "Tanjant değeri karşı kenarın komşu kenara oranı, kotanjant değeri ise komşu kenarın karşı kenara oranıdır.",
-        "Temel trigonometrik kimliklerden en önemlisi her \\(x\\) açısı için \\(\\sin^2 x + \\cos^2 x = 1\\) olmasıdır.",
-        "Toplam ve fark formülleri: \\(\\sin(a+b) = \\sin a \\cos b + \\cos a \\sin b\\) şeklinde açılır.",
-        "Kosinüs toplam formülü kosinüslerin çarpımından sinüslerin çarpımının çıkarılmasıdır: \\(\\cos(a+b) = \\cos a \\cos b - \\sin a \\cos b\\).",
-        "Yarım açı formülü: \\(\\sin 2x = 2 \\sin x \\cos x\\) en çok sadeleştirme sorularında karşımıza çıkar.",
-        "Kosinüs yarım açı formülü 3 farklı şekilde yazılabilir: \\(\\cos 2x = \\cos^2 x - \\sin^2 x = 2\\cos^2 x - 1 = 1 - 2\\sin^2 x\\).",
-        "Kosinüs teoremi, iki kenarı ve aradaki açısı bilinen üçgende üçüncü kenarı bulmaya yarar: \\(a^2 = b^2 + c^2 - 2bc\\cos A\\).",
-        "Sinüs teoremi, kenar uzunluklarının karşılarındaki açıların sinüslerine oranının sabit ve çevre çemberin çapına eşit olduğunu söyler.",
-        "Trigonometrik denklemleri çözerken tanım aralığındaki periyodik kök formüllerini eklemeyi unutmamalısın.",
-        "Ters trigonometrik fonksiyonlar (arcsin, arccos, arctan) trigonometrik oranların açı değerini veren ters fonksiyonlardır.",
-        "Sıralama sorularında tüm oranları birinci bölgeye taşıyıp sinüs ve tanjanta çevirerek karşılaştırma yapmak kolaylık sağlar.",
-        "Trigonometrik sadeleştirmelerde tanjant yerine sin/cos, kotanjant yerine cos/sin yazarak işlem yapılır.",
-        "Sekant \\(1/\\cos x\\) ve kosekant \\(1/\\sin x\\) olarak temel fonksiyonlara dönüştürülmelidir.",
-        "Açı indirgemelerinde açının eksenle yaptığı açıya göre ismi değişir (90 ve 270 derecede isim değişir).",
-        "180 ve 360 derecelik indirgemelerde trigonometrik fonksiyonun ismi değişmez, sadece bölge işareti belirlenir.",
-        "Trigonometrik fonksiyonların periyotları hesaplanırken sinüs/kosinüsün derecesine ve açının katsayısına bakılır.",
-        "Periyodik grafik çizimlerinde açı değerleri yerine yazılarak fonksiyonun aldığı genlik noktaları bulunur.",
-        "Sinüs fonksiyonunun grafiği orijinden başlar, kosinüs fonksiyonunun grafiği ise tepe noktasından başlar.",
-        "Ters trigonometrik fonksiyonlarda arcsin ve arctan fonksiyonlarının değer kümesi \\([-\\pi/2, \\pi/2]\\) aralığındadır.",
-        "Arccos fonksiyonunun değer kümesi ise \\([0, \\pi]\\) aralığındadır.",
-        "Trigonometrik denklemlerde \\(\\sin x = \\sin a\\) ise kökler \\(x = a + 2k\\pi\\) veya \\(x = \\pi - a + 2k\\pi\\) olarak bulunur.",
-        "Kosinüs denklemlerinde \\(\\cos x = \\cos a\\) ise kökler \\(x = a + 2k\\pi\\) veya \\(x = -a + 2k\\pi\\) şeklindedir.",
-        "Tanjant ve kotanjant denklemlerinde periyot \\(\\pi\\) olduğu için tek kök formülü \\(x = a + k\\pi\\) yeterlidir.",
-        "Geometrik şekilli trigonometri sorularında dik üçgen oluşturacak ek çizimler yapılmalıdır.",
-        "Yarım açı formüllerini uygularken cos2x'in içindeki 1'i yok edecek açılımı seçmek kolaylık sağlar.",
-        "Trigonometrik özdeşliklerde içler dışlar çarpımı yaparak sadeleştirmeleri hızabilirsin.",
-        "Birim çember üzerindeki sinüs ekseni düşey eksen, kosinüs ekseni yatay eksendir.",
-        "Tanjant ekseni x=1 doğrusu, kotanjant ekseni ise y=1 doğrusudur.",
-        "Radyan ve derece cinsinden açı dönüşümlerinde \\(D/180 = R/\\pi\\) formülü kullanılır.",
-        "Esas ölçü bulunurken derece 360'a, radyan ise paydanın iki katına bölünerek kalan bulunur.",
-        "Negatif açıların esas ölçüsünde kalan değere pozitif olana kadar periyot eklenir.",
-        "Sinüs, tanjant ve kotanjant tek fonksiyonlar olup içlerindeki eksiyi dışarı kusarlar.",
-        "Kosinüs çift fonksiyon olup içindeki eksiyi yutar: \\(\\cos(-x) = \\cos x\\).",
-        "Geometrik alan sorularında sinüslü alan formülü: \\(A = \\frac{1}{2} a b \\sin C\\) sıklıkla kullanılır.",
-        "Trigonometri sorularını çözerken dik üçgen kenar bağıntılarını (3-4-5, 5-12-13 vb.) ezbere bilmelisin.",
-        "YKS AYT sınavında trigonometri konusundan her yıl ortalama 3-4 soru çıkmaktadır."
-      );
-    } else if (cleanTopic === "Paragraf") {
-      sentences.push(
-        "Paragraf, tek bir düşünce etrafında şekillenen ve birbirini tamamlayan cümleler bütünüdür.",
-        "Paragraf sorularında başarılı olmanın anahtarı soru kökünü doğru anlayıp yönlendirmeyi takip etmesidir.",
-        "Ana düşünce, yazarın paragrafta okuyucuya iletmek istediği temel mesaj veya öğüttür.",
-        "Ana düşünce cümleleri genellikle paragrafın girişinde veya sonuç bölümünde özetleyici ifadelerle yer alır.",
-        "Yardımcı düşünceler, ana düşünceyi destekleyen, açıklayan ve somutlaştıran yan fikirlerdir.",
-        "Yardımcı düşünce soruları genellikle olumsuz soru kökleriyle ('değinilmemiştir', 'çıkarılamaz') sorulur.",
-        "Paragrafı ikiye bölme sorularında, yeni bir konuya veya konunun farklı bir yönüne geçilen cümle tespit edilmelidir.",
-        "Düşüncenin akışını bozan cümle, paragrafın genel konusuyla uyuşmayan veya bakış açısı farklı olan cümledir.",
-        "Cümle yerleştirme sorularında, cümlenin anlam ve yapı yönünden önceki ve sonraki cümlelerle bağları kurulmalıdır.",
-        "Paragrafta anlam akışını sağlayan 'ancak', 'çünkü', 'oysaki', 'bu nedenle' gibi bağlayıcı unsurlara dikkat edilmelidir.",
-        "Paragraftaki boşluk doldurma sorularında, boşluğun öncesindeki ve sonrasındaki ipuçları doğru değerlendirilmelidir.",
-        "Yazarın üslubu, dili kullanma şeklidir ve 'yalınlık', 'özgünlük', 'akıcılık' gibi kavramlarla ifade edilir.",
-        "Paragrafta anlatım biçimleri açıklama, tartışma, betimleme ve öyküleme olmak üzere 4 ana gruba ayrılır.",
-        "Düşünceyi geliştirme yolları tanımlama, örneklendirme, tanık gösterme, karşılaştırma ve sayısal verilerden yararlanmadır.",
-        "Her gün düzenli olarak 20 paragraf sorusu çözmek sınavda okuma hızını ve odaklanma süresini artırır.",
-        "Paragraf okurken kelimeleri tek tek çizmek yerine blok halinde okumak hızı artırır.",
-        "Anlamadığın cümlelerde takılıp kalmak yerine paragrafın bütününü okumaya devam etmelisin.",
-        "Paragraftaki olay veya düşünce sırasını belirlemek için kronolojik veya mantıksal ipuçları aranmalıdır.",
-        "Sorulardaki öznel yargılar ile nesnel bilgilerin ayrımını net yapmalısın.",
-        "Paragrafta karşılaştırma ifadeleri (en, daha, kadar) genellikle soru getiren kritik yerlerdir.",
-        "Tanık gösterme ve alıntı yapma, yazarın savunduğu düşünceyi inandırıcı kılmak için başvurduğu yoldur.",
-        "Örneklendirme soyut düşünceleri somut hale getirerek anlaşılmasını kolaylaştırır.",
-        "Betimleyici anlatımda sıfatlar ve duyu organlarına hitap eden ayrıntılar ağırlıktadır.",
-        "Öyküleyici anlatımda olay, yer, zaman ve şahıs kadrosu gibi unsurlar bulunur; hareket esastır.",
-        "Açıklayıcı anlatımda bilgi verme amacı güdülür, nesnel bir dil tercih edilir.",
-        "Tartışmacı anlatımda yazar kendi fikrini savunurken karşıt fikri çürütmeye çalışır.",
-        "Paragrafın giriş cümlesi bağımsız olmalı, kendinden önce bir cümle olduğunu düşündürecek bağlaçlar içermemelidir.",
-        "Sonuç cümlesi genellikle 'kısacası', 'özetle', 'sonuç olarak' gibi özetleyici bağlaçlarla başlar.",
-        "Yardımcı düşünce sorularını çözerken seçeneklerdeki anahtar kelimeleri paragrafta eşleştirmelisin.",
-        "Paragraf sorularında şahsi görüşlerini kesinlikle soruya katmamalı, sadece metne bağlı kalmalısın.",
-        "Akışı bozan cümle sorularında konunun bakış açısının (olumlu/olumsuz) değiştiği yere bakılır.",
-        "Boşluk doldurma sorularında boşluğun hemen sonrasındaki bağlaçlar yön belirleyicidir.",
-        "Düşünceyi geliştirme yollarında sayısal verilerden yararlanma için metinde istatistiki rakamlar yer almalıdır.",
-        "Kişileştirme insana özgü özelliklerin cansız varlıklara verilmesiyle yapılan anlatımdır.",
-        "Benzetme anlatımı güçlendirmek için aralarında ilişki bulunan iki şeyden zayıf olanı güçlü olana benzetmektir.",
-        "Paragraf çözümlerini günün ilk saatlerinde yapmak odaklanma kalitesini üst seviyeye çıkarır.",
-        "Hızlanmak için süreli paragraf çözme provaları (20 soruya 22 dakika gibi) yapılmalıdır.",
-        "Yapamadığın paragraf sorularındaki kelimelerin anlamlarını öğrenmek kelime dağarcığını genişletir.",
-        "Çok uzun paragraf sorularından korkmamalı, bu soruların genellikle daha fazla ipucu barındırdığını bilmelisin.",
-        "YKS TYT Türkçe sınavının yaklaşık 22-26 sorusu doğrudan paragraf ve anlam bilgisinden gelmektedir."
-      );
-    } else if (cleanTopic === "Polinomlar" || cleanTopic === "Polinom") {
-      sentences.push(
-        "Polinom, dereceleri doğal sayı ve katsayıları gerçek sayı olan değişkenli ifadelerin toplamıdır.",
-        "Bir ifadenin polinom belirtmesi için x değişkenlerinin tüm üslerinin doğal sayı (0, 1, 2...) olması şarttır.",
-        "Polinomun en büyük üslü teriminin derecesine polinomun derecesi denir ve der[P(x)] ile gösterilir.",
-        "En büyük dereceli terimin katsayısına başkatsayı denir ve polinomun davranışını belirler.",
-        "Polinomun değişken içermeyen terimine sabit terim denir ve P(0) değeriyle hesaplanır.",
-        "Polinomun katsayılar toplamını bulmak için değişkene 1 yazılır, yani P(1) değeri hesaplanır.",
-        "P(x) polinomunun x-a ile bölümünden kalan, bölen ifade sıfıra eşitlenerek P(a) değeriyle bulunur.",
-        "Bölme algoritmasında bölenin derecesi, kalanın derecesinden daima büyük olmak zorundadır.",
-        "Eğer kalan sıfır ise P(x) polinomu bölen polinoma tam bölünüyor veya o polinomun bir çarpanıdır denir.",
-        "İki polinomun eşitliğinde, aynı dereceli terimlerin katsayıları karşılıklı olarak birbirine eşit olmalıdır.",
-        "Polinom grafiklerinde x eksenini teğet geçen noktalarda çift katlı kök (çift dereceli çarpan) vardır.",
-        "Polinom grafiklerinde x eksenini kesip geçen noktalarda tek katlı kök (tek dereceli çarpan) bulunur.",
-        "Derecesi n olan bir polinomun en fazla n tane gerçek kökü olabilir.",
-        "Sabit polinomun derecesi sıfırdır, sıfır polinomunun derecesi ise tanımsızdır.",
-        "Polinomlarda dört işlem yapılırken benzer terimlerin katsayıları kendi arasında toplanır veya çıkarılır.",
-        "Polinom dereceleri çarpılırken dereceler toplanır: der[P(x) * Q(x)] = der[P(x)] + der[Q(x)].",
-        "Polinomlar bölünürken dereceler çıkarılır: der[P(x) / Q(x)] = der[P(x)] - der[Q(x)].",
-        "Polinomun üssü veya değişkenin üssü alındığında derece çarpılır: der[P(x^k)] = k * der[P(x)].",
-        "Polinom toplama veya çıkarmasında derece, derecesi büyük olan polinomun derecesine eşittir.",
-        "P(x) polinomunun ax+b ile bölümünden kalan için x yerine -b/a yazılır.",
-        "Bölen ifade ikinci dereceden ise kalan en fazla birinci dereceden (mx+n) olabilir.",
-        "Polinomlarda kalan bulurken bölme bağıntısı olan P(x) = B(x)*Q(x) + K(x) denklemi yazılır.",
-        "Başkatsayısı verilen polinomların denklemi kökleri yardımıyla kurulabilir.",
-        "Kökleri x1, x2, x3 olan üçüncü dereceden polinom denklemi P(x) = a*(x-x1)*(x-x2)*(x-x3) şeklinde yazılır.",
-        "Simetrik köklere sahip polinomlarda tek dereceli terimlerin katsayıları sıfır olabilir.",
-        "Polinomun x-a ile tam bölünmesi, a sayısının polinomun bir kökü (sıfırı) olduğunu gösterir.",
-        "Katsayıları rasyonel olan polinomların köklerinden biri irrasyonel ise eşleniği de polinomun köküdür.",
-        "Çift dereceli terimlerin katsayıları toplamı [P(1) + P(-1)] / 2 formülüyle hesaplanır.",
-        "Tek dereceli terimlerin katsayıları toplamı [P(1) - P(-1)] / 2 formülüyle hesaplanır.",
-        "Polinom grafiğinde y eksenini kesen nokta P(0) değerine eşittir.",
-        "Polinom grafiklerindeki ekstremum noktaları türevi sıfır yapan noktalardır.",
-        "Bölme işleminde kalan bulurken bölenin sıfıra eşitlenmesi temel prensiptir.",
-        "Polinomlarda değişken değiştirme yapılarak dereceler küçültülebilir.",
-        "İkinci dereceden polinomlar aynı zamanda parabol belirtirler.",
-        "Polinom katsayılarının tam sayı veya gerçek sayı olması soru şartlarında kontrol edilmelidir.",
-        "Polinom eşitliklerinde belirsiz katsayılar yöntemiyle ortak denklemler çözülür.",
-        "Yeni nesil polinom sorularında kutular, bölmeler veya alan hesapları sıklıkla entegre edilir.",
-        "Polinom konusunu çalışmadan önce çarpanlara ayırma konusunun eksiksiz kapatılması gerekir.",
-        "Soru bankalarından polinom çözmek analitik düşünme becerisini geliştirir.",
-        "YKS AYT sınavında polinom konusundan her yıl en az 1-2 adet soru sorulmaktadır."
-      );
-    } else if (cleanTopic === "Optik ve Aynalar" || cleanTopic === "Optik") {
-      sentences.push(
-        "Optik, ışığın doğasını, yayılmasını, kırılmasını ve yansımasını inceleyen fizik dalıdır.",
-        "Işığın yansıma kanunlarına göre, gelme açısı daima yansıma açısına eşittir.",
-        "Düzlem aynada oluşan görüntü daima sanal (zahiri), düz, cisimle aynı boyda ve aynaya göre simetriktir.",
-        "Küresel aynalar yansıtıcı yüzeyi bir küre kapağı şeklinde olan aynalardır; çukur ve tümsek ayna olarak ayrılır.",
-        "Çukur aynada odağın dışındaki cisimlerin görüntüleri gerçek ve terstir; odağın içindeki cisimlerin görüntüsü sanal ve düzdir.",
-        "Tümsek aynada cismin konumu ne olursa olsun, görüntü daima sanal, düz, cisimden küçük ve odak ile tepe noktası arasındadır.",
-        "Işığın bir ortamdan diğerine geçerken doğrultu değiştirmesine ışığın kırılması denir.",
-        "Kırılma indisinin büyük olduğu ortama çok yoğun ortam, küçük olduğu ortama az yoğun ortam denir.",
-        "Işık az yoğun ortamdan çok yoğun ortama geçerken normale yaklaşarak kırılır; hızı azalır.",
-        "Işık çok yoğun ortamdan az yoğun ortama geçerken normalden uzaklaşarak kırılır; hızı artar.",
-        "Sınır açısı, çok yoğundan az yoğuna geçen ışının 90 derece kırılma açısı yaptığı gelme açısıdır.",
-        "Sınır açısından daha büyük açıyla gelen ışınlar diğer ortama geçemez ve tam yansıma yapar.",
-        "Mercekler en az bir yüzeyi küresel olan kırıcı ortamlardır; ince kenarlı (yakınsak) ve kalın kenarlı (ıraksak) olarak ikiye ayrılır.",
-        "Göz kusurlarından miyop kalın kenarlı mercekle, hipermetrop ise ince kenarlı mercekle düzeltilir.",
-        "Işığın prizmadan geçerken renklerine ayrılması, farklı dalga boyundaki renklerin farklı kırılma indislerine sahip olmasındandır.",
-        "Düzlem aynada görüş alanı aynanın uçlarına çizilen yansıyan ışınların arasında kalan bölgedir.",
-        "Aynaya yaklaşan cismin düzlem aynadaki görüntüsü aynaya aynı hızla yaklaşır.",
-        "Çukur aynada merkezdeki cismin görüntüsü yine merkezde, gerçek, ters ve cisimle aynı boydadır.",
-        "Çukur aynada odağın ortasındaki (f/2) cismin görüntüsü ayna arkasında (f) mesafede, sanal ve iki katı boydadır.",
-        "Tümsek aynada cisim aynaya yaklaştıkça görüntü de büyüyerek aynaya yaklaşır ancak daima cisimden küçükdür.",
-        "Küresel aynalarda tepe noktasına gelen ışın asal eksenle aynı açıyı yapacak şekilde yansır.",
-        "Asal eksene paralel gelen ışınlar çukur aynada odaktan geçecek şekilde yansırlar.",
-        "Tümsek aynada asal eksene paralel gelen ışınların uzantısı odaktan geçecek şekilde dağılırlar.",
-        "Kırılma indisi ortamın yoğunluğuyla doğru, ışığın o ortamdaki hızıyla ters orantılıdır.",
-        "Snell Yasası: n1 * sin(i) = n2 * sin(r) kırılma açılarının oranını belirler.",
-        "Görünür derinlik hesabında, az yoğun ortamdan çok yoğun ortama bakan gözlemci cisimleri daha yakın görür.",
-        "Çok yoğun ortamdan az yoğun ortama bakan gözlemci ise cisimleri olduğundan daha uzakta görür.",
-        "Serap olayı, ışığın sıcaklık farkından dolayı farklı yoğunluktaki hava katmanlarında tam yansımasıyla oluşur.",
-        "Fiber optik kablolar ışığın tam yansıma prensibiyle veri iletmesini sağlayan teknolojidir.",
-        "İnce kenarlı mercekte asal eksene paralel gelen ışınlar odakta toplanacak şekilde kırılırlar.",
-        "Kalın kenarlı mercekte asal eksene paralel gelen ışınlar uzantısı odaktan geçecek şekilde dağılarak kırılırlar.",
-        "Merceğin odak uzaklığı yapıldığı malzemenin kırılma indisine ve eğrilik yarıçapına bağlıdır.",
-        "Işığın renklerine göre kırılma indisi en büyük olan mor, en küçük olan ise kırmızıdır.",
-        "Gökkuşağı oluşumu ışığın su damlacıklarında hem kırılması hem de tam yansıması sonucu gerçekleşir.",
-        "Küresel aynaların odak uzaklığı sadece aynanın eğrilik yarıçapına bağlıdır, ışığın rengine bağlı değildir.",
-        "Merceklerin odak uzaklığı ise kullanılan ışığın rengine ve dış ortamın kırılma indisine bağlıdır.",
-        "Aydınlanma şiddeti ışık kaynağının gücüyle doğru, mesafenin karesiyle ters orantılıdır: E = I / d^2.",
-        "Işık akısı kaynağın çevresine yaydığı toplam ışık miktarıdır ve sadece kaynağın gücüne bağlıdır: Phi = 4*pi*I.",
-        "Gölge ve yarı gölge oluşumu ışığın doğrusal yolla yayıldığının en net kanıtıdır.",
-        "YKS TYT Fizik sınavında optik ünitesinden her yıl kesinlikle 1-2 adet soru çıkmaktadır."
-      );
-    } else if (cleanTopic === "Mol Kavramı" || cleanTopic === "Mol") {
-      sentences.push(
-        "Mol kavramı, atom ve moleküller gibi gözle görülemeyen taneciklerin miktarını belirtmek için kullanılan ölçü birimidir.",
-        "1 mol tanecik daima Avogadro sayısı olan \\(6.02 \\times 10^{23}\\) adet taneciğe eşittir.",
-        "Avogadro sayısı kadar atom içeren maddeye 1 gram-atom veya 1 mol atom denir.",
-        "Bir elementin 1 molünün gram cinsinden kütlesine o elementin mol kütlesi (MA) denir.",
-        "Kütlesi verilen bir maddenin mol sayısı \\(n = \\frac{m}{M_A}\\) formülü ile hesaplanır.",
-        "Tanecik sayısı verilen bir maddenin mol sayısı \\(n = \\frac{N}{N_A}\\) formülü ile bulunur.",
-        "Normal koşullarda (0°C ve 1 atm basınçta) 1 mol gaz daima 22.4 litre hacim kaplar.",
-        "Oda koşullarında (25°C ve 1 atm basınçta) 1 mol gaz daima 24.5 litre hacim kaplar.",
-        "Gazların hacminden mol hesaplanırken \\(n = \\frac{V}{22.4}\\) (NK) formülü uygulanır.",
-        "İzotop atomların kütle numaraları farklı olduğundan, ortalama atom kütlesi hesabı mol hesaplarında önem taşır.",
-        "Kimyasal tepkimelerdeki katsayılar maddelerin mol oranlarını ve gaz fazında hacim oranlarını belirtir.",
-        "Bağıl atom kütlesi, karbon-12 izotopunun kütlesi referans alınarak belirlenmiş kütle değeridir.",
-        "Bir moleküldeki atomların gerçek kütlesi, o molekülün kütlesinin Avogadro sayısına bölünmesiyle bulunur.",
-        "Kovalent bağlı bileşiklerde molekül kütlesi, iyonik bağlı bileşiklerde ise formül kütlesi kavramı kullanılır.",
-        "Kimyasal hesaplamalarda sınırlayıcı bileşen, tepkimede ilk önce tükenen ve oluşan ürün miktarını belirleyen maddedir.",
-        "Gerçek atom kütlesi 1 tane atomun gram cinsinden değeridir ve MA / NA formülüyle bulunur.",
-        "Atomik kütle birimi (akb), 1 tane karbon-12 izotopunun kütlesinin 12'de biridir.",
-        "1 akb daima 1 / NA gram değerine eşittir ve mikro ölçekli kütle birimidir.",
-        "Formül kütlesi iyonik bağlı bileşiklerin (NaCl, MgO vb.) 1 molünün kütlesini ifade eder.",
-        "Molekül kütlesi kovalent bağlı bileşiklerin (H2O, CO2 vb.) 1 molünün kütlesini ifade eder.",
-        "Gaz karışımı sorularında ortalama mol kütlesi karışımın toplam kütlesinin toplam mol sayısına bölünmesiyle bulunur.",
-        "Katsayılar arasındaki mol geçişleri tepkime denkleştirildikten sonra yapılmalıdır.",
-        "Tepkime denkleştirilmeden yapılan mol hesapları daima yanlış sonuç verir.",
-        "Artan madde sorularında başlangıç-değişim-sonuç tablosu kurularak mol takibi yapılır.",
-        "Tepkime verimi, oluşan gerçek ürün miktarının teorik olarak hesaplanan maksimum ürün miktarına oranıdır.",
-        "Saf olmayan madde içeren tepkime sorularında saf kısım mol sayısına çevrilerek işleme alınır.",
-        "Analiz tepkimelerinde büyük moleküller küçük moleküllere parçalanırken mol sayısı artabilir.",
-        "Sentez tepkimelerinde ise küçük moleküller birleşerek mol sayısını azaltabilir.",
-        "Avogadro Hipotezi, aynı sıcaklık ve basınçta farklı gazların eşit hacimlerinin eşit sayıda tanecik içerdiğini söyler.",
-        "1 mol atom içeren CO2 bileşiği 1/3 mol CO2 molekülüne eşittir çünkü molekülde 3 atom vardır.",
-        "Bileşik formülünden elementlerin kütlece birleşme oranları mol kütleleri yardımıyla bulunur.",
-        "Kaba formül (en sade formül) bileşikteki atomların en küçük tam sayılı mol oranlarını gösterir.",
-        "Molekül formülü ise kaba formülün gerçek mol kütlesine göre genişletilmiş halidir.",
-        "Kaba formülden kütlece yüzde bileşimler bulunabilir ancak gerçek atom sayıları bulunamaz.",
-        "Mol hesaplarında kütle, hacim ve tanecik sayısı geçişlerinde daima köprü olarak mol birimi kullanılır.",
-        "Kimyasal hesaplamalarda mol kütlesi değerleri parantez içinde soru sonunda verilir.",
-        "akb kütle sorularında Avogadro sayısı ile çarpma veya bölme işlemlerine ekstra dikkat edilmelidir.",
-        "1 mol H2 gazı 2 gram iken, 1 tane H2 molekülü 2/NA gram veya 2 akb kütleye sahiptir.",
-        "Soru çözümlerinde birim analizi yapmak hata oranını en aza indirir.",
-        "YKS TYT Kimya sınavında mol kavramı ve kimyasal hesaplamalardan her yıl en az 1 soru çıkmaktadır."
-      );
-    } else if (cleanTopic === "Hücre Biyolojisi" || cleanTopic === "Hücre") {
-      sentences.push(
-        "Hücre, canlıların yapısal ve işlevsel en küçük temel biyolojik birimidir.",
-        "Çekirdek zarı ve zarlı organelleri olmayan basit hücrelere prokaryot hücre denir; bakteriler bu gruptadır.",
-        "Çekirdek zarı ve zarlı organelleri olan gelişmiş hücrelere ökaryot hücre denir; bitki ve hayvan hücreleri ökaryottur.",
-        "Hücre zarı seçici geçirgen, esnek, canlı ve çift sıralı fosfolipit tabakasından oluşan yapıdır.",
-        "Hücre zarından madde geçişleri pasif taşıma (enerji harcanmaz) ve aktif taşıma (ATP harcanır) olarak ikiye ayrılır.",
-        "Difüzyon, maddelerin çok yoğun ortamdan az yoğun ortamda kendiliğinden yayılmasıdır; pasif taşımadır.",
-        "Ozmoz, suyun yarı geçirgen zardan difüzyonudur ve suyun çok olduğu yerden az olduğu yere geçişidir.",
-        "Aktif taşıma, maddelerin az yoğun ortamdan çok yoğun ortama taşıyıcı proteinler ve ATP yardımıyla geçirilmesidir.",
-        "Büyük katı maddelerin hücre içine alınmasına fagositoz, büyük sıvı maddelerin alınmasına pinositoz denir.",
-        "Endositoz ve ekzositoz olayları sadece ökaryot hücrelerde gerçekleşir ve zar yüzey alanını değiştirir.",
-        "Ribozom, protein sentezinin yapıldığı zarsız ve tüm hücrelerde ortak olarak bulunan organeldir.",
-        "Mitokondri, oksijenli solunumla hücrenin ihtiyaç duyduğu ATP enerjisini üreten çift zarlı organeldir.",
-        "Kloroplast, bitki hücrelerinde fotosentez yaparak organik besin sentezleyen çift zarlı organeldir.",
-        "Endoplazmik retikulum, hücre içi madde iletimini sağlayan kanallar sistemidir; granüllü ve granülsüz olarak ayrılır.",
-        "Lizozom, hayvan hücrelerinde hücre içi sindirimi gerçekleştiren hidrolitik enzimler içeren tek zarlı organeldir.",
-        "Golgi aygıtı hücrede salgı üretimi, paketleme ve glikoprotein gibi karmaşık moleküllerin sentezini yapar.",
-        "Koful hücre içi su dengesini, besin depolamayı ve atık maddelerin saklanmasını sağlayan tek zarlı organeldir.",
-        "Kontraktil koful tatlı suda yaşayan tek hücrelilerde fazla suyu ATP harcayarak dışarı atan hayati organdır.",
-        "Sentrozom hayvan hücrelerinde hücre bölünmesi sırasında iğ ipliklerini oluşturan zarsız organeldir.",
-        "Hücre duvarı bitki, bakteri ve mantarlarda bulunan, hücreye dayanıklılık sağlayan cansız yapıdır.",
-        "Bitki hücre duvarı selülozdan, mantar hücre duvarı kitinden, bakteri duvarı ise peptidoglikandan oluşur.",
-        "Plazmoliz hücrenin hipertonik (çok yoğun) ortama konulduğunda su kaybederek büzüşmesi olayıdır.",
-        "Deplazmoliz plazmolize uğramış hücrenin hipotonik ortama konulduğunda su alarak eski haline dönmesidir.",
-        "Turgor basıncı hücre içindeki suyun hücre zarına ve duvarına yaptığı net itme basıncıdır.",
-        "Ozmotik basınç hücre içindeki çözünmüş maddelerin oluşturduğu su emme isteğidir.",
-        "Emme kuvveti ozmotik basınç ile turgor basıncı arasındaki farka eşittir: EK = OB - TB.",
-        "Hemoliz çeperi olmayan hücrelerin (hayvan hücresi) aşırı su alarak turgor basıncından dolayı patlamasıdır.",
-        "Çeperli hücrelerde (bitki hücresi) çeper dayanıklılık sağladığı için hemoliz olayı gerçekleşmez.",
-        "Aktif taşıma ve difüzyon küçük moleküllerin (glikoz, amino asit, iyonlar) geçişinde kullanılır.",
-        "Endositoz ve ekzositoz ise büyük moleküllerin (protein, nişasta vb.) zardan geçiş yöntemleridir.",
-        "Çekirdek hücrenin yönetim merkezidir; çekirdek zarı, çekirdek sıvısı, çekirdekçik ve kromatinden oluşur.",
-        "Kromatin iplikler bölünme sırasında kısalarak kalınlaşır ve kromozom adını alırlar.",
-        "Hücre iskeleti hücrenin şeklini koruyan, organelleri sabitleyen mikrotübül, mikrofilament ve ara filamentlerden oluşur.",
-        "Peroksizom katalaz enzimi yardımıyla zehirli hidrojen peroksiti (H2O2) su ve oksijene parçalayan organdır.",
-        "Plastitler bitki hücrelerinde bulunan kloroplast, kromoplast (renk maddesi) ve lökoplast (nişasta deposu) organelleridir.",
-        "Glikokaliks hücre zarının dış yüzeyinde bulunan, hücrelerin birbirini tanımasını sağlayan reseptör tabakadır.",
-        "Glikoprotein ve glikolipitler glikokaliks yapısını oluşturarak hücreye özgünlük kazandırırlar.",
-        "Sıcaklık ve pH değişimleri hücre organellerinin ve enzimlerinin çalışmasını doğrudan etkiler.",
-        "Hücre teorisine göre tüm canlılar bir ya da birden fazla hücreden meydana gelmiştir.",
-        "YKS TYT Biyoloji sınavında hücre biyolojisi ünitesinden her yıl en az 1-2 adet soru sorulmaktadır."
-      );
-    } else {
-      // 2. Dynamic, Subject-Specific Generator for any user-input topic under any YKS subject domain
-      const sub = (subject || "").toLowerCase();
-      
-      if (sub.includes("biyoloji") || sub.includes("biyolojisi") || sub.includes("fizyoloji") || sub.includes("canlı") || sub.includes("hücre")) {
-        sentences.push(
-          `Belirttiğin "${cleanTopic}" konusu YKS Biyoloji müfredatının en temel ve soru getiren kazanımlarındandır.`,
-          `YKS Biyoloji sorularında "${cleanTopic}" mekanizmaları ve hücresel yapılar arasındaki ilişkiler sorgulanır.`,
-          `Bu konuyu çalışırken prokaryot ve ökaryot hücre modelleri üzerindeki farklılıkları net ayırt etmelisin.`,
-          `ÖSYM, "${cleanTopic}" süreçlerini deneysel düzenekler ve grafik yorumlamaları şeklinde sormayı sever.`,
-          `Konudaki latince kökenli biyolojik terimleri ve görevlerini özel çalışma kartları yaparak ezberlemelisin.`,
-          `Hücre organellerinin (özellikle mitokondri, kloroplast ve ribozom) "${cleanTopic}" içindeki rollerini öğren.`,
-          `Bu konudaki reaksiyon basamaklarında ATP, enzim ve koenzim kullanım durumlarını tek tek not almalısın.`,
-          `Madde geçişi kurallarını bilmek, "${cleanTopic}" konusunun deney sorularını çözmek için kilit öneme sahiptir.`,
-          `Fotosentez, solunum ve protein sentezi gibi temel olayların "${cleanTopic}" ile olan bağlarını kurabilmelisin.`,
-          `Haftalık biyoloji tekrarlarında "${cleanTopic}" çizimlerini boş kağıtlara şema olarak çizmelisin.`,
-          `Biyoloji denemelerinde "${cleanTopic}" ile ilgili öncüllü sorularda her şıkkı titizlikle analiz et.`,
-          `Mitoz ve mayoz bölünme evrelerindeki kromozom davranışlarının "${cleanTopic}" üzerindeki genetik etkisini gör.`,
-          `Kalıtım kuralları ve soyağacı analizleri ile "${cleanTopic}" arasındaki kalıtsal ilişkileri incelemelisin.`,
-          `Canlıların ortak özellikleri ünitesinde "${cleanTopic}" konusunun tüm canlı gruplarındaki karşılığını araştır.`,
-          `Ekoloji ve çevre biyolojisi sorularında "${cleanTopic}" konusunun madde döngülerindeki yerine odaklan.`,
-          `Sistemler (fizyoloji) konularını çalışırken "${cleanTopic}" konusunun organ bazındaki işlevlerini kavra.`,
-          `Bitki biyolojisi sorularında stomaların ve taşıma dokularının "${cleanTopic}" ile etkileşimini unutma.`,
-          `Enzim aktivitesine etki eden sıcaklık, pH ve su miktarı grafiklerini "${cleanTopic}" için de uyarla.`,
-          `Biyoloji soru bankalarındaki zor seviye "${cleanTopic}" testlerini çözerek kavramsal eksiklerini kapat.`,
-          `YKS Biyoloji müfredatında "${cleanTopic}" kazanımlarının tamamını MEB kazanım testleriyle doğrula.`
-        );
-      } else if (sub.includes("fizik") || sub.includes("mekanik") || sub.includes("optik") || sub.includes("elektrik") || sub.includes("kuvvet")) {
-        sentences.push(
-          `Belirttiğin "${cleanTopic}" konusu YKS Fizik müfredatının en kritik sayısal ve sözel kazanımlarındandır.`,
-          `Fizikte formülleri ezberlemek yerine, "${cleanTopic}" konusundaki temel yasaların mantığını kavramalısın.`,
-          `Newton'un hareket kanunları ve vektörel büyüklükler, "${cleanTopic}" sorularında işlem yapmanı sağlar.`,
-          `Sürtünme kuvveti, yerçekimi ve net kuvvet vektörlerini serbest cisim diyagramı çizerek "${cleanTopic}" üzerinde göster.`,
-          `İş, güç ve enerji dönüşüm denklemleri "${cleanTopic}" sorularını çözmede en büyük yardımcındır.`,
-          `Optik, ışık akısı ve kırılma kanunlarının "${cleanTopic}" ile olan fiziksel paralelliğini incelemelisin.`,
-          `Elektrik alan, potansiyel fark ve akım kurallarını "${cleanTopic}" bağıntılarıyla birleştirmelisin.`,
-          `Dalgalar ve basit harmonik hareket formüllerini "${cleanTopic}" analizlerinde aktif kullanmalısın.`,
-          `Sayısal işlemlerde birim analizine dikkat etmek, "${cleanTopic}" sorularında hata yapmanı engeller.`,
-          `ÖSYM, fizikte günlük hayattaki "${cleanTopic}" uygulamalarını ve öncüllü yorum sorularını sıklıkla sorar.`,
-          `Çembersel hareket ve açısal momentum kavramlarının "${cleanTopic}" üzerindeki tork etkisini hesapla.`,
-          `Fizik denemelerinde "${cleanTopic}" sorularını çözerken mutlaka şekil çizerek kuvvet yönlerini işaretle.`,
-          `Isı ve sıcaklık grafiklerindeki hal değişim noktalarının "${cleanTopic}" üzerindeki termodinamik etkisini öğren.`,
-          `Basınç ve kaldırma kuvveti ilkelerinin "${cleanTopic}" akışkan mekaniğindeki kurallarını gözden geçir.`,
-          `Modern fizik ve radyoaktivite konularındaki ışınım türlerinin "${cleanTopic}" ile olan teorik bağını kur.`,
-          `Fizik dersinde "${cleanTopic}" konusunu çalışırken her formülün hangi fiziksel sabite bağlı olduğunu yaz.`,
-          `Önceki yıllarda YKS'de çıkmış "${cleanTopic}" sorularını çözerek soru tarzlarını iyice analiz et.`,
-          `Farklı kaynaklardan görsel ağırlıklı yeni nesil "${cleanTopic}" sorularını bularak çözmelisin.`,
-          `Hata Defterindeki tüm yanlış yapılmış "${cleanTopic}" fizik sorularını haftalık olarak tekrar çöz.`,
-          `YKS Fizik hazırlığında "${cleanTopic}" konusundan tam net çıkarmak için MEB kazanımlarına tam uy.`
-        );
-      } else if (sub.includes("kimya") || sub.includes("gazlar") || sub.includes("mol") || sub.includes("denge") || sub.includes("organik")) {
-        sentences.push(
-          `Belirttiğin "${cleanTopic}" konusu YKS Kimya müfredatının en önemli temel yapı taşlarındandır.`,
-          `Kimyasal hesaplamalarda katsayı ilişkilerini kurabilmek "${cleanTopic}" sorularında doğru sonucu verir.`,
-          `Avogadro sayısı, mol kütlesi ve normal şartlar altındaki gaz hacimlerini "${cleanTopic}" sorularına uyarla.`,
-          `Sınırlayıcı bileşen ve tepkime verimi hesaplarını "${cleanTopic}" reaksiyonları üzerinde denemelisin.`,
-          `Atom modelleri ve periyodik cetvel özelliklerinin "${cleanTopic}" element bağlarındaki etkisini öğren.`,
-          `Kimyasal türler arası zayıf ve güçlü etkileşim kuralları, "${cleanTopic}" maddelerinin yapısını açıklar.`,
-          `Gaz kanunları (basınç, hacim, sıcaklık) ile "${cleanTopic}" gaz moleküllerinin davranışlarını çöz.`,
-          `Çözeltilerde molarite, molalite ve koligatif özellikleri "${cleanTopic}" hesaplamalarında aktif kullan.`,
-          `Tepkimelerde ısı değişimi (entalpi) ve hız bağıntılarının "${cleanTopic}" reaksiyonlarına etkisini incele.`,
-          `Kimyasal denge, Le Chatelier ilkesi ve pH/pOH kavramlarını "${cleanTopic}" dengelerinde uygula.`,
-          `Redoks tepkimeleri ve elektrokimyasal pillerin anot/katot kurallarını "${cleanTopic}" için tekrar et.`,
-          `Karbon kimyası ve organik bileşik adlandırma kurallarını "${cleanTopic}" fonksiyonel gruplarında çalış.`,
-          `Kimya laboratuvar güvenlik kuralları ve madde sembollerinin "${cleanTopic}" içindeki önemini bil.`,
-          `Asitler, bazlar ve tuzların genel özelliklerini "${cleanTopic}" tepkimelerinde doğru eşleştirmelisin.`,
-          `Bileşik formülü bulma (kaba ve molekül formülü) adımlarını "${cleanTopic}" kütle yüzdelerine göre yap.`,
-          `Kimya dersinde "${cleanTopic}" sorularını çözerken birimlerin rasyonel sadeleştirmelerine dikkat et.`,
-          `ÖSYM'nin kimyada sorduğu grafik okuma ve tablo yorumlama sorularını "${cleanTopic}" için analiz et.`,
-          `Haftalık kimya tekrarlarında "${cleanTopic}" formüllerini boş bir kağıda hafızandan yazarak dene.`,
-          `Yeni nesil kimya sorularında günlük hayat örnekli "${cleanTopic}" sorularını çözmeye özen göster.`,
-          `YKS Kimya sınavında "${cleanTopic}" konusundan soru kaçırmamak için MEB kazanım odaklı çalış.`
-        );
-      } else if (sub.includes("türkçe") || sub.includes("turkce") || sub.includes("edebiyat") || sub.includes("paragraf") || sub.includes("dil")) {
-        sentences.push(
-          `Belirttiğin "${cleanTopic}" konusu YKS Türkçe ve Edebiyat müfredatında en yüksek puan getiren alanlardandır.`,
-          `Türkçede dil bilgisi kuralları ve sözcük türlerinin "${cleanTopic}" içindeki yapısını iyi öğrenmelisin.`,
-          `Yazım kuralları, noktalama işaretleri ve ses olaylarının "${cleanTopic}" sorularındaki rollerine dikkat et.`,
-          `Paragrafta ana düşünce ve yardımcı düşünceleri bulurken "${cleanTopic}" metinlerini hızlı ve odaklı oku.`,
-          `Cümle ögeleri, fiil çatısı ve anlatım bozukluğu kurallarını "${cleanTopic}" cümlelerinde uygula.`,
-          `Edebiyat çalışıyorsan, sanatçıların eserlerini ve edebi dönemlerin "${cleanTopic}" üzerindeki etkisini ezberle.`,
-          `Divan edebiyatı, Tanzimat ve Cumhuriyet dönemlerinin şiir ve nesir türlerindeki "${cleanTopic}" izlerini takip et.`,
-          `Metin tahlili yaparken yazarın üslubu ve anlatım biçimlerinin "${cleanTopic}" ile olan bağını incele.`,
-          `Dilin sadeleşme aşamaları ve Türk dili tarihindeki gelişimlerin "${cleanTopic}" kelimelerine etkisini gör.`,
-          `Türkçe denemelerinde süre yönetimi yapabilmek için her gün düzenli olarak "${cleanTopic}" pratikleri yap.`,
-          `Sözcükte anlam ve cümlede anlam sorularındaki ince nüansları "${cleanTopic}" örnekleri üzerinden çalış.`,
-          `Halk edebiyatı nazım şekilleri ve aruz/hece ölçüsü kurallarını "${cleanTopic}" metinlerinde eşleştir.`,
-          `Roman özetleri ve karakter analizlerini "${cleanTopic}" edebi akımlarına göre gruplandır.`,
-          `Anlatım biçimlerinden açıklama, tartışma, betimleme ve öykülemeyi "${cleanTopic}" paragrafında ayırt et.`,
-          `Düşünceyi geliştirme yollarından tanımlama ve örneklendirmeyi "${cleanTopic}" sorularında hızlıca gör.`,
-          `Yazım hatalarını azaltmak için sıkça karıştırılan kelimelerin doğru yazılışlarını "${cleanTopic}" için listele.
-          "`,
-          `Edebi türlerin (tiyatro, masal, destan, mektup) gelişim tarihini "${cleanTopic}" kapsamında tekrar et.`,
-          `Türkçe sorularını çözerken seçenekleri eleyerek gitmek "${cleanTopic}" konusunda süreni kısaltır.`,
-          `Hata Defterindeki yanlış çözülmüş tüm "${cleanTopic}" Türkçe ve Edebiyat sorularını analiz et.`,
-          `YKS Türkçe ve Edebiyat sınavında "%100 Başarı" hedefiyle "${cleanTopic}" kazanımlarını MEB'den kontrol et.`
-        );
-      } else if (sub.includes("sosyal") || sub.includes("tarih") || sub.includes("coğrafya") || sub.includes("felsefe") || sub.includes("din")) {
-        sentences.push(
-          `Belirttiğin "${cleanTopic}" konusu YKS Sosyal Bilimler (Tarih, Coğrafya, Felsefe) müfredatında yer almaktadır.`,
-          `Tarihte olayların neden-sonuç ilişkilerini ve kronolojik sırasını "${cleanTopic}" kapsamında öğrenmelisin.`,
-          `Osmanlı tarihi, inkılap tarihi ve dünya savaşı dönemlerinin "${cleanTopic}" üzerindeki etkilerini analiz et.`,
-          `Atatürk ilkeleri ve inkılaplarının çağdaşlaşma hedeflerini "${cleanTopic}" süreçleriyle bağdaştır.`,
-          `Coğrafyada harita okuryazarlığı ve iklim/yer şekilleri kurallarını "${cleanTopic}" bölgelerine uyarla.`,
-          `Nüfus, göç, ekonomik faaliyetler ve doğal afetlerin "${cleanTopic}" üzerindeki beşeri etkilerini gör.`,
-          `Felsefede bilgi, varlık, ahlak ve siyaset kuramlarının "${cleanTopic}" hakkındaki görüşlerini incele.`,
-          `Din kültürü ve ahlak bilgisi sorularında inanç esasları ve ahlaki değerlerin "${cleanTopic}" bağını kur.`,
-          `ÖSYM sosyal bilimlerde kavram bilgisini ve paragraf üzerinden yorum yapmayı "${cleanTopic}" için sorgular.`,
-          `Sosyal tekrarlarında önemli kavramları, antlaşmaları ve coğrafi terimleri "${cleanTopic}" için kartlara yaz.`,
-          `Tarihi belgeler ve ilk kaynaklar üzerinden yapılan yorumlamaları "${cleanTopic}" sorularında dikkate al.`,
-          `Coğrafi koordinat sistemi, yerel saat hesapları ve projeksiyonların "${cleanTopic}" ile ilişkisini kur.`,
-          `İlk çağ uygarlıkları ve İslam tarihi dönemlerindeki kültürel gelişmelerin "${cleanTopic}" katkısını gör.`,
-          `Felsefi akımları (rasyonalizm, empirizm, nihilizm vb.) ve kurucularını "${cleanTopic}" için eşleştir.`,
-          `Doğal kaynakların verimli kullanımı ve küresel çevre örgütlerinin "${cleanTopic}" raporlarını oku.`,
-          `Sosyal denemelerinde paragrafların içindeki gizli ipuçlarını "${cleanTopic}" soruları için yakala.`,
-          `Tarih ve coğrafya haritaları üzerinde önemli bölgeleri ve boğazları "${cleanTopic}" için işaretle.`,
-          `Sosyal bilimler konularındaki sözel ezberleri kodlama teknikleriyle "${cleanTopic}" için zihninde tut.`,
-          `Hata Defterine eklediğin yanlış yapılmış tüm "${cleanTopic}" sosyal sorularının doğru cevaplarını öğren.`,
-          `YKS Sosyal Bilimler sınavında fullemek için "${cleanTopic}" MEB müfredat kazanımlarını eksiksiz bitir.`
-        );
-      } else if (sub.includes("ingilizce") || sub.includes("english") || sub.includes("ydt") || sub.includes("dil")) {
-        sentences.push(
-          `Belirttiğin "${cleanTopic}" konusu YKS YDT (Yabancı Dil Testi) İngilizce müfredatının önemli kazanımlarındandır.`,
-          `İngilizce gramer, zamanlar (tenses) ve aktif/pasif yapıların "${cleanTopic}" içindeki kullanımını gör.`,
-          `İngilizce bağlaçlar (conjunctions) ve yan cümlelerin (clauses) "${cleanTopic}" cümlelerindeki yerini incele.`,
-          `YDT İngilizce kelime dağarcığını geliştirmek için "${cleanTopic}" ile ilgili akademik kelimeleri listele.`,
-          `Phrasal verbs, edatlar (prepositions) ve collocation kullanımlarını "${cleanTopic}" için ezberle.`,
-          `Paragraf tamamlama ve anlamca en yakın cümleyi bulma sorularını "${cleanTopic}" metinlerinde çöz.`,
-          `Diyalog tamamlama ve durum sorularındaki uygun ifadeleri "${cleanTopic}" bağlamında analiz et.`,
-          `İngilizce okuma (reading) parçalarını okurken bilinmeyen kelimelerin anlamlarını "${cleanTopic}" için çıkar.`,
-          `Çeviri sorularında temel ögelerin (özne, yüklem, nesne) yerleşimini "${cleanTopic}" cümlelerinde yakala.`,
-          `YDT hazırlık sürecinde her gün en az 50 kelime ezberi yaparak "${cleanTopic}" metinlerini kolayca oku.`,
-          `İngilizce denemelerinde zaman yönetimi kazanmak amacıyla "${cleanTopic}" soru tiplerine süre tutarak çalış.`,
-          `Sıfatlar (adjectives), zarflar (adverbs) ve zamirlerin (pronouns) "${cleanTopic}" içindeki görevlerini yaz.`,
-          `İngilizce deyimler ve atasözlerinin YDT sınavında soru getiren "${cleanTopic}" kalıplarını kontrol et.`,
-          `Kelime kartları hazırlayarak eş anlamlı (synonyms) ve zıt anlamlı (antonyms) sözcükleri "${cleanTopic}" için çalış.`,
-          `Soru çözümlerinde soru kökü analizi yapmak, "${cleanTopic}" sorularında çeldiricileri elenmesini sağlar.`,
-          `İngilizce cümleleri kendi kelimelerinle özetleme (paraphrasing) egzersizlerini "${cleanTopic}" için dene.`,
-          `YDT çıkmış sınav sorularındaki gramer ve kelime dağılımlarını "${cleanTopic}" odağında incele.`,
-          `Haftalık YDT tekrarlarında takıldığın gramer kurallarını "${cleanTopic}" örnekleriyle pekiştir.`,
-          `Hata Defterindeki tüm yanlış çözülmüş "${cleanTopic}" İngilizce sorularını öğretmenlerine sorarak düzelt.`,
-          `YKS YDT İngilizce sınavında derece yapmak için "${cleanTopic}" konusuyla ilgili tüm testleri çöz.`
-        );
-      } else {
-        // General Default YKS templates if subject is not detected
-        sentences.push(
-          `Belirttiğin "${cleanTopic}" konusu YKS müfredatında kritik bir yere sahiptir ve düzenli çalışma gerektirir.`,
-          `Bu konudaki temel kavramları öğrenmeden karmaşık soru tiplerine geçmemelisin.`,
-          `YKS sınavında bu konu ile ilgili her yıl doğrudan veya dolaylı soru çıkmaktadır.`,
-          `Bu konuyu çalışırken pasif okuma yerine yazarak ve formülleri türeterek çalışmak kalıcılığı artırır.`,
-          `Konu anlatım videolarını izlerken önemli yerleri not almalı ve kendi bilgi kartlarını oluşturmalısın.`,
-          `Anlamadığın soru tiplerini kesip Hata Defterine eklemeli ve çözümlerini hemen öğrenmelisin.`,
-          `Konunun mantığını anlamak, formülleri ezberlemekten çok daha değerlidir.`,
-          `Konuyla ilgili ilk testi çözerken süre sınırlaması koymadan doğru çözmeye odaklanmalısın.`,
-          `İlk aşamada çözdüğün sorularda hata yapman doğaldır; önemli olan hatalardan ders çıkarmaktır.`,
-          `Haftalık tekrarlarda bu konu ile ilgili en az 15-20 soru çözerek bilgileri taze tutmalısın.`,
-          `Konunun çıkmış sınav sorularını (ÖSYM soruları) inceleyerek soru tarzlarını öğrenmelisin.`,
-          `Konuyu çalıştıktan sonra 48 saat kuralına uyarak Öğrenme Doğrulama Testi (ÖDT) çözmelisin.`,
-          `ÖDT sonucuna göre konunun durumunu (Öğrenildi, Kırılgan, Bitmedi) belirleyip aksiyon almalısın.`,
-          `Konu pekiştirmek için farklı soru bankalarından seviyeli (kolay-orta-zor) testler çözmelisin.`,
-          `Takıldığın yerlerde öğretmenlerinden veya AI Koç'tan anında destek alarak ilerlemelisin.`,
-          "Konuyu çalışırken önemli formülleri ve kuralları renkli kağıtlara yazıp görebileceğin bir yere asabilirsin.",
-          "Soru çözüm videolarını izlerken önce videoyu durdurup soruyu kendin çözmeye çalışmalısın.",
-          "Aynı konudan üst üste çok fazla soru çözmek yerine aralıklı çalışma yöntemini uygulamalısın.",
-          "Çözdüğün kaynakların güncel ÖSYM tarzında yeni nesil sorular içerdiğinden emin olmalısın.",
-          "Konunun alt başlıklarını zihin haritası (Mind Map) çıkararak görselleştirmek kavramayı kolaylaştırır."
-        );
-      }
-      
-      // Pad out the custom topic summary sentences to ensure it has exactly 40 sentences before YKS warnings
-      while (sentences.length < 40) {
-        sentences.push(
-          `YKS sınavına hazırlık sürecinde "${cleanTopic}" konusunun hedeflenen netlere ulaşmadaki kritik önemini hatırla.`,
-          `Bu konuyu çalışırken dikkati dağıtacak dış uyarıcılardan (tablet, telefon) uzak kalmaya özen göster.`,
-          `Konuyla ilgili kavram sözlüğünü düzenli olarak güncellemeli ve yatmadan önce gözden geçirmelisin.`,
-          `Sorulardaki öznel yorumlar ile nesnel bilgilerin ayrımını "${cleanTopic}" için net yapmalısın.`,
-          `Formül ispatlarını öğrenmek, sınav anında formülü unuttuğunda "${cleanTopic}" sorularını kurtarmanı sağlar.`,
-          `Her ders seansında tek bir kazanıma odaklanarak "${cleanTopic}" çalışmasının verimini maksimize et.`
-        );
-      }
-    }
-
-    // 3. Add 10 General YKS warnings/tips (Sentences 41-50)
-    sentences.push(
-      "Sınava hazırlıkta her konunun ardından çıkmış ÖSYM sorularını analiz etmelisin.",
-      "Denemelerde turlama tekniğini kullanarak zor sorularla vakit kaybetmemelisin.",
-      "Soru kökündeki 'değildir', 'olamaz', 'kesinlikle' gibi kelimeleri vurgulayarak okumalısın.",
-      "Hata Defteri'ne eklediğin yanlış soruların çözümlerini 24 saat içinde mutlaka öğrenmelisin.",
-      "Uyku düzenini korumalı ve günde ortalama 7-8 saat kaliteli uyku uyumalısın.",
-      "Çalışma seansları arasında odağını tazeleyecek 10 dakikalık aktif molalar vermelisin.",
-      "Çözdüğün soru bankalarının düzeyini kendi seviyene göre aşama aşama seçmelisin.",
-      "Formülleri sadece ezberlemek yerine mantığını ve ispatını öğrenerek ilerlemelisin.",
-      "Sınav kaygısını yönetmek için düzenli nefes egzersizleri ve provalar yapmalısın.",
-      "Başkalarının netleri yerine kendi kişisel gelişiminizi ve eksik kapatma serinizi takip etmelisin."
-    );
-
-    // Ensure it is EXACTLY 50 sentences
-    return sentences.slice(0, 50);
-  },
+  // NOT: generate50SentenceSummary() kaldirildi. 636 satirlik sabit konu
+  // metni tutuyordu ama ne arayuzde ne kodda tek bir cagrisi vardi.
 
     
   renderVault: function() {
@@ -14017,10 +13350,9 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     this.openModal("subscriptionModal");
   },
 
-  subscribeSim: function(planName) {
-    alert(`Tebrikler! '${planName}' planına simüle olarak abone olundu. Tüm özellikleriniz aktif edildi!`);
-    this.closeModal("subscriptionModal");
-  },
+  // NOT: subscribeSim() kaldirildi. Odeme yokken 'abone oldunuz, tum
+  // ozellikleriniz aktif' diyen sahte bir uyariydi; hicbir yerden
+  // cagrilmiyordu ve gercek paket kisitlamasiyla celisiyordu.
 
 
 
@@ -18009,9 +17341,7 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
     return { worked: workedCount, learned: learnedCount };
   },
 
-  togglePencilLogoSvg: function(e) {
-    // Left empty for compatibility
-  }
+  // NOT: togglePencilLogoSvg() kaldirildi — govdesi bos bir stubdi.
 };
 
 window.app = app;

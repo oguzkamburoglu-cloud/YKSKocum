@@ -122,14 +122,30 @@ T.grup("6.3  Deneme bitince TAM KILIT");
 })();
 
 (function () {
-  // Salt okunur modda gorev isaretlenemez
+  // Salt okunur modda gorev isaretlenemez.
+  // REGRESYON: bu denetim yalnizca cagrilmayan toggleTaskCompleted()
+  // icinde duruyordu; gercekte kullanilan toggleTodayTaskCompleted()
+  // korumasizdi ve suresi dolmus kullanici gorev isaretleyebiliyordu.
   paket("free");
   elemanEkle("coachModalTitle"); elemanEkle("coachModalBody"); elemanEkle("coachModalQuote");
-  const kutu = { checked: true };
+  app.state.daysData = { 1: { completed: false, tasks: [{ id: "t1", subject: "Matematik", topic: "Limit", completed: false }] } };
+  app.renderTodayPanel = function () {};
   let patladi = null;
-  try { app.toggleTaskCompleted("t1", kutu); } catch (e) { patladi = e.message; }
+  try { app.toggleTodayTaskCompleted(1, 0); } catch (e) { patladi = e.message; }
   T.dogru("görev işaretleme çökmüyor", patladi === null, patladi);
-  T.esit("işaret geri alındı", kutu.checked, false);
+  T.esit("salt okunur modda görev tamamlanmadı",
+         app.state.daysData[1].tasks[0].completed, false);
+
+  // Denemesi suren kullanici isaretleyebilmeli (kilit fazla kisitlamasin)
+  paket("pro");
+  app.state.daysData = { 1: { completed: false, tasks: [{ id: "t1", subject: "Matematik", topic: "Limit", completed: false }] } };
+  app.calculateFocusScore = function () {};
+  app.renderDashboard = function () {};
+  app.saveState = function () {};
+  app.triggerEndDayCheck = function () {};
+  app.toggleTodayTaskCompleted(1, 0);
+  T.esit("açık pakette görev tamamlanıyor",
+         app.state.daysData[1].tasks[0].completed, true);
 })();
 
 T.grup("6.4  Kilitli sekmeye gecilemiyor");
