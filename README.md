@@ -1,4 +1,4 @@
-# YKSKoçum — YKS Çalışma Takip Uygulaması
+# AI Koçum — YKS Çalışma Takip Uygulaması
 
 Tarayıcıda çalışan, sunucu gerektirmeyen bir YKS hazırlık asistanı.
 Tüm veriler kullanıcının kendi tarayıcısında (localStorage) saklanır.

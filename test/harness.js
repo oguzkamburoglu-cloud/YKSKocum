@@ -1,5 +1,5 @@
 // ============================================================
-// YKSKoçum — test kosum ortami (JavaScriptCore icin)
+// AI Koçum — test kosum ortami (JavaScriptCore icin)
 // app.js tarayici icin yazildi; burada DOM ve depolama taklit edilir
 // ki hesaplama fonksiyonlari sunucusuz/tarayicisiz kosulabilsin.
 // ============================================================

@@ -1,4 +1,4 @@
-# YKSKoçum — Test Paketi
+# AI Koçum — Test Paketi
 
 Harici bağımlılık yoktur (npm/node gerekmez). Testler macOS'ta hazır gelen
 **JavaScriptCore** (`jsc`) ile koşar; `app.js` gerçek hâliyle yüklenir.
