@@ -4388,6 +4388,10 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     const kart = document.getElementById("programSuggestionCard");
     if (kart) kart.style.display = "none";
     this.switchTab("programCreator");
+    // "Kendim Kurayim" dendi: dogrudan "Kendim Yapayim" panelini ac.
+    // Eskiden oluşturucu AI modunda aciliyor, ogrenci demin "kendim" dedigi
+    // halde tekrar "AI Olustursun" ekraniyla karsilasiyordu.
+    this.setProgramCreatorMode("custom");
     this.showToast("Programı kendin kurabilirsin. Önerimi istediğinde Program Sihirbazı'ndan alabilirsin.", "info");
   },
 
