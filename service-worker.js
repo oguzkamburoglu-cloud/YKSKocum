@@ -99,7 +99,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('push', event => {
   // Fallback if push comes from server
   const data = event.data ? event.data.json() : {};
-  const title = data.title || 'AIKoçum';
+  const title = data.title || 'AI Koçum';
   const options = {
     body: data.body || 'Yeni bir bildiriminiz var.',
     icon: './icon-192.png',

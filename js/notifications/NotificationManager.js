@@ -129,7 +129,7 @@ class NotificationManager {
     if (!navigator.serviceWorker || !navigator.serviceWorker.ready) return;
 
     let prompt = "";
-    let defaultTitle = "AIKoçum";
+    let defaultTitle = "AI Koçum";
     let defaultBody = "";
     let targetView = "dashboardView";
 
@@ -154,7 +154,7 @@ class NotificationManager {
         break;
       case "test":
         defaultTitle = "✅ Bildirim Testi";
-        defaultBody = "AIKoçum bildirimleri başarıyla çalışıyor. Senin için buradayım!";
+        defaultBody = "AI Koçum bildirimleri başarıyla çalışıyor. Senin için buradayım!";
         targetView = "dashboardView";
         break;
     }

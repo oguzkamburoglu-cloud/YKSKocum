@@ -1,6 +1,6 @@
 {
-  "name": "AIKoçum - YKS Asistanı",
-  "short_name": "AIKoçum",
+  "name": "AI Koçum - YKS Asistanı",
+  "short_name": "AI Koçum",
   "description": "YKS Maratonunda Yapay Zeka Destekli Dijital Koçun",
   "start_url": "./index.html",
   "display": "standalone",
