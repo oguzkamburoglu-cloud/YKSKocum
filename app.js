@@ -10810,9 +10810,17 @@ normalizeClause: function(clause) {
   // Analiz kartini acar/kapatir ve tercihi hatirlar.
   analizKartiAcKapa: function(anahtar) {
     if (!this.state.acikAnalizKartlari) this.state.acikAnalizKartlari = {};
-    const kap = document.getElementById("insightCards");
-    if (!kap) return;
-    const btn = kap.querySelector(`button[onclick*="'${anahtar}'"]`);
+    // Kartlar IKI konteynere dagitiliyor: genel analiz (insightCards) ve
+    // mufredat (curriculumInsightCards). Eskiden yalnizca insightCards'a
+    // bakiliyordu; "Ders Bazli Mufredat Ilerlemen" digerinde oldugu icin
+    // dugmesi bulunamiyor, kapatma calismiyordu.
+    let btn = null;
+    for (const id of ["insightCards", "curriculumInsightCards"]) {
+      const kap = document.getElementById(id);
+      if (!kap) continue;
+      const bulunan = kap.querySelector(`button[onclick*="'${anahtar}'"]`);
+      if (bulunan) { btn = bulunan; break; }
+    }
     if (!btn) return;
     const govde = btn.nextElementSibling;
     const acik = govde && govde.style.display !== "none";
