@@ -3,7 +3,13 @@
 Bu klasör, koç–öğrenci senkronizasyonu ve çoklu cihaz bildirimi için
 gereken arka uç dosyalarını içerecek. Şu an yalnızca uygunluk kontrolü var.
 
-## Şimdi ne yapmalı
+## Durum (2026-08-22)
+
+Site canlıda: https://aikocum.com.tr (rootless Docker `aikocum` → 127.0.0.1:8090,
+ana nginx proxy + Let's Encrypt). Backend henüz yok; sıradaki adım aynı
+Docker'a php-fpm eklemek.
+
+## Şimdi ne yapmalı (paylaşımlı hosting için; VPS'te Docker yolu izlenir)
 
 1. Alan adını al ve hosting'e yönlendir.
 2. cPanel'den ücretsiz SSL'i (AutoSSL / Let's Encrypt) etkinleştir.

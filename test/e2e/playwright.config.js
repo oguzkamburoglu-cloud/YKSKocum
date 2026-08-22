@@ -4,6 +4,10 @@ const path = require("path");
 
 module.exports = defineConfig({
   testDir: __dirname,
+  // canli-*.spec.js uretim sitesine (https://aikocum.com.tr) gider; CI'da
+  // dis bagimlilik olmasin diye yalnizca elle kosulur:
+  //   CANLI=1 npx playwright test -c test/e2e/playwright.config.js canli-smoke
+  testIgnore: process.env.CANLI ? [] : [/canli-.*\.spec\.js$/],
   timeout: 30000,
   fullyParallel: false,
   workers: 1,
