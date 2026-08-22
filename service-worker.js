@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aikocum-v109-gerisayim-yks';
+const CACHE_NAME = 'aikocum-v110-hesap';
 const urlsToCache = [
   './',
   './index.html',
