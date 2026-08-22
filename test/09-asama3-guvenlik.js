@@ -164,10 +164,17 @@ T.grup("3.3  Hassas veri saklama");
 })();
 
 (function () {
-  // Depolanan veride parola/token olmamali
-  const src = readFile("app.js");
-  const sifreAlani = /password|parola|şifre\s*:/i.test(src.replace(/\/\/[^\n]*/g, ""));
-  T.dogru("uygulamada parola alanı yok (kimlik doğrulama yok)", !sifreAlani, "parola alanı bulundu");
+  // Dilim 2 ile hesap parolasi geldi. Kural: parola ve oturum token'i
+  // state'e (slamdunk_yks_state) ASLA yazilmaz — yedek/disa aktarma
+  // dosyalarina sizmasin. Parola yalnizca bellekte (_kayitParola), token
+  // ayri localStorage anahtarinda (aikocum_oturum) durur.
+  const src = readFile("app.js").replace(/\/\/[^\n]*/g, "");
+  T.dogru("parola state'e yazilmiyor (state.*parola = yok)", !/this\.state\.[A-Za-z_]*[Pp]arola\s*=/.test(src), true);
+  T.dogru("token state'e yazilmiyor (state.*token = yok)", !/this\.state\.[A-Za-z_]*[Tt]oken\s*=/.test(src), true);
+  const hesap = readFile("js/hesap.js");
+  T.dogru("token ayri anahtarda saklaniyor", hesap.indexOf('ANAHTAR: "aikocum_oturum"') !== -1, true);
+  T.dogru("parola alani autocomplete=new-password", readFile("index.html").indexOf('id="studentPassword"') !== -1 &&
+          /id="studentPassword"[^>]*autocomplete="new-password"/.test(readFile("index.html")), true);
 })();
 
 // ────────────────────────────────────────────────────────────

@@ -3911,3 +3911,6 @@ a:focus-visible {
   font-size: 0.62rem;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
+
+/* Mesgul dugme (Dilim 2): disabled yerine — Chromium tiklama takilmasi olmasin */
+.btn.is-busy { opacity: .7; cursor: progress; }

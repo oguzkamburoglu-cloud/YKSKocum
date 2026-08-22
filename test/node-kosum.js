@@ -42,7 +42,11 @@ function loadlariAc(kod, yuklenen) {
   });
 }
 
-function dosyaKos(testYolu) {
+// ASENKRON TESTLER: bir test dosyasi "(async function(){ ... T.ozet(); })()" ile
+// yazilmissa (ornek: 12-hesap.js, fetch taklidi await eder) runInContext
+// doner donmez ozet henuz yazilmamis olur. Mikro-gorevler bosalana ve
+// T.ozet() ciktisi gorunene kadar (en fazla ~2 sn) beklenir.
+async function dosyaKos(testYolu) {
   const kod = loadlariAc(oku(testYolu), new Set());
   let cikti = "";
   const sandbox = {
@@ -52,6 +56,7 @@ function dosyaKos(testYolu) {
     console, Date, Math, JSON, RegExp, Error, TypeError,
     Object, Array, String, Number, Boolean, Set, Map, Symbol,
     isNaN, parseInt, parseFloat, encodeURIComponent, decodeURIComponent,
+    Promise, setTimeout, clearTimeout, setImmediate,
     globalThis: null
   };
   sandbox.globalThis = sandbox;
@@ -62,6 +67,10 @@ function dosyaKos(testYolu) {
     console.log("  ✗ KOSUM HATASI: " + e.message);
     return { gecen: 0, kalan: 1 };
   }
+  for (let i = 0; i < 2000 && !/TOPLAM:/.test(cikti); i++) {
+    await new Promise((r) => setImmediate(r));
+  }
+  if (!/TOPLAM:/.test(cikti)) console.log("  ✗ KOSUM HATASI: T.ozet() hic cagrilmadi (asenkron test takildi?)");
   // T.ozet() ciktisindan sayilari al
   const m = cikti.match(/TOPLAM:\s*(\d+)\s+GEÇEN:\s*(\d+)\s+KALAN:\s*(\d+)/);
   return m ? { gecen: +m[2], kalan: +m[3] } : { gecen: 0, kalan: 1 };
@@ -74,16 +83,18 @@ const hedefler = process.argv.length > 2
       .sort()
       .map((f) => "test/" + f);
 
-let toplamGecen = 0, toplamKalan = 0;
-for (const t of hedefler) {
-  console.log("\n════════ " + t + " ════════");
-  const s = dosyaKos(t);
-  toplamGecen += s.gecen;
-  toplamKalan += s.kalan;
-}
+(async () => {
+  let toplamGecen = 0, toplamKalan = 0;
+  for (const t of hedefler) {
+    console.log("\n════════ " + t + " ════════");
+    const s = await dosyaKos(t);
+    toplamGecen += s.gecen;
+    toplamKalan += s.kalan;
+  }
 
-console.log("\n" + "═".repeat(60));
-console.log("  GENEL TOPLAM: " + (toplamGecen + toplamKalan) +
-            "   GEÇEN: " + toplamGecen + "   KALAN: " + toplamKalan);
-console.log("═".repeat(60));
-process.exit(toplamKalan === 0 ? 0 : 1);
+  console.log("\n" + "═".repeat(60));
+  console.log("  GENEL TOPLAM: " + (toplamGecen + toplamKalan) +
+              "   GEÇEN: " + toplamGecen + "   KALAN: " + toplamKalan);
+  console.log("═".repeat(60));
+  process.exit(toplamKalan === 0 ? 0 : 1);
+})();

@@ -53,6 +53,8 @@ test("kabul edilmis program yuklemede korunuyor", async ({ page }) => {
 });
 
 test("yeniden kayitta eski kabul damgasi program uretmiyor", async ({ page }) => {
+  await page.route("**/api/**", route => route.fulfill({ status: 201, contentType: "application/json",
+    body: JSON.stringify({ ok: true, token: "e2e-token-xxxxxxxxxxxxxxxxxxxxxxxxxxxx", kullanici: { id: 1, eposta: "y@o.com", ad: "Yeni", rol: "ogrenci", paket: "deneme", deneme_bitti: false, deneme_kalan_gun: 7 } }) }));
   await page.goto("http://localhost:8791/");
   // Ayni cihazda daha once kabul edilmis bir program var
   await page.evaluate(() => {
@@ -64,7 +66,7 @@ test("yeniden kayitta eski kabul damgasi program uretmiyor", async ({ page }) =>
     }));
   });
   await page.goto("http://localhost:8791/");
-  const r = await page.evaluate(() => {
+  const r = await page.evaluate(async () => {
     // Yeni kayit: hicbir sey secmeden sihirbazdan gecip iceri gir
     app.startAsStudent();
     const yaz = (id, v) => { const e = document.getElementById(id); if (e) e.value = v; };
@@ -76,7 +78,8 @@ test("yeniden kayitta eski kabul damgasi program uretmiyor", async ({ page }) =>
     app.state.diagnosticAccuracy = null;
     app.state.currentPositionSource = "skipped";
     app.state.testSkipped = true;
-    app.upgradeToPro("trial");
+    app._kayitParola = "Guclu-Parola-1";
+    await app.upgradeToPro("trial");
     app.startMainDashboard();
     const g = app.state.daysData || {};
     return {

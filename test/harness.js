@@ -79,7 +79,16 @@ const setTimeout = function(){ return 0; };
 const clearTimeout = function(){};
 const setInterval = function(){ return 0; };
 const clearInterval = function(){};
-const fetch = function(){ return { then(){ return this; }, catch(){ return this; } }; };
+// fetch TAKLIT EDILEBILIR: testler window.__fetch = async (url, opts) => Response-benzeri
+// atayarak sunucu yanitini kurgular. Atanmamissa eski davranis (isletmez).
+const fetch = function(){
+  if (typeof window.__fetch === "function") return window.__fetch.apply(null, arguments);
+  return { then(){ return this; }, catch(){ return this; } };
+};
+// Sahte Response uretici: sahteYanit(200, {ok:true,...})
+function sahteYanit(kod, govde) {
+  return { ok: kod >= 200 && kod < 300, status: kod, json: async function(){ return govde; } };
+}
 const console = { log: print, warn: print, error: print, info: print };
 
 // ── Basit test cercevesi ────────────────────────────────────
@@ -128,16 +137,19 @@ function veriDosyalariniYukle() {
     ["curriculum.js", "YKS_CURRICULUM"],
     ["questions.js",  "YKS_QUESTION_BANK"],
     ["quotes.js",     null],
-    ["osym-data.js",  "OSYM_TABLO4"]
+    ["osym-data.js",  "OSYM_TABLO4"],
+    ["js/hesap.js",   "Hesap"]            // Dilim 2: hesap/oturum istemcisi
   ];
   dosyalar.forEach(function (d) {
     const ad = d[0], degisken = d[1];
     let src;
     try { src = readFile(ad); } catch (e) { return; }  // yoksa atla
     try {
-      const fn = new Function("window", "document", "console",
+      // hesap.js cagri aninda localStorage/fetch/navigator kullanir; harness
+      // taklitleri parametre olarak verilir ki ayni kapsamda gorunsunler.
+      const fn = new Function("window", "document", "console", "localStorage", "fetch", "navigator",
         src + (degisken ? "\n; try { window." + degisken + " = " + degisken + "; } catch(e){}" : ""));
-      fn(window, document, console);
+      fn(window, document, console, localStorage, fetch, navigator);
     } catch (e) { print("  ! " + ad + " yuklenemedi: " + e.message); }
   });
 }

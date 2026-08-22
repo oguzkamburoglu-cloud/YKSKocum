@@ -18,7 +18,20 @@ const { test, expect } = require("@playwright/test");
 // ── Yardimcilar ─────────────────────────────────────────────
 
 /** Uygulamayi TEMIZ durumla acar. */
+// Dilim 2: deneme baslatmak hesap acar; sahte API ile sunucuya bagimlilik yok
+async function sahteHesapApi(page) {
+  await page.route("**/api/**", route => {
+    const yol = new URL(route.request().url()).pathname;
+    const k = { id: 1, eposta: "test@ornek.com", ad: "Test", rol: "ogrenci", paket: "deneme", deneme_bitti: false, deneme_kalan_gun: 7, sunucu_zamani: 1787400000 };
+    const g = yol === "/api/kayit" ? { ok: true, token: "e2e-token-xxxxxxxxxxxxxxxxxxxxxxxxxxxx", kullanici: k }
+            : yol === "/api/giris" ? { ok: true, token: "e2e-token-xxxxxxxxxxxxxxxxxxxxxxxxxxxx", kullanici: k }
+            : yol === "/api/ben"   ? { ok: true, kullanici: k } : { ok: true };
+    return route.fulfill({ status: yol === "/api/kayit" ? 201 : 200, contentType: "application/json", body: JSON.stringify(g) });
+  });
+}
+
 async function temizAc(page) {
+  await sahteHesapApi(page);
   await page.goto("/index.html");
   await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); });
   await page.reload();
@@ -37,6 +50,7 @@ async function kayitOl(page, { ad = "Test Öğrenci", siralama = "50000" } = {})
     yaz("studentName", ad);
     yaz("studentEmail", "test@ornek.com");
     yaz("targetRank", siralama);
+    app._kayitParola = "Guclu-Parola-1";   // Dilim 2: deneme hesap acar
     app.wizardGo(3);
     app.updateGoalPlanPreview();
     app.wizardGo(4);
@@ -67,7 +81,7 @@ test.describe("4.1  Kayıt → paket → program → görev → analiz", () => {
     expect(paketGorunur).toBe(true);
 
     // 3) Denemeyi baslat
-    await page.evaluate(() => app.upgradeToPro("trial"));
+    await page.evaluate(async () => { await app.upgradeToPro("trial"); });
     const tier = await page.evaluate(() => app.state.subscriptionTier);
     expect(tier).toBe("trial");
 
@@ -115,8 +129,8 @@ test.describe("4.2  Veri kalıcılığı", () => {
   test("sayfa yenilendiğinde program ve kayıtlar duruyor", async ({ page }) => {
     await temizAc(page);
     await kayitOl(page);
-    await page.evaluate(() => {
-      app.upgradeToPro("trial");
+    await page.evaluate(async () => {
+      await app.upgradeToPro("trial");
       app.startMainDashboard();
       app.acceptProgramSuggestion();
       app.state.chartData.push({
@@ -147,10 +161,14 @@ test.describe("4.3  Paket kısıtlaması", () => {
   test("Başlangıç kullanıcısı kilitli modüle giremiyor", async ({ page }) => {
     await temizAc(page);
     await kayitOl(page);
-    const sonuc = await page.evaluate(() => {
-      app.upgradeToPro("trial");
+    const sonuc = await page.evaluate(async () => {
+      await app.upgradeToPro("trial");
       app.startMainDashboard();
-      app.state.subscriptionTier = "baslangic";
+      // Dilim 2: paket karari SUNUCUDAN gelir; istemcideki tier'i degistirmek
+      // artik ise yaramaz (bu, B-1'in kapanisi). Sunucunun "baslangic"
+      // dedigini taklit ediyoruz.
+      app.state.sunucuHesap = Object.assign({}, app.state.sunucuHesap, { paket: "baslangic", deneme_bitti: false });
+      app.state.subscriptionTier = "pro";        // konsol saldirisi: etkisiz olmali
       app.renderDashboard();
       const oncekiSekme = app.state.activeTab;
       app.switchTab("charts");                    // analiz -> Standart gerekir
@@ -168,12 +186,14 @@ test.describe("4.3  Paket kısıtlaması", () => {
   test("deneme bitince uygulamaya girilemiyor", async ({ page }) => {
     await temizAc(page);
     await kayitOl(page);
-    const sonuc = await page.evaluate(() => {
-      app.upgradeToPro("trial");
+    const sonuc = await page.evaluate(async () => {
+      await app.upgradeToPro("trial");
       app.startMainDashboard();
       app.acceptProgramSuggestion();
       const gunOnce = Object.keys(app.state.daysData).length;
-      app.state.subscriptionTier = "free";        // deneme bitti
+      // Sunucu "deneme bitti" diyor (sunucu saatiyle); istemci tarihi/tier'i onemsiz
+      app.state.sunucuHesap = Object.assign({}, app.state.sunucuHesap, { paket: "free", deneme_bitti: true, deneme_kalan_gun: 0 });
+      app.state.subscriptionTier = "pro";        // konsol saldirisi: etkisiz olmali
       app.startMainDashboard();
       const m = document.getElementById("subscriptionModal");
       return {

@@ -479,10 +479,20 @@ const app = {
     this.showPaketler();
   },
 
+  // YETKI KARARI (Dilim 2): hesap sunucuya baglandiysa paket SUNUCUDAN okunur
+  // (state.sunucuHesap, sunucu saatiyle hesaplanmis). Istemcideki
+  // subscriptionTier/trialStartDate artik yalnizca hesapsiz (eski) kullanicilar
+  // icin yedek. Konsoldan tier='pro' yazmak sunucu kaydini degistirmez.
   aktifPaketSeviyesi: function() {
     if (!this.MONETIZATION_ENABLED) return 99;         // paket sistemi kapaliysa her sey acik
-    const tier = this.paketKimligi((this.state && this.state.subscriptionTier) || "pending");
-    const sv = this.PAKET_SEVIYE[tier];
+    const h = this.state && this.state.sunucuHesap;
+    let tier;
+    if (h && h.paket) {
+      tier = h.paket === "deneme" ? "trial" : h.paket;
+    } else {
+      tier = this.paketKimligi((this.state && this.state.subscriptionTier) || "pending");
+    }
+    const sv = this.PAKET_SEVIYE[this.paketKimligi(tier)];
     return typeof sv === "number" ? sv : 0;
   },
 
@@ -492,6 +502,8 @@ const app = {
   // Veri silinmez; odeme yapildiginda oldugu yerden devam edilir.
   denemeBittiMi: function() {
     if (!this.MONETIZATION_ENABLED) return false;
+    const h = this.state && this.state.sunucuHesap;
+    if (h && h.paket) return this.aktifPaketSeviyesi() === 0;   // sunucu karari
     return this.aktifPaketSeviyesi() === 0 && this.state.subscriptionTier !== "pending";
   },
 
@@ -592,6 +604,8 @@ const app = {
     // Subscription & Marketing
     subscriptionTier: "pending", // 'pending', 'free', 'trial', 'pro_monthly', 'pro_yearly'
     trialStartDate: null,
+    sunucuHesap: null,           // Dilim 2: sunucudan gelen {paket, deneme_bitti, rol, ...}
+    hesapBekliyor: false,
     faturaDonemi: "aylik",   // "aylik" | "sinavaKadar"
     pomodoroKayitlari: [],
     theme: "classic",
@@ -1282,10 +1296,37 @@ const app = {
     kutu.innerHTML = secici + kartlar;
   },
 
-  upgradeToPro: function(plan) {
+  upgradeToPro: async function(plan) {
     if (plan === "trial") {
-      this.state.subscriptionTier = "trial";
-      this.state.trialStartDate = new Date().toISOString();
+      // Dilim 2: deneme SUNUCUDA baslar. Hesap yoksa sihirbazda alinan
+      // e-posta + parolayla once hesap acilir; deneme tarihi sunucu saatidir.
+      const hesapModulu = typeof Hesap !== "undefined" ? Hesap : null;
+      if (hesapModulu && !hesapModulu.varMi()) {
+        if (!this._kayitParola) {
+          // Parola yok (eski akis / sayfa yenilendi): once giris/kayit istenir
+          this.hesapGirisAc("Deneme başlatmak için hesap gerekiyor. Giriş yap ya da kayıt olurken parola belirle.");
+          return;
+        }
+        const s = await hesapModulu.kayit(this.state.email, this._kayitParola, this.state.name);
+        if (s.ok) {
+          this._kayitParola = null;                 // parola bellekten silinir
+        } else if (s.kod === 409) {
+          this.hesapGirisAc("Bu e-posta zaten kayıtlı. Parolanla giriş yap.");
+          return;
+        } else if (s.ag) {
+          // Cevrimdisi: yerel deneme baslar, hesap sonra acilir (parola bellekte kaldikca)
+          this.showToast("Sunucuya ulaşılamadı; denemen bu cihazda başladı, bağlantı gelince hesabın oluşturulacak.", "warning");
+          this.state.hesapBekliyor = true;
+        } else {
+          this.showToast(s.hata || "Hesap oluşturulamadı.", "error");
+          return;
+        }
+      }
+      if (!this.state.sunucuHesap) {
+        // Hesapsiz yedek yol (sunucu yok / cevrimdisi): eski yerel deneme
+        this.state.subscriptionTier = "trial";
+        this.state.trialStartDate = new Date().toISOString();
+      }
       this.saveState();
       this.closeModal("subscriptionModal");
       const m = document.getElementById("subscriptionModal");
@@ -2184,7 +2225,24 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       }
 
       this.checkSubscriptionStatus();
-      
+
+      // Dilim 2: hesap bagliysa paket/deneme bilgisini sunucudan tazele.
+      // Yanit gelince yetki kilitleri yeniden uygulanir; 401'de token duser.
+      if (typeof Hesap !== "undefined") {
+        Hesap.bagla(this);
+        if (Hesap.varMi()) {
+          Hesap.ben().then((s) => {
+            if (s && (s.ok || s.kod === 401)) {
+              this.checkSubscriptionStatus();
+              if (typeof this.paketKilitleriniUygula === "function") this.paketKilitleriniUygula();
+              if (s.kod === 401 && !this.state.isLoggedOut) {
+                this.showToast("Oturumun sona ermiş; lütfen tekrar giriş yap.", "warning");
+              }
+            }
+          }).catch(() => {});
+        }
+      }
+
       // Load and apply saved theme
       const activeTheme = (this.state && this.state.theme) || "classic";
       document.body.className = "";
@@ -2417,11 +2475,67 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
 
       this.state.isLoggedOut = true;
       this.saveState();
+      // Dilim 2: sunucu oturumunu da kapat (token gecersiz olur)
+      if (typeof Hesap !== "undefined") { Hesap.cikis().catch(() => {}); }
       this.showLandingView();
     }
   },
 
+  // ---- HESAP GIRIS MODALI (Dilim 2) -------------------------------
+  hesapGirisAc: function(mesaj) {
+    const hataEl = document.getElementById("hesapGirisHata");
+    if (hataEl) { hataEl.textContent = mesaj || ""; hataEl.style.display = mesaj ? "block" : "none"; }
+    const e = document.getElementById("hesapGirisEposta");
+    if (e && !e.value && this.state && this.state.email) e.value = this.state.email;
+    this.openModal("hesapGirisModal");
+  },
+
+  hesapGirisGonder: async function() {
+    if (typeof Hesap === "undefined") return;
+    const eposta = (document.getElementById("hesapGirisEposta") || {}).value || "";
+    const parola = (document.getElementById("hesapGirisParola") || {}).value || "";
+    const hataEl = document.getElementById("hesapGirisHata");
+    const btn = document.getElementById("hesapGirisBtn");
+    const hata = (m) => { if (hataEl) { hataEl.textContent = m; hataEl.style.display = m ? "block" : "none"; } };
+    hata("");
+    if (!eposta.trim() || !parola) { hata("E-posta ve parola gerekli."); return; }
+    // Yeniden-giris korumasi bayrakla, gorsel durum sinifla (disabled yerine:
+    // dugme odaklanabilir ve ekran okuyucuya "mesgul" olarak kalir).
+    // NOT: E2E'de gorulen "ikinci tiklama olu" durumu dugmeden degil,
+    // hata metni belirince duzenin kaymasi + farenin hic kipirdamamasindan
+    // (headless Chromium bayat hover) kaynaklaniyordu; gercek kullanimda
+    // ve dokunmatikte olusmaz.
+    if (this._girisBekliyor) return;
+    this._girisBekliyor = true;
+    if (btn) { btn.classList.add("is-busy"); btn.setAttribute("aria-busy", "true"); }
+    let s;
+    try { s = await Hesap.giris(eposta.trim(), parola); }
+    finally {
+      this._girisBekliyor = false;
+      if (btn) { btn.classList.remove("is-busy"); btn.removeAttribute("aria-busy"); }
+    }
+    if (!s.ok) {
+      hata(s.ag ? "Sunucuya ulaşılamadı. İnternetini kontrol et." : (s.hata || "Giriş başarısız."));
+      return;
+    }
+    const pEl = document.getElementById("hesapGirisParola"); if (pEl) pEl.value = "";
+    this.closeModal("hesapGirisModal");
+    this.state.isLoggedOut = false;
+    this.state.hesapBekliyor = false;
+    this.saveState();
+    this.checkSubscriptionStatus();
+    this.showToast(`Hoş geldin${this.state.name ? ", " + this.state.name.split(" ")[0] : ""}!`, "success");
+    // Bu cihazda program varsa dogrudan panele; yoksa sihirbaza (parola adimi gizlenir)
+    const programVar = this.state.daysData && Object.keys(this.state.daysData).length > 0;
+    if (programVar) this.startMainDashboard(); else this.startWizard();
+  },
+
   quickLogin: function() {
+    // Dilim 2: hesap bagli ama sunucu oturumu yoksa (cikis yapilmis) parola istenir
+    if (typeof Hesap !== "undefined" && this.state.sunucuHesap && !Hesap.varMi()) {
+      this.hesapGirisAc();
+      return;
+    }
     if (this.state.subscriptionTier === "pending") {
       this.showSubscriptionModal();
       return;
@@ -2781,6 +2895,9 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
   showWizardPage: function(pageNum) {
     // Veli alanlari kayitliysa kilitli gorunsun
     setTimeout(() => this.applyParentContactLock(), 0);
+    // Dilim 2: zaten giris yapilmissa parola alani istenmez
+    const parolaWrap = document.getElementById("studentPasswordWrap");
+    if (parolaWrap) parolaWrap.style.display = (typeof Hesap !== "undefined" && Hesap.varMi()) ? "none" : "";
     document.querySelectorAll(".wizard-page").forEach(page => {
       page.style.display = "none";
     });
@@ -2826,6 +2943,23 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailVal)) {
       showEmailError("Geçerli bir e-posta adresi gir (örn: ornek@eposta.com).");
       return;
+    }
+    // Hesap parolasi (Dilim 2). Zaten giris yapilmissa istenmez.
+    const parolaEl = document.getElementById("studentPassword");
+    const parolaErrEl = document.getElementById("studentPasswordError");
+    const hesapVar = typeof Hesap !== "undefined" && Hesap.varMi();
+    if (!hesapVar && parolaEl) {
+      const p = parolaEl.value;
+      const parolaHata = (msg) => {
+        if (parolaErrEl) { parolaErrEl.textContent = msg; parolaErrEl.style.display = msg ? "block" : "none"; }
+        if (msg) parolaEl.focus();
+      };
+      parolaHata("");
+      if (p.length < 8) { parolaHata("Parola en az 8 karakter olmalı."); return; }
+      if (p.length > 200) { parolaHata("Parola çok uzun."); return; }
+      // Parola state'e YAZILMAZ (localStorage'a sizmasin); yalnizca bu oturumda
+      // deneme baslatilirken hesap acmak icin bellekte tutulur.
+      this._kayitParola = p;
     }
     if (!this.state.targetRank) {
       alert("Lütfen hedef sıralamanı gir veya üniversite + bölüm seçerek hedefini belirle!");
@@ -16541,6 +16675,8 @@ Yalnızca geçerli JSON döndür, markdown veya başka açıklama metni ekleme.`
           summaryShown: parsed.summaryShown && typeof parsed.summaryShown === "object" ? parsed.summaryShown : {},
           subscriptionTier: parsed.subscriptionTier || "pending",
           trialStartDate: parsed.trialStartDate || null,
+          sunucuHesap: parsed.sunucuHesap && typeof parsed.sunucuHesap === "object" ? parsed.sunucuHesap : null,
+          hesapBekliyor: !!parsed.hesapBekliyor,
           pomodoroKayitlari: Array.isArray(parsed.pomodoroKayitlari) ? parsed.pomodoroKayitlari : [],
           theme: parsed.theme || "classic",
           diagnosticAccuracy: parsed.diagnosticAccuracy !== undefined ? parsed.diagnosticAccuracy : null,

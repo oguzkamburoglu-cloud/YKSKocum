@@ -40,6 +40,12 @@ self.addEventListener('fetch', event => {
   const request = event.request;
   if (request.method !== 'GET') return;
 
+  // API istekleri servis calisanina UGRAMAZ: tarayici dogrudan sunucuya
+  // gider. Aksi halde "once onbellek" dali /api/ben gibi yanitlari
+  // onbellege alip bir daha sunucuya sormuyor; paket/deneme guncellemesi
+  // hic gorunmuyordu. (Bearer tasiyan yanitlar zaten onbellege girmemeli.)
+  if (new URL(request.url).pathname.startsWith('/api/')) return;
+
   // ------------------------------------------------------------
   // KOD İÇİN "ÖNCE AĞ", VARLIKLAR İÇİN "ÖNCE ÖNBELLEK"
   // ------------------------------------------------------------
