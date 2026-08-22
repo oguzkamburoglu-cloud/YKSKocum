@@ -1,0 +1,54 @@
+# AI Koçum — sunucu yığını (rootless Docker, sudo gerektirmez)
+# ---------------------------------------------------------------
+# Konum: ~/aikocum/site/sunucu/docker/   (site kökü = ../..)
+# Kurulum:
+#   cp ../.env.example ../.env   && nano ../.env     # gizli degerleri SEN yaz
+#   docker rm -f aikocum 2>/dev/null                 # eski tek-container'i kaldir
+#   docker compose up -d --build
+#   curl -s http://127.0.0.1:8090/api/saglik
+#
+# Ana nginx (yonetici) 127.0.0.1:8090'a proxy yapar; SSL orada biter.
+# web  : nginx — statik site + /api/* -> php
+# php  : php-fpm 8.3 — sunucu/api
+# db   : MariaDB 11 — kalici hacim aikocum_db
+services:
+  web:
+    image: nginx:alpine
+    container_name: aikocum-web
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8090:80"
+    volumes:
+      - ../..:/var/www/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - php
+
+  php:
+    build:
+      context: .
+      dockerfile: php.Dockerfile
+    container_name: aikocum-php
+    restart: unless-stopped
+    env_file: ../.env
+    volumes:
+      - ../..:/var/www/html:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mariadb:11
+    container_name: aikocum-db
+    restart: unless-stopped
+    env_file: ../.env
+    volumes:
+      - aikocum_db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  aikocum_db:

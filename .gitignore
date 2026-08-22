@@ -23,3 +23,8 @@ package-lock.json
 
 # Playwright yerelde kurulunca olusur; CI kendi package.json'unu uretir
 package.json
+
+# Sunucu gizli degerleri ve yerel gelistirme veritabani — ASLA depoya girmez
+sunucu/.env
+*.sqlite
+*.sqlite-journal
