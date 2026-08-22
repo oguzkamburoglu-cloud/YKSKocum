@@ -120,7 +120,7 @@ const SafeStorage = {
 // layer when it persists a notification preference change.
 window.SafeStorage = SafeStorage;
 
-// YKSKoçum - Akıllı YKS Ders Çalışma Koçu
+// AIKoçum - Akıllı YKS Ders Çalışma Koçu
 // Fallback YKS Question Bank initialization
 if (typeof window !== 'undefined' && !window.YKS_QUESTION_BANK) {
   window.YKS_QUESTION_BANK = {
@@ -191,7 +191,7 @@ const app = {
     window.addEventListener("appinstalled", () => {
       cubuk.style.display = "none";
       this._installEvent = null;
-      this.showToast("YKSKoçum ana ekranına eklendi.", "success");
+      this.showToast("AIKoçum ana ekranına eklendi.", "success");
     });
 
     // iOS: beforeinstallprompt yok, kullaniciya adimlar soylenir
@@ -1913,7 +1913,7 @@ const app = {
     const apiKey = this.getLlmApiKey();
     if (!apiKey) throw new Error("No API key");
 
-    const systemPrompt = `Sen YKSKoçum'sun. (Kullanıcıya 'Koç Kalem' olarak da biliniyorsun). Sen zorlu ama destekleyici bir YKS mentorusun.
+    const systemPrompt = `Sen AIKoçum'sun. (Kullanıcıya 'Koç Kalem' olarak da biliniyorsun). Sen zorlu ama destekleyici bir YKS mentorusun.
 Yanıtlarında Türkçe kullan. Cümlelerin kısa ve net olsun, <strong> gibi HTML etiketleriyle vurgular yapabilirsin. 
 Kullanıcının verileri (netler, çalışma süresi) hakkında yorum yaparken ASLA uydurma veri kullanma, sadece araçlardan gelen veriyi referans al.
 Gelişim analizini veya koç değerlendirmesini incelemek için getLastCoachCommentary aracını kullanıp öğrenciyle bu konuda sohbet edebilirsin.
@@ -2106,7 +2106,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
 
   init: function() {
     try {
-      console.log("YKSKoçum App Phase 3.5 Initialized");
+      console.log("AIKoçum App Phase 3.5 Initialized");
 
       // Register Online/Offline handlers (H-004)
       window.addEventListener('online', () => {
@@ -2531,7 +2531,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
 
     const roster = document.getElementById("coachStudentRoster");
     if (roster) roster.innerHTML = students.map(s => {
-      const source = s.source === "coach" ? "Koç programı" : s.source === "proposal" ? "Onay bekliyor" : "YKSKoçum AI programı";
+      const source = s.source === "coach" ? "Koç programı" : s.source === "proposal" ? "Onay bekliyor" : "AIKoçum AI programı";
       const risk = s.risk === "good" ? "Rayında" : s.risk === "pending" ? "Onay bekliyor" : s.risk === "watch" ? "İzle" : "Takip et";
       return `<button class="coach-student-row ${s.id === selected?.id ? "is-selected" : ""}" onclick="app.selectCoachStudent('${s.id}')">
         <span class="coach-avatar">${this.escapeHtml(s.name.charAt(0))}</span>
@@ -2542,7 +2542,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
 
     const detail = document.getElementById("coachStudentDetail");
     if (!detail || !selected) return;
-    const sourceName = selected.source === "coach" ? "Koç programı aktif" : selected.source === "proposal" ? "Koç programı önerisi" : "YKSKoçum AI programı aktif";
+    const sourceName = selected.source === "coach" ? "Koç programı aktif" : selected.source === "proposal" ? "Koç programı önerisi" : "AIKoçum AI programı aktif";
     const sourceCopy = selected.source === "coach" ? "Bu planı sen oluşturdun. Yeni değişiklikler öğrenciye sürüm olarak gönderilir." : selected.source === "proposal" ? "Öğrencinin kabulü bekleniyor. Onaylanmadan aktif program değişmez." : "Öğrenci kendi AI planıyla ilerliyor. Planı izleyebilir, not ve öneri gönderebilirsin.";
     detail.innerHTML = `<div class="coach-detail-head">
       <div><span class="coach-detail-eyebrow">ÖĞRENCİ GÖRÜNÜMÜ</span><h2>${this.escapeHtml(selected.name)}</h2><p>${this.escapeHtml(selected.track)} · Son etkinlik: ${this.escapeHtml(selected.lastActive)}</p></div>
@@ -3654,7 +3654,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       feedbackBox.innerHTML = `
         <div class="coach-avatar">${isWarning ? "🚨" : "✏️"}</div>
         <div class="coach-message">
-          <h4>YKSKoçum Yaşam Raporu</h4>
+          <h4>AIKoçum Yaşam Raporu</h4>
           <p>${coachAdvice}</p>
         </div>
       `;
@@ -6231,7 +6231,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     if (totalCompletedTasksAllTime === 0) {
       const textEl = document.getElementById("dailyCoachBriefingText");
       if (textEl) {
-        textEl.innerHTML = `Merhaba ${name.split(" ")[0]}! YKSKoçum'a hoş geldin. YKS hedefine giden maratonda ilk adımını bugün atıyoruz. Program tipini seçtikten sonra bugünün ilk görevlerine göz atıp hemen sahaya çıkabilirsin. Sen dersleri tamamladıkça alışkanlıklarını analiz edip sana özel günlük taktikler ve çalışma tavsiyeleri hazırlayacağım. Başarılar, şampiyon! 🏆`;
+        textEl.innerHTML = `Merhaba ${name.split(" ")[0]}! AIKoçum'a hoş geldin. YKS hedefine giden maratonda ilk adımını bugün atıyoruz. Program tipini seçtikten sonra bugünün ilk görevlerine göz atıp hemen sahaya çıkabilirsin. Sen dersleri tamamladıkça alışkanlıklarını analiz edip sana özel günlük taktikler ve çalışma tavsiyeleri hazırlayacağım. Başarılar, şampiyon! 🏆`;
       }
       return;
     }
@@ -6249,7 +6249,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
         yesterdayText = "Dün planında herhangi bir görev bulunmuyordu. ";
       }
     } else {
-      yesterdayText = "Bugün YKSKoçum ile 1. günün, harika bir başlangıç yapalım! ";
+      yesterdayText = "Bugün AIKoçum ile 1. günün, harika bir başlangıç yapalım! ";
     }
 
     // 2. Scan completed subjects for progress
@@ -6479,7 +6479,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       return;
     }
     const text = document.getElementById("parentReportText").textContent;
-    const subject = encodeURIComponent("YKSKoçum · Günlük Çalışma Raporu");
+    const subject = encodeURIComponent("AIKoçum · Günlük Çalışma Raporu");
     const body = encodeURIComponent(text);
     window.location.href = `mailto:${encodeURIComponent(contact)}?subject=${subject}&body=${body}`;
   },
@@ -6781,9 +6781,9 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       this.showToast("Önce profilinde veli iletişim bilgisi girmelisin.", "error");
       return;
     }
-    const text = `YKSKoçum · ${n.title}\n\n${n.body}`;
+    const text = `AIKoçum · ${n.title}\n\n${n.body}`;
     if (contact.includes("@")) {
-      window.location.href = `mailto:${encodeURIComponent(contact)}?subject=${encodeURIComponent("YKSKoçum · " + n.title)}&body=${encodeURIComponent(text)}`;
+      window.location.href = `mailto:${encodeURIComponent(contact)}?subject=${encodeURIComponent("AIKoçum · " + n.title)}&body=${encodeURIComponent(text)}`;
     } else {
       const phone = this.normalizePhoneForWhatsapp(contact);
       if (phone.length < 10) { this.showToast("Geçerli bir telefon numarası bulunamadı.", "error"); return; }
@@ -6920,7 +6920,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     if (ch.push && "Notification" in window && Notification.permission === "granted") {
       try {
         navigator.serviceWorker.ready.then(reg => {
-          reg.showNotification("YKSKoçum · " + title, {
+          reg.showNotification("AIKoçum · " + title, {
             body: body,
             icon: "./icon-192.png",
             badge: "./icon-192.png",
@@ -7775,7 +7775,7 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
         ${this.getPencilLogoSvg('20px', '23px')}
       </div>
       <div id="aiTypingText" style="background: var(--bg-card); border: 1px solid var(--border-color); padding: 0.5rem 0.75rem; border-radius: 0 12px 12px 12px; font-size: 0.8rem; color: var(--text-muted);">
-        YKSKoçum yazıyor...
+        AIKoçum yazıyor...
       </div>
     `;
     msgContainer.appendChild(typingIndicator);
