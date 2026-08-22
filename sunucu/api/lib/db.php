@@ -33,21 +33,33 @@ function db(): PDO {
     return $pdo;
 }
 
-/** Tablolar yoksa surucuye uygun semayi calistirir. */
+/**
+ * Sema SQL'ini calistirilabilir ifadelere boler.
+ * Once TUM "--" yorumlari (satir-ici dahil) atilir, SONRA ";" ile bolunur.
+ * Eskiden yalnizca tam-satir yorumlar atiliyordu; "-- sha256(token); ..."
+ * gibi icinde ";" gecen bir satir-ici yorum ifadeyi ortadan kesiyor,
+ * MariaDB 1064 veriyor ve sonraki tablolar hic olusmuyordu.
+ */
+function sema_ifadeleri(string $sql): array {
+    $temiz = preg_replace('/--[^\n]*/', '', $sql);
+    return array_values(array_filter(array_map('trim', explode(';', $temiz))));
+}
+
+/** Sema eksikse surucuye uygun semayi calistirir (CREATE IF NOT EXISTS: idempotent). */
 function sema_kur(PDO $pdo): void {
+    // Kontrol SON tabloya gore yapilir: yarim kalmis bir kurulum (ilk tablo
+    // var, sonrakiler yok) bir sonraki baglantida kendini tamamlar.
     try {
-        $pdo->query('SELECT 1 FROM kullanicilar LIMIT 1');
+        $pdo->query('SELECT 1 FROM oran_sinir LIMIT 1');
         return;
     } catch (PDOException $e) {
-        // tablo yok -> kur
+        // eksik -> kur
     }
     $surucu = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
     $dosya = __DIR__ . '/../../' . ($surucu === 'sqlite' ? 'schema.sqlite.sql' : 'schema.mysql.sql');
     $sql = file_get_contents($dosya);
     if ($sql === false) throw new RuntimeException('Şema dosyası okunamadı');
-    // Yorum satirlarini at, ifadeleri tek tek calistir (bazi suruculer coklu ifadeyi sevmez)
-    $temiz = preg_replace('/^\s*--.*$/m', '', $sql);
-    foreach (array_filter(array_map('trim', explode(';', $temiz))) as $ifade) {
+    foreach (sema_ifadeleri($sql) as $ifade) {
         $pdo->exec($ifade);
     }
 }

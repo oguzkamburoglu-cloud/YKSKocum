@@ -68,6 +68,8 @@ jobs:
           for f in sunucu/api/index.php sunucu/api/router.php sunucu/api/lib/*.php sunucu/push.php sunucu/kontrol.php; do
             php -l "$f"
           done
+      - name: Şema kurucu (MariaDB + SQLite şemaları, yarım kurulum onarımı)
+        run: php sunucu/test/sema-test.php
       - name: Paket/deneme zaman mantığı
         run: php sunucu/test/paket-test.php
       - name: API uçtan uca (SQLite)
