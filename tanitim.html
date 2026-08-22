@@ -41,6 +41,9 @@
   }
   .nav-in { display:flex; align-items:center; justify-content:space-between; height:64px; }
   .brand { display:flex; align-items:center; gap:.55rem; font-family:"Fraunces",serif; font-weight:700; font-size:1.2rem; }
+  .brand-yks { font-family:"Instrument Sans",sans-serif; font-weight:700; font-size:.62rem; letter-spacing:.06em;
+    color:var(--indigo); background:var(--indigo-w); border:1px solid color-mix(in srgb,var(--indigo) 30%, transparent);
+    padding:.1rem .4rem; border-radius:5px; }
   .brand .mk {
     width:32px; height:32px; border-radius:9px; flex:0 0 auto;
     background:linear-gradient(135deg, var(--indigo), var(--indigo-2));
@@ -371,7 +374,7 @@
 
 <nav>
   <div class="wrap nav-in">
-    <div class="brand"><span class="mk">✏️</span> AI Koçum</div>
+    <div class="brand"><span class="mk">✏️</span> AI Koçum <span class="brand-yks">YKS</span></div>
     <div class="nav-links">
       <a href="#ozellikler">Özellikler</a>
       <a href="#nasil">Nasıl çalışır</a>
@@ -404,7 +407,7 @@
     <div class="mock">
       <div class="mock-in">
         <div class="mock-top">
-          <div class="mock-brand"><span class="mk">✏️</span> AI Koçum</div>
+          <div class="mock-brand"><span class="mk">✏️</span> AI Koçum <span class="brand-yks" style="font-size:.6rem">YKS</span></div>
           <span class="mock-tag">Deneme</span>
         </div>
         <div class="cd-label">⏳ YKS'ye kalan süre</div>

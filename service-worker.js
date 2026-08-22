@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aikocum-v108-mufredat-kart';
+const CACHE_NAME = 'aikocum-v109-gerisayim-yks';
 const urlsToCache = [
   './',
   './index.html',

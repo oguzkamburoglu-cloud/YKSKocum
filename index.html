@@ -88,7 +88,10 @@
         </g>
       </svg>
       <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem;">
-        <span style="background: linear-gradient(135deg, var(--text-main) 40%, var(--primary) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">AI Koçum</span>
+        <span style="display:inline-flex; align-items:center; gap:0.4rem;">
+          <span style="background: linear-gradient(135deg, var(--text-main) 40%, var(--primary) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">AI Koçum</span>
+          <span style="font-family:var(--font-header); font-weight:800; font-size:0.6rem; letter-spacing:0.06em; color:var(--primary); background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.3); padding:0.08rem 0.4rem; border-radius:5px;">YKS</span>
+        </span>
         <span id="roleBadge" style="display:none; align-items:center; gap:0.3rem; padding:0.2rem 0.55rem; font-size:0.68rem; font-weight:800; border-radius:99px; background:rgba(16,185,129,0.12); border:1px solid var(--success, #10b981); color:var(--success, #10b981); white-space:nowrap; margin-left:0.4rem;"></span>
         <button style="padding: 0.1rem 0.5rem; font-size: 0.58rem; line-height: 1.4; display: inline-flex; align-items: center; gap: 0.2rem; font-weight: 700; white-space: nowrap; border-radius: 4px; border: 1px solid rgba(245,158,11,0.4); background: rgba(245,158,11,0.08); color: #b45309; cursor: pointer; font-family: var(--font-header);" id="headerTierBtn" onclick="event.stopPropagation(); app.showSubscription()">
           <i class="fa-solid fa-bolt" style="font-size: 0.5rem;"></i> <span id="headerTierText">Paket Seç</span>
@@ -2462,6 +2465,6 @@
   <script src="curriculum.js?v=4"></script>
   <script src="questions.js?v=2"></script>
   <script src="quotes.js?v=1"></script>
-  <script src="app.js?v=168"></script>
+  <script src="app.js?v=169"></script>
 </body>
 </html>

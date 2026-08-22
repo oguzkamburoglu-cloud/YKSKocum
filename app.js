@@ -2201,14 +2201,14 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
       // Make Pomodoro Widget draggable
       this.makeElementDraggable(document.getElementById("floatingPomoWidget"));
 
-      // Smallest unit shown is the hour, so a one-minute tick is plenty
+      // En kucuk birim saniye: her saniye tik (acikca canli geri sayim)
       setInterval(() => {
         try {
           this.updateYksCountdown();
         } catch (e) {
           console.error("Error in interval updateYksCountdown", e);
         }
-      }, 60000);
+      }, 1000);
     } catch (e) {
       console.error("Critical error during app initialization, recovering cleanly...", e);
       try {
@@ -2263,12 +2263,15 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     this.applyParentContactLock();
   },
 
-  // YKS Countdown timer (Target: June 19, 2027) — split-flap style
+  // YKS geri sayimi — Gün/Saat/Dakika/Saniye.
+  // Eskiden Ay/Hafta/Gün/Saat vardi; sinava ~10 ay kala "00 Hafta"
+  // gibi anlamsiz haneler cikiyor, ogrenci hata sandi. Gün 3 haneli
+  // olabildigi icin (302) gün grubu 3 kart kullanir.
   YKS_CD_UNITS: [
-    { key: "month",  label: "Ay" },
-    { key: "week",   label: "Hafta" },
-    { key: "day",    label: "Gün" },
-    { key: "hour",   label: "Saat" }
+    { key: "day",  label: "Gün",    digits: 3 },
+    { key: "hour", label: "Saat",   digits: 2 },
+    { key: "min",  label: "Dakika", digits: 2 },
+    { key: "sec",  label: "Saniye", digits: 2 }
   ],
 
   // Builds the flip cards once; later ticks only swap the digits.
@@ -2276,14 +2279,15 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     const wrap = document.getElementById("yksCdGroups");
     if (!wrap || wrap.dataset.built === "1") return;
 
-    wrap.innerHTML = this.YKS_CD_UNITS.map(u => `
+    wrap.innerHTML = this.YKS_CD_UNITS.map(u => {
+      const kartlar = [];
+      for (let i = 0; i < u.digits; i++) kartlar.push(`<div class="flip-card" id="cd_${u.key}_${i}"><span>0</span></div>`);
+      return `
       <div class="flip-group">
-        <div class="flip-cards">
-          <div class="flip-card" id="cd_${u.key}_0"><span>0</span></div>
-          <div class="flip-card" id="cd_${u.key}_1"><span>0</span></div>
-        </div>
+        <div class="flip-cards">${kartlar.join("")}</div>
         <span class="flip-unit">${u.label}</span>
-      </div>`).join("");
+      </div>`;
+    }).join("");
 
     wrap.dataset.built = "1";
   },
@@ -2307,23 +2311,18 @@ Eğer kullanıcı sana genel bir soru sorarsa (Örn: 'Türev nasıl çalışıl�
     let diffMs = targetDate - today;
     if (diffMs < 0) diffMs = 0;
 
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const day  = Math.floor(diffMs / 86400000);
+    const hour = Math.floor(diffMs / 3600000) % 24;
+    const min  = Math.floor(diffMs / 60000) % 60;
+    const sec  = Math.floor(diffMs / 1000) % 60;
 
-    const months = Math.floor(diffDays / 30);
-    const remainingDaysAfterMonths = diffDays % 30;
-    const weeks = Math.floor(remainingDaysAfterMonths / 7);
-    const finalDays = remainingDaysAfterMonths % 7;
-
-    const hours = Math.floor(diffMs / 3600000) % 24;
-
-    const values = { month: months, week: weeks, day: finalDays, hour: hours };
+    const values = { day: day, hour: hour, min: min, sec: sec };
 
     this.buildYksCountdownBar();
 
     this.YKS_CD_UNITS.forEach(u => {
-      const padded = String(values[u.key]).padStart(2, "0").slice(-2);
-      this.setFlipDigit(`cd_${u.key}_0`, padded[0]);
-      this.setFlipDigit(`cd_${u.key}_1`, padded[1]);
+      const padded = String(values[u.key]).padStart(u.digits, "0").slice(-u.digits);
+      for (let i = 0; i < u.digits; i++) this.setFlipDigit(`cd_${u.key}_${i}`, padded[i]);
     });
   },
 
