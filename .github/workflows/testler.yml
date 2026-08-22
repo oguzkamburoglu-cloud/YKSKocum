@@ -54,6 +54,25 @@ jobs:
             playwright-report/
           retention-days: 7
 
+  api:
+    name: Sunucu API (PHP, 28 uçtan uca + paket mantığı)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: pdo_sqlite, sqlite3, mbstring, openssl, curl, json
+      - name: PHP sözdizimi
+        run: |
+          for f in sunucu/api/index.php sunucu/api/router.php sunucu/api/lib/*.php sunucu/push.php sunucu/kontrol.php; do
+            php -l "$f"
+          done
+      - name: Paket/deneme zaman mantığı
+        run: php sunucu/test/paket-test.php
+      - name: API uçtan uca (SQLite)
+        run: bash sunucu/test/api-test.sh
+
   sozdizimi:
     name: Sözdizimi denetimi
     runs-on: ubuntu-latest
